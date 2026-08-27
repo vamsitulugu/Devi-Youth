@@ -1,5 +1,5 @@
 -- ============================================================
--- Grama Ganapati — Phase 2 Row Level Security
+-- Devi Youth Sree Bala Ganesh Puja — Phase 2 Row Level Security
 -- Run AFTER 01_schema.sql.
 --
 -- Rule of thumb applied throughout:

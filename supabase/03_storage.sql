@@ -1,5 +1,5 @@
 -- ============================================================
--- Grama Ganapati — Phase 2 Storage
+-- Devi Youth Sree Bala Ganesh Puja — Phase 2 Storage
 -- Run AFTER 01_schema.sql and 02_policies.sql.
 --
 -- One public bucket, `gallery`, holds everything: committee photos,

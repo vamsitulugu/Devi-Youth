@@ -1,5 +1,5 @@
 export const en = {
-  app_name: 'Grama Ganapati',
+  app_name: 'Devi Youth Sree Bala Ganesh Puja',
   app_tag: 'Our Village Festival, Together',
   splash_loading: 'Preparing the mandapam…',
 

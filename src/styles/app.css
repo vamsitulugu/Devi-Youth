@@ -483,7 +483,8 @@
     bottom: auto;
     transform: none;
     grid-column: 1;
-    grid-row: 1;
+    grid-row: 1 / -1;
+    align-self: start;
     width: 100%;
     max-width: none;
     height: fit-content;

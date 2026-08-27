@@ -9,7 +9,7 @@ import { useActiveFestival } from '../../hooks/useActiveFestival';
 import { upsertFestival, setActiveFestival, deleteFestival, listProfiles, updateProfileRole } from '../../services/adminApi';
 import { PageSkeleton } from '../../components/LoadingStates';
 
-const blankFestival = { year: new Date().getFullYear(), name_en: 'Grama Ganapati', name_te: '', village_en: '', village_te: '', start_date: '', end_date: '', public_donation_total: '' };
+const blankFestival = { year: new Date().getFullYear(), name_en: 'Devi Youth Sree Bala Ganesh Puja', name_te: '', village_en: '', village_te: '', start_date: '', end_date: '', public_donation_total: '' };
 
 export default function Settings() {
   const toast = useToast();
