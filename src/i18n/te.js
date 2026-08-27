@@ -1,0 +1,56 @@
+export const te = {
+  app_name: 'గ్రామ గణపతి',
+  app_tag: 'మన గ్రామ ఉత్సవం, అందరం కలిసి',
+  splash_loading: 'మండపం సిద్ధమవుతోంది…',
+
+  nav_home: 'హోమ్',
+  nav_announcements: 'ప్రకటనలు',
+  nav_events: 'కార్యక్రమాలు',
+  nav_gallery: 'గ్యాలరీ',
+  nav_more: 'మరిన్ని',
+
+  see_all: 'అన్నీ చూడండి',
+
+  home_latest_announcement: 'తాజా ప్రకటన',
+  home_upcoming_events: 'రాబోయే కార్యక్రమాలు',
+  home_laddu_highlight: 'లడ్డు వేలం',
+  home_lottery_highlight: 'లాటరీ',
+  home_latest_photos: 'తాజా ఫోటోలు',
+  home_committee: 'మా కమిటీ',
+  home_donations_public: 'మొత్తం ఉత్సవ విరాళాలు',
+
+  announcements_title: 'ప్రకటనలు',
+  important: 'ముఖ్యం',
+  share_whatsapp: 'వాట్సాప్‌లో పంచుకోండి',
+
+  events_title: 'కార్యక్రమాలు',
+
+  laddu_title: 'లడ్డు వేలం',
+  laddu_current: 'ఈ సంవత్సరం లడ్డు',
+  starting_price: 'ప్రారంభ ధర',
+  final_price: 'తుది ధర',
+  winner: 'విజేత',
+  auction_date: 'తేదీ & సమయం',
+  location: 'ప్రదేశం',
+  previous_years: 'గత సంవత్సరాలు',
+  result_pending: 'ఫలితం త్వరలో ప్రకటించబడుతుంది',
+
+  lottery_title: 'లాటరీ',
+  lottery_prizes: 'బహుమతులు',
+  draw_details: 'డ్రా వివరాలు',
+  prize_value: 'విలువ',
+  winners_title: 'విజేతలు',
+
+  committee_title: 'కమిటీ',
+  contact: 'సంప్రదించండి',
+
+  gallery_title: 'గ్యాలరీ',
+  gallery_empty: 'ఈ సంవత్సరానికి ఇంకా ఫోటోలు లేవు.',
+
+  history_title: 'ఉత్సవ చరిత్ర',
+
+  contacts_title: 'ముఖ్యమైన సంప్రదింపులు',
+  call: 'కాల్ చేయండి',
+
+  offline_note: 'మండపం వద్ద ప్రత్యక్షంగా నిర్వహించబడుతుంది. కార్యక్రమం తర్వాత కమిటీ ఫలితాలను నమోదు చేస్తుంది.',
+};

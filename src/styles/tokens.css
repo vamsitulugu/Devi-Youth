@@ -1,0 +1,116 @@
+/* ============================================================
+   DESIGN TOKENS — "Grama Ganapati" village festival identity
+   Palette pulled from the festival itself: kumkum vermillion,
+   turmeric, marigold garlands, temple brass, banana-leaf green.
+   ============================================================ */
+
+:root {
+  /* Color */
+  --color-vermillion: #C22B1F;      /* kumkum — primary brand */
+  --color-vermillion-dark: #971F17;
+  --color-marigold: #F0940F;        /* garlands, CTAs */
+  --color-turmeric: #F6B93B;        /* highlight / warning */
+  --color-brass: #A8791F;           /* temple brass — decorative */
+  --color-leaf: #3E6B4F;            /* banana leaf — secondary/success */
+  --color-leaf-dark: #2C4E38;
+
+  --color-bg: #FDF6EA;              /* warm rice-flour ivory */
+  --color-surface: #FFFFFF;
+  --color-surface-alt: #FBEEDA;
+  --color-ink: #38220F;             /* betel-nut brown text */
+  --color-ink-soft: #6B5642;
+  --color-border: #EADFC7;
+
+  --color-danger: #B23A2E;
+
+  /* Type */
+  --font-display: 'Baloo 2', 'Ramabhadra', 'Noto Sans Telugu', sans-serif;
+  --font-body: 'Poppins', 'Noto Sans Telugu', sans-serif;
+
+  --fs-xs: 0.75rem;
+  --fs-sm: 0.875rem;
+  --fs-base: 1rem;
+  --fs-md: 1.125rem;
+  --fs-lg: 1.375rem;
+  --fs-xl: 1.75rem;
+  --fs-xxl: 2.25rem;
+
+  /* Radius & spacing */
+  --radius-sm: 10px;
+  --radius-md: 16px;
+  --radius-lg: 24px;
+  --radius-pill: 999px;
+
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
+
+  --shadow-card: 0 4px 16px rgba(56, 34, 15, 0.08);
+  --shadow-pop: 0 8px 28px rgba(194, 43, 31, 0.18);
+
+  --nav-height: 68px;
+  --header-height: 56px;
+}
+
+* { box-sizing: border-box; }
+
+html, body, #root {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--color-bg);
+  color: var(--color-ink);
+  font-family: var(--font-body);
+  -webkit-font-smoothing: antialiased;
+  overscroll-behavior-y: none;
+}
+
+h1, h2, h3, h4 {
+  font-family: var(--font-display);
+  margin: 0;
+  color: var(--color-vermillion-dark);
+  letter-spacing: 0.2px;
+}
+
+p { margin: 0; }
+
+a { color: inherit; text-decoration: none; }
+
+button {
+  font-family: var(--font-body);
+  cursor: pointer;
+  border: none;
+  background: none;
+}
+
+img { max-width: 100%; display: block; }
+
+/* Focus visibility */
+a:focus-visible,
+button:focus-visible,
+input:focus-visible,
+textarea:focus-visible,
+select:focus-visible {
+  outline: 3px solid var(--color-turmeric);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+}
+
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-thumb { background: var(--color-border); border-radius: 10px; }
+
+[lang="te"] {
+  font-family: 'Noto Sans Telugu', var(--font-body);
+}
