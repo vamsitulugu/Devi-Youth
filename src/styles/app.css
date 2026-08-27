@@ -16,13 +16,20 @@
   position: sticky;
   top: 0;
   z-index: 20;
+  display: flex;
+  flex-direction: column;
+  background: linear-gradient(180deg, var(--color-vermillion) 0%, var(--color-vermillion-dark) 100%);
+  color: #fff;
+  overflow: hidden;
+}
+
+.app-header-row {
   height: var(--header-height);
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: var(--space-2);
   padding: 0 var(--space-4);
-  background: var(--color-vermillion);
-  color: #fff;
 }
 
 .app-header .back-btn,
@@ -31,6 +38,20 @@
   align-items: center;
   gap: 4px;
   color: #fff;
+  flex-shrink: 0;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+.brand-logo {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  box-shadow: 0 0 0 2px rgba(255,255,255,0.55);
+  display: block;
 }
 
 .app-header .title {
@@ -38,6 +59,7 @@
   font-size: var(--fs-md);
   color: #fff;
   flex: 1;
+  min-width: 0;
   text-align: center;
   white-space: nowrap;
   overflow: hidden;
@@ -55,12 +77,13 @@
 .lang-toggle .active { color: var(--color-turmeric); }
 .lang-toggle .sep { opacity: 0.5; margin: 0 3px; }
 
-/* ---------- Toranam garland divider — signature element ---------- */
+/* ---------- Toranam garland — woven into the header itself, no seam ---------- */
 .toranam {
   display: block;
   width: 100%;
-  height: 22px;
-  background: var(--color-vermillion);
+  height: 14px;
+  margin-top: -1px;
+  line-height: 0;
 }
 .toranam svg { display: block; width: 100%; height: 100%; }
 
@@ -136,6 +159,12 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+@media (max-width: 360px) {
+  .nav-item .nav-label { font-size: 10px; max-width: 52px; }
+  .app-header .title { font-size: var(--fs-base); }
+  .brand-logo { width: 28px; height: 28px; }
 }
 
 /* ---------- Cards ---------- */
@@ -521,6 +550,19 @@
     position: sticky;
     top: var(--space-6);
     border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-pop);
+  }
+
+  .app-header-row {
+    height: 64px;
+    padding: 0 var(--space-5);
+  }
+
+  .brand-logo { width: 40px; height: 40px; }
+
+  .app-header .title {
+    text-align: left;
+    font-size: var(--fs-lg);
   }
 
   /* wider canvas, more breathing room for cards */
