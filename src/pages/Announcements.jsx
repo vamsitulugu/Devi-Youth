@@ -29,10 +29,10 @@ export default function Announcements() {
                 <CalendarDays size={12} style={{ verticalAlign: -2 }} /> {a.date}
               </span>
             </div>
-            <div className="title" style={{ fontSize: 'var(--fs-md)' }}>{a.title[lang]}</div>
-            <div className="desc" style={{ fontSize: 'var(--fs-sm)' }}>{a.body[lang]}</div>
+            <div className="title" style={{ fontSize: 'var(--fs-md)' }}>{a.title?.[lang] || ''}</div>
+            <div className="desc" style={{ fontSize: 'var(--fs-sm)' }}>{a.body?.[lang] || ''}</div>
             <div>
-              <WhatsAppShare text={`🙏 ${a.title[lang]}\n\n${a.body[lang]}`} />
+              <WhatsAppShare text={`🙏 ${a.title?.[lang] || ''}\n\n${a.body?.[lang] || ''}`} />
             </div>
           </div>
         ))}

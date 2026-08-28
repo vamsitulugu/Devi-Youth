@@ -82,20 +82,26 @@ function HomeContent({ data, t, lang }) {
             <h2>{t('home_latest_announcement')}</h2>
             <Link to="/announcements" className="see-all">{t('see_all')}</Link>
           </div>
-          <div className="card list-card">
-            <PhotoTile
-              src={latestAnnouncement.image}
-              alt=""
-              className="thumb"
-              onClick={latestAnnouncement.image ? () => openViewer([{ id: 'announcement', src: latestAnnouncement.image, caption: latestAnnouncement.title[lang] }]) : undefined}
-              style={latestAnnouncement.image ? { cursor: 'zoom-in' } : undefined}
-            />
+          <Link to="/announcements" className="card list-card" style={{ textDecoration: 'none', color: 'inherit' }}>
+            {latestAnnouncement.image && (
+              <PhotoTile
+                src={latestAnnouncement.image}
+                alt=""
+                className="thumb"
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  openViewer([{ id: 'announcement', src: latestAnnouncement.image, caption: latestAnnouncement.title?.[lang] }]);
+                }}
+                style={{ cursor: 'zoom-in' }}
+              />
+            )}
             <div className="body">
               {latestAnnouncement.important && <span className="chip chip-danger">{t('important')}</span>}
-              <div className="title">{latestAnnouncement.title[lang]}</div>
-              <div className="desc">{latestAnnouncement.body[lang]}</div>
+              <div className="title">{latestAnnouncement.title?.[lang] || ''}</div>
+              <div className="desc">{latestAnnouncement.body?.[lang] || ''}</div>
             </div>
-          </div>
+          </Link>
         </section>
       )}
 
