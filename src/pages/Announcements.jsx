@@ -18,7 +18,7 @@ export default function Announcements() {
         {loading && <PageSkeleton />}
         {!loading && error && <PageError />}
         {!loading && !error && announcements?.length === 0 && (
-          <div className="card empty-state">{t('gallery_empty')}</div>
+          <div className="card empty-state">{t('announcements_empty')}</div>
         )}
         {!loading && !error && announcements?.map((a) => (
           <div className="card card-pad" key={a.id} style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>

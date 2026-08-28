@@ -46,6 +46,8 @@ export const en = {
 
   gallery_title: 'Gallery',
   gallery_empty: 'No photos yet for this year.',
+  announcements_empty: 'No announcements yet.',
+  events_empty: 'No events scheduled yet.',
 
   history_title: 'Festival History',
 

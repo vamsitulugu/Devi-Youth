@@ -16,7 +16,7 @@ export default function Events() {
         {loading && <PageSkeleton />}
         {!loading && error && <PageError />}
         {!loading && !error && events?.length === 0 && (
-          <div className="card empty-state">{t('gallery_empty')}</div>
+          <div className="card empty-state">{t('events_empty')}</div>
         )}
         {!loading && !error && events?.length > 0 && (
           <div className="timeline">

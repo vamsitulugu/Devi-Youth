@@ -46,6 +46,8 @@ export const te = {
 
   gallery_title: 'గ్యాలరీ',
   gallery_empty: 'ఈ సంవత్సరానికి ఇంకా ఫోటోలు లేవు.',
+  announcements_empty: 'ఇంకా ప్రకటనలు లేవు.',
+  events_empty: 'ఇంకా కార్యక్రమాలు నిర్ణయించలేదు.',
 
   history_title: 'ఉత్సవ చరిత్ర',
 
