@@ -356,3 +356,52 @@ Donation and expense data is private by design and lives behind Supabase
 RLS (Phase 3), with only an admin-approved total (e.g. "Total Festival
 Donations: ₹8,50,000") ever shown to villagers, as reflected on the Home
 page.
+
+## Phase 5 — Bilingual content (EN ↔ TE)
+
+Two separate layers of localization, both already wired in:
+
+**Static UI text** (nav labels, buttons, empty states, etc.) uses the
+existing `src/i18n/` system — `en.js` / `te.js` dictionaries plus
+`LanguageContext`, which persists the chosen language to `localStorage`
+(`gc_lang`) and applies it app-wide via `useLanguage()`.
+
+**Admin-entered content** (festival name/village, announcements, events,
+committee positions, contacts, laddu/lottery details, gallery album
+names) now uses a single-input workflow instead of separate
+English/Telugu fields:
+
+- `src/lib/language.js` — `detectLanguage(text)` detects Telugu vs.
+  English by Unicode script, instantly, with no API call.
+- `src/components/admin/BilingualField.jsx` — a drop-in single `<input>`
+  that detects the script as the admin types and stores it in the
+  correct `{field}_en` / `{field}_te` / `{field}_source_lang` columns,
+  leaving the other language blank.
+- `src/services/translate.js` — `translateText()` calls MyMemory's free
+  translation API (no key required) with an 8s timeout, in-flight
+  request de-duplication, and a shared cache table
+  (`translation_cache`, see `supabase/06_i18n.sql`) so the same sentence
+  is never translated twice.
+- `src/services/localize.js` — `resolveBilingual()` fills in whichever
+  side is blank (cached translation → live translation → original text
+  as a last-resort fallback; it never returns blank/undefined). This is
+  wired into `src/services/api.js` for every public-facing read.
+
+`supabase/06_i18n.sql` is additive only — it doesn't touch or drop any
+existing column, so already-populated bilingual rows keep working
+exactly as before; only new/edited content goes through the
+detect-and-translate path. Run it after `05_gallery_update.sql`.
+
+**Applied so far:** Settings (festival name/village), Announcements,
+Events, Committee, Contacts, Gallery albums, Laddu Velam, Lottery
+(draw location + prize names). Donations/Expenses were left as-is —
+they're private admin-only financial records, not public bilingual
+content.
+
+**Extending the pattern to a new field:** add a nullable
+`{field}_source_lang` column (see `06_i18n.sql` for the pattern), swap
+the admin form's two `Field`/`Input` pairs for one
+`<BilingualField label="..." baseName="..." form={form} setForm={setForm} />`,
+and wrap the read in `src/services/api.js` with
+`await bilingual(row.x_en, row.x_te, row.x_source_lang)`.
+

@@ -17,6 +17,17 @@
 
 import { supabase, isSupabaseConfigured } from '../lib/supabaseClient';
 import * as sample from '../data/sampleData';
+import { resolveBilingual } from './localize';
+
+// Admin content is now entered ONCE (see BilingualField) — the admin types
+// either English or Telugu and we store it in the matching `_en`/`_te`
+// column, leaving the other blank along with a `_source_lang` marker.
+// This helper fills in the blank side for display, using cached/live
+// translation, and NEVER returns a blank string for a field that has
+// real underlying content (see resolveBilingual's fallback hierarchy).
+function bilingual(en, te, sourceLang) {
+  return resolveBilingual({ en, te, sourceLang });
+}
 
 // ---------- storage helpers ----------
 export function publicImageUrl(path) {
@@ -77,11 +88,16 @@ async function getActiveFestival() {
   const end = new Date(data.end_date);
   const fmt = (d) => d.toLocaleDateString('en-IN', { day: '2-digit', month: 'short' });
 
+  const [name, village] = await Promise.all([
+    bilingual(data.name_en, data.name_te, data.name_source_lang),
+    bilingual(data.village_en, data.village_te, data.village_source_lang),
+  ]);
+
   _festivalCache = {
     id: data.id,
     year: data.year,
-    name: { en: data.name_en, te: data.name_te },
-    village: { en: data.village_en, te: data.village_te },
+    name,
+    village,
     dates: { en: `${fmt(start)} – ${fmt(end)} ${data.year}`, te: `${fmt(start)} – ${fmt(end)}, ${data.year}` },
     publicDonationTotal: data.public_donation_total,
   };
@@ -103,14 +119,14 @@ export async function getAnnouncements() {
     .eq('festival_id', festival.id)
     .order('published_at', { ascending: false });
   throwIfError(error);
-  return (data || []).map((a) => ({
+  return Promise.all((data || []).map(async (a) => ({
     id: a.id,
     important: a.important,
     date: a.published_at?.slice(0, 10),
-    title: { en: a.title_en, te: a.title_te },
-    body: { en: a.body_en, te: a.body_te },
+    title: await bilingual(a.title_en, a.title_te, a.title_source_lang),
+    body: await bilingual(a.body_en, a.body_te, a.body_source_lang),
     image: publicImageUrl(a.image_url),
-  }));
+  })));
 }
 
 // ---------- events ----------
@@ -125,14 +141,14 @@ export async function getEvents() {
     .order('event_date', { ascending: true })
     .order('sort_order', { ascending: true });
   throwIfError(error);
-  return (data || []).map((e) => ({
+  return Promise.all((data || []).map(async (e) => ({
     id: e.id,
     date: e.event_date,
     time: e.event_time,
-    title: { en: e.title_en, te: e.title_te },
-    location: { en: e.location_en, te: e.location_te },
-    description: { en: e.description_en, te: e.description_te },
-  }));
+    title: await bilingual(e.title_en, e.title_te, e.title_source_lang),
+    location: await bilingual(e.location_en, e.location_te, e.location_source_lang),
+    description: await bilingual(e.description_en, e.description_te, e.description_source_lang),
+  })));
 }
 
 // ---------- committee ----------
@@ -146,13 +162,13 @@ export async function getCommittee() {
     .eq('festival_id', festival.id)
     .order('sort_order', { ascending: true });
   throwIfError(error);
-  return (data || []).map((m) => ({
+  return Promise.all((data || []).map(async (m) => ({
     id: m.id,
     name: m.name,
-    position: { en: m.position_en, te: m.position_te },
+    position: await bilingual(m.position_en, m.position_te, m.position_source_lang),
     phone: m.phone,
     photo: publicImageUrl(m.photo_url),
-  }));
+  })));
 }
 
 // ---------- laddu velam ----------
@@ -177,17 +193,22 @@ export async function getLaddu() {
 
   if (!current) return null;
 
+  const [title, location] = await Promise.all([
+    bilingual(current.title_en, current.title_te, current.title_source_lang),
+    bilingual(current.location_en, current.location_te, current.location_source_lang),
+  ]);
+
   return {
     current: {
       year: festival.year,
-      title: { en: current.title_en, te: current.title_te },
+      title,
       image: publicImageUrl(current.image_url),
       startingPrice: current.starting_price,
       finalPrice: current.final_price,
       winner: current.winner_name,
       date: current.auction_date,
       time: current.auction_time,
-      location: { en: current.location_en, te: current.location_te },
+      location,
     },
     history: (history || []).map((h) => ({ year: h.festivals.year, finalPrice: h.final_price, winner: h.winner_name })),
   };
@@ -229,14 +250,14 @@ export async function getLottery() {
   return {
     drawDate: lotteryRow.draw_date,
     drawTime: lotteryRow.draw_time,
-    location: { en: lotteryRow.location_en, te: lotteryRow.location_te },
-    prizes: (prizes || []).map((p) => ({
+    location: await bilingual(lotteryRow.location_en, lotteryRow.location_te, lotteryRow.location_source_lang),
+    prizes: await Promise.all((prizes || []).map(async (p) => ({
       id: p.id,
-      name: { en: p.name_en, te: p.name_te },
+      name: await bilingual(p.name_en, p.name_te, p.name_source_lang),
       value: p.value,
       image: publicImageUrl(p.image_url),
-    })),
-    winners: (winners || []).map((w) => ({ name: w.winner_name, prize: w.lottery_prizes?.name_en })),
+    }))),
+    winners: (winners || []).map((w) => ({ name: w.winner_name, prize: w.lottery_prizes?.name_en || w.lottery_prizes?.name_te })),
     history: (historyRows || []).map((h) => ({
       year: h.festivals.year,
       topPrize: { en: h.lottery_prizes?.[0]?.name_en, te: h.lottery_prizes?.[0]?.name_te },
@@ -264,14 +285,12 @@ export async function getGalleryAlbums(year) {
     .eq('festival_id', festivalRow.id)
     .order('sort_order');
   throwIfError(error);
-  return (albums || []).map((a) => ({
+  return Promise.all((albums || []).map(async (a) => ({
     id: a.id,
-    // Album names are English-only; { en, te } is kept so pages that key
-    // off lang[album] (e.g. captions) keep working without special-casing.
-    album: { en: a.name_en, te: a.name_en },
+    album: await bilingual(a.name_en, a.name_te, a.name_source_lang),
     cover: publicImageUrl(a.cover_photo_url),
     count: a.photos?.[0]?.count ?? 0,
-  }));
+  })));
 }
 
 // All photos in one album, newest first — used by the album viewer.
@@ -330,10 +349,10 @@ export async function getContacts() {
   if (!isSupabaseConfigured) return sample.contacts;
   const { data, error } = await supabase.from('contacts').select('*').order('sort_order');
   throwIfError(error);
-  return (data || []).map((c) => ({
+  return Promise.all((data || []).map(async (c) => ({
     id: c.id,
     name: c.name,
-    role: { en: c.role_en, te: c.role_te },
+    role: await bilingual(c.role_en, c.role_te, c.role_source_lang),
     phone: c.phone,
-  }));
+  })));
 }

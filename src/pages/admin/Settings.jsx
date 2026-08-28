@@ -3,13 +3,19 @@ import { Plus, Star, Trash2, X, LogOut } from 'lucide-react';
 import { AdminHeader } from '../../components/admin/AdminLayout';
 import ConfirmDialog from '../../components/admin/ConfirmDialog';
 import { Field, Input, Select, FormGrid } from '../../components/admin/FormField';
+import BilingualField from '../../components/admin/BilingualField';
 import { useToast } from '../../components/admin/Toast';
 import { useAuth } from '../../auth/AuthContext';
 import { useActiveFestival } from '../../hooks/useActiveFestival';
 import { upsertFestival, setActiveFestival, deleteFestival, listProfiles, updateProfileRole } from '../../services/adminApi';
 import { PageSkeleton } from '../../components/LoadingStates';
 
-const blankFestival = { year: new Date().getFullYear(), name_en: 'Devi Youth Sree Bala Ganesh Puja', name_te: '', village_en: '', village_te: '', start_date: '', end_date: '', public_donation_total: '' };
+const blankFestival = {
+  year: new Date().getFullYear(),
+  name_en: 'Devi Youth Sree Bala Ganesh Puja', name_te: '', name_source_lang: 'en',
+  village_en: '', village_te: '', village_source_lang: null,
+  start_date: '', end_date: '', public_donation_total: '',
+};
 
 export default function Settings() {
   const toast = useToast();
@@ -103,7 +109,7 @@ export default function Settings() {
           {!festivalsLoading && festivals.map((f) => (
             <div key={f.id} className="card card-pad" style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 10 }}>
               <div style={{ flex: 1 }}>
-                <div className="title">{f.year} — {f.name_en}</div>
+                <div className="title">{f.year} — {f.name_en || f.name_te}</div>
                 <div className="meta">{f.start_date} to {f.end_date}</div>
               </div>
               {f.is_active ? (
@@ -135,18 +141,8 @@ export default function Settings() {
                 <Field label="Year">
                   <Input required type="number" value={form.year} onChange={(e) => setForm({ ...form, year: e.target.value })} />
                 </Field>
-                <Field label="Festival Name (English)">
-                  <Input required value={form.name_en} onChange={(e) => setForm({ ...form, name_en: e.target.value })} />
-                </Field>
-                <Field label="Festival Name (Telugu)">
-                  <Input required value={form.name_te} onChange={(e) => setForm({ ...form, name_te: e.target.value })} />
-                </Field>
-                <Field label="Village (English)">
-                  <Input required value={form.village_en} onChange={(e) => setForm({ ...form, village_en: e.target.value })} />
-                </Field>
-                <Field label="Village (Telugu)">
-                  <Input required value={form.village_te} onChange={(e) => setForm({ ...form, village_te: e.target.value })} />
-                </Field>
+                <BilingualField label="Festival Name" baseName="name" form={form} setForm={setForm} required />
+                <BilingualField label="Village" baseName="village" form={form} setForm={setForm} required />
                 <div style={{ display: 'flex', gap: 10 }}>
                   <Field label="Start Date">
                     <Input required type="date" value={form.start_date} onChange={(e) => setForm({ ...form, start_date: e.target.value })} />

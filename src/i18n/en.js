@@ -62,4 +62,8 @@ export const en = {
   call: 'Call',
 
   offline_note: 'Conducted physically at the mandapam. Results are entered by the committee after the event.',
+
+  not_found_title: 'Page not found',
+  not_found_body: "That page doesn't exist. Let's get you back home.",
+  page_error: "Couldn't load this page. Please try again.",
 };

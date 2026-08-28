@@ -3,16 +3,17 @@ import { Plus, Pencil, Trash2, X, MapPin, Clock } from 'lucide-react';
 import { AdminHeader } from '../../components/admin/AdminLayout';
 import FestivalBanner from '../../components/admin/FestivalBanner';
 import ConfirmDialog from '../../components/admin/ConfirmDialog';
-import { Field, Input, Textarea, FormGrid } from '../../components/admin/FormField';
+import { Field, Input, FormGrid } from '../../components/admin/FormField';
+import BilingualField from '../../components/admin/BilingualField';
 import { useToast } from '../../components/admin/Toast';
 import { useActiveFestival } from '../../hooks/useActiveFestival';
 import { eventsApi } from '../../services/adminApi';
 import { PageSkeleton, PageError } from '../../components/LoadingStates';
 
 const blank = {
-  title_en: '', title_te: '',
-  description_en: '', description_te: '',
-  location_en: '', location_te: '',
+  title_en: '', title_te: '', title_source_lang: null,
+  description_en: '', description_te: '', description_source_lang: null,
+  location_en: '', location_te: '', location_source_lang: null,
   event_date: '', event_time: '', sort_order: 0,
 };
 
@@ -52,9 +53,9 @@ export default function ManageEvents() {
   }
   function openEdit(item) {
     setForm({
-      title_en: item.title_en, title_te: item.title_te,
-      description_en: item.description_en || '', description_te: item.description_te || '',
-      location_en: item.location_en || '', location_te: item.location_te || '',
+      title_en: item.title_en, title_te: item.title_te, title_source_lang: item.title_source_lang,
+      description_en: item.description_en || '', description_te: item.description_te || '', description_source_lang: item.description_source_lang,
+      location_en: item.location_en || '', location_te: item.location_te || '', location_source_lang: item.location_source_lang,
       event_date: item.event_date || '', event_time: item.event_time || '',
       sort_order: item.sort_order || 0,
     });
@@ -112,12 +113,7 @@ export default function ManageEvents() {
                 <strong>{editing.id ? 'Edit' : 'New'} Event</strong>
                 <button type="button" onClick={() => setEditing(null)} aria-label="Close"><X size={18} /></button>
               </div>
-              <Field label="Title (English)">
-                <Input required value={form.title_en} onChange={(e) => setForm({ ...form, title_en: e.target.value })} />
-              </Field>
-              <Field label="Title (Telugu)">
-                <Input required value={form.title_te} onChange={(e) => setForm({ ...form, title_te: e.target.value })} />
-              </Field>
+              <BilingualField label="Title" baseName="title" form={form} setForm={setForm} required />
               <div style={{ display: 'flex', gap: 10 }}>
                 <Field label="Date">
                   <Input type="date" required value={form.event_date} onChange={(e) => setForm({ ...form, event_date: e.target.value })} />
@@ -126,18 +122,8 @@ export default function ManageEvents() {
                   <Input placeholder="6:00 PM" value={form.event_time} onChange={(e) => setForm({ ...form, event_time: e.target.value })} />
                 </Field>
               </div>
-              <Field label="Location (English)">
-                <Input value={form.location_en} onChange={(e) => setForm({ ...form, location_en: e.target.value })} />
-              </Field>
-              <Field label="Location (Telugu)">
-                <Input value={form.location_te} onChange={(e) => setForm({ ...form, location_te: e.target.value })} />
-              </Field>
-              <Field label="Description (English)">
-                <Textarea value={form.description_en} onChange={(e) => setForm({ ...form, description_en: e.target.value })} />
-              </Field>
-              <Field label="Description (Telugu)">
-                <Textarea value={form.description_te} onChange={(e) => setForm({ ...form, description_te: e.target.value })} />
-              </Field>
+              <BilingualField label="Location" baseName="location" form={form} setForm={setForm} />
+              <BilingualField label="Description" baseName="description" form={form} setForm={setForm} multiline />
               <Field label="Sort order" hint="Lower numbers appear first on the same date">
                 <Input type="number" value={form.sort_order} onChange={(e) => setForm({ ...form, sort_order: e.target.value })} />
               </Field>
@@ -154,13 +140,13 @@ export default function ManageEvents() {
         {!loading && !error && items.map((ev) => (
           <div key={ev.id} className="card card-pad" style={{ display: 'flex', gap: 12 }}>
             <div style={{ flex: 1, minWidth: 0 }}>
-              <div className="title">{ev.title_en}</div>
+              <div className="title">{ev.title_en || ev.title_te}</div>
               <div className="meta" style={{ display: 'flex', gap: 10, marginTop: 4 }}>
                 <span><Clock size={12} style={{ verticalAlign: -2 }} /> {ev.event_date} {ev.event_time}</span>
               </div>
-              {ev.location_en && (
+              {(ev.location_en || ev.location_te) && (
                 <div className="meta" style={{ marginTop: 2 }}>
-                  <MapPin size={12} style={{ verticalAlign: -2 }} /> {ev.location_en}
+                  <MapPin size={12} style={{ verticalAlign: -2 }} /> {ev.location_en || ev.location_te}
                 </div>
               )}
             </div>
@@ -173,7 +159,7 @@ export default function ManageEvents() {
       </div>
       <ConfirmDialog
         open={!!toDelete}
-        message={`Delete "${toDelete?.title_en}"? This can't be undone.`}
+        message={`Delete "${toDelete?.title_en || toDelete?.title_te}"? This can't be undone.`}
         onConfirm={handleDelete}
         onCancel={() => setToDelete(null)}
       />

@@ -232,7 +232,7 @@ export const lotteryWinnersApi = {
     assertReady();
     const { data, error } = await supabase
       .from('lottery_winners')
-      .select('*, lottery_prizes(name_en)')
+      .select('*, lottery_prizes(name_en, name_te)')
       .eq('lottery_id', lotteryId);
     up(error);
     return data || [];
@@ -320,7 +320,7 @@ export async function uploadPhotosToAlbum(album, festivalYear, files, onProgress
     onProgress?.({ index: i, total: files.length, file });
     try {
       if (!isAcceptedImage(file)) throw new Error(`${file.name}: unsupported file type`);
-      const path = `${festivalYear}/${slugify(album.name_en)}/${Date.now()}-${i}-${file.name}`;
+      const path = `${festivalYear}/${slugify(album.name_en || album.name_te)}/${Date.now()}-${i}-${file.name}`;
       await uploadImage(file, path);
       const row = await addPhotoRecord({ album_id: album.id, storage_path: path });
       uploaded.push(row);
@@ -337,9 +337,9 @@ export async function uploadPhotosToAlbum(album, festivalYear, files, onProgress
 // upload screen. Sets the first successfully-uploaded photo as the
 // album's cover. Throws only if the album row itself can't be created;
 // individual photo failures are reported back via `failed`.
-export async function createAlbumWithPhotos({ name_en, festival_id, sort_order }, festivalYear, files, onProgress) {
+export async function createAlbumWithPhotos({ name_en, name_te, name_source_lang, festival_id, sort_order }, festivalYear, files, onProgress) {
   assertReady();
-  const album = await albumsApi.add({ name_en, festival_id, sort_order });
+  const album = await albumsApi.add({ name_en, name_te, name_source_lang, festival_id, sort_order });
   const { uploaded, failed } = await uploadPhotosToAlbum(album, festivalYear, files, onProgress);
   if (uploaded[0]) {
     try {

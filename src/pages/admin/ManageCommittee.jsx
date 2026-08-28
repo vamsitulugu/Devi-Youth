@@ -4,12 +4,13 @@ import { AdminHeader } from '../../components/admin/AdminLayout';
 import FestivalBanner from '../../components/admin/FestivalBanner';
 import ConfirmDialog from '../../components/admin/ConfirmDialog';
 import { Field, Input, FormGrid } from '../../components/admin/FormField';
+import BilingualField from '../../components/admin/BilingualField';
 import { useToast } from '../../components/admin/Toast';
 import { useActiveFestival } from '../../hooks/useActiveFestival';
 import { committeeApi, uploadImage, publicUrl } from '../../services/adminApi';
 import { PageSkeleton, PageError } from '../../components/LoadingStates';
 
-const blank = { name: '', position_en: '', position_te: '', phone: '', sort_order: 0, photo_url: '' };
+const blank = { name: '', position_en: '', position_te: '', position_source_lang: null, phone: '', sort_order: 0, photo_url: '' };
 
 export default function ManageCommittee() {
   const toast = useToast();
@@ -49,7 +50,7 @@ export default function ManageCommittee() {
   }
   function openEdit(item) {
     setForm({
-      name: item.name, position_en: item.position_en, position_te: item.position_te,
+      name: item.name, position_en: item.position_en, position_te: item.position_te, position_source_lang: item.position_source_lang,
       phone: item.phone || '', sort_order: item.sort_order || 0, photo_url: item.photo_url || '',
     });
     setFile(null);
@@ -115,12 +116,7 @@ export default function ManageCommittee() {
               <Field label="Name">
                 <Input required value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
               </Field>
-              <Field label="Position (English)">
-                <Input required placeholder="President" value={form.position_en} onChange={(e) => setForm({ ...form, position_en: e.target.value })} />
-              </Field>
-              <Field label="Position (Telugu)">
-                <Input required value={form.position_te} onChange={(e) => setForm({ ...form, position_te: e.target.value })} />
-              </Field>
+              <BilingualField label="Position" baseName="position" form={form} setForm={setForm} required placeholder="President" />
               <Field label="Phone">
                 <Input value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} />
               </Field>
@@ -152,7 +148,7 @@ export default function ManageCommittee() {
             />
             <div style={{ flex: 1, minWidth: 0 }}>
               <div className="title">{m.name}</div>
-              <div className="meta">{m.position_en}{m.phone ? ` · ${m.phone}` : ''}</div>
+              <div className="meta">{m.position_en || m.position_te}{m.phone ? ` · ${m.phone}` : ''}</div>
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
               <button className="icon-btn" onClick={() => openEdit(m)} aria-label="Edit"><Pencil size={16} /></button>

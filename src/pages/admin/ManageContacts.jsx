@@ -3,11 +3,12 @@ import { Plus, Pencil, Trash2, X } from 'lucide-react';
 import { AdminHeader } from '../../components/admin/AdminLayout';
 import ConfirmDialog from '../../components/admin/ConfirmDialog';
 import { Field, Input, FormGrid } from '../../components/admin/FormField';
+import BilingualField from '../../components/admin/BilingualField';
 import { useToast } from '../../components/admin/Toast';
 import { contactsApi } from '../../services/adminApi';
 import { PageSkeleton, PageError } from '../../components/LoadingStates';
 
-const blank = { name: '', role_en: '', role_te: '', phone: '', sort_order: 0 };
+const blank = { name: '', role_en: '', role_te: '', role_source_lang: null, phone: '', sort_order: 0 };
 
 export default function ManageContacts() {
   const toast = useToast();
@@ -38,7 +39,7 @@ export default function ManageContacts() {
     setEditing({});
   }
   function openEdit(item) {
-    setForm({ name: item.name, role_en: item.role_en, role_te: item.role_te, phone: item.phone, sort_order: item.sort_order || 0 });
+    setForm({ name: item.name, role_en: item.role_en, role_te: item.role_te, role_source_lang: item.role_source_lang, phone: item.phone, sort_order: item.sort_order || 0 });
     setEditing(item);
   }
 
@@ -94,12 +95,7 @@ export default function ManageContacts() {
               <Field label="Name">
                 <Input required value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
               </Field>
-              <Field label="Role (English)">
-                <Input required value={form.role_en} onChange={(e) => setForm({ ...form, role_en: e.target.value })} />
-              </Field>
-              <Field label="Role (Telugu)">
-                <Input required value={form.role_te} onChange={(e) => setForm({ ...form, role_te: e.target.value })} />
-              </Field>
+              <BilingualField label="Role" baseName="role" form={form} setForm={setForm} required />
               <Field label="Phone">
                 <Input required value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} />
               </Field>
@@ -120,7 +116,7 @@ export default function ManageContacts() {
           <div key={c.id} className="card card-pad" style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
             <div style={{ flex: 1, minWidth: 0 }}>
               <div className="title">{c.name}</div>
-              <div className="meta">{c.role_en} · {c.phone}</div>
+              <div className="meta">{c.role_en || c.role_te} · {c.phone}</div>
             </div>
             <div style={{ display: 'flex', gap: 8 }}>
               <button className="icon-btn" onClick={() => openEdit(c)} aria-label="Edit"><Pencil size={16} /></button>

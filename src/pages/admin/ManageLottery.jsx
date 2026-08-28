@@ -4,6 +4,7 @@ import { AdminHeader } from '../../components/admin/AdminLayout';
 import FestivalBanner from '../../components/admin/FestivalBanner';
 import ConfirmDialog from '../../components/admin/ConfirmDialog';
 import { Field, Input, Select, FormGrid } from '../../components/admin/FormField';
+import BilingualField from '../../components/admin/BilingualField';
 import { useToast } from '../../components/admin/Toast';
 import { useActiveFestival } from '../../hooks/useActiveFestival';
 import {
@@ -11,8 +12,8 @@ import {
 } from '../../services/adminApi';
 import { PageSkeleton, PageError } from '../../components/LoadingStates';
 
-const blankDraw = { draw_date: '', draw_time: '', location_en: '', location_te: '' };
-const blankPrize = { name_en: '', name_te: '', value: '', image_url: '' };
+const blankDraw = { draw_date: '', draw_time: '', location_en: '', location_te: '', location_source_lang: null };
+const blankPrize = { name_en: '', name_te: '', name_source_lang: null, value: '', image_url: '' };
 const blankWinner = { winner_name: '', prize_id: '' };
 
 export default function ManageLottery() {
@@ -44,7 +45,7 @@ export default function ManageLottery() {
       setLottery(row);
       setDraw(row ? {
         draw_date: row.draw_date || '', draw_time: row.draw_time || '',
-        location_en: row.location_en || '', location_te: row.location_te || '',
+        location_en: row.location_en || '', location_te: row.location_te || '', location_source_lang: row.location_source_lang,
       } : blankDraw);
       if (row) {
         const [p, w] = await Promise.all([lotteryPrizesApi.list(row.id), lotteryWinnersApi.list(row.id)]);
@@ -170,12 +171,7 @@ export default function ManageLottery() {
                     <Input placeholder="8:00 PM" value={draw.draw_time} onChange={(e) => setDraw({ ...draw, draw_time: e.target.value })} />
                   </Field>
                 </div>
-                <Field label="Location (English)">
-                  <Input value={draw.location_en} onChange={(e) => setDraw({ ...draw, location_en: e.target.value })} />
-                </Field>
-                <Field label="Location (Telugu)">
-                  <Input value={draw.location_te} onChange={(e) => setDraw({ ...draw, location_te: e.target.value })} />
-                </Field>
+                <BilingualField label="Location" baseName="location" form={draw} setForm={setDraw} />
                 <button className="btn btn-primary btn-block" disabled={savingDraw}>
                   {savingDraw ? 'Saving…' : 'Save Draw Details'}
                 </button>
@@ -189,7 +185,7 @@ export default function ManageLottery() {
                   <div key={p.id} className="card card-pad" style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
                     {p.image_url && <img src={publicUrl(p.image_url)} alt="" className="thumb" loading="lazy" decoding="async" />}
                     <div style={{ flex: 1 }}>
-                      <div className="title">{p.name_en}</div>
+                      <div className="title">{p.name_en || p.name_te}</div>
                       <div className="meta">{p.value}</div>
                     </div>
                     <button className="icon-btn" onClick={() => setPrizeToDelete(p)} aria-label="Delete"><Trash2 size={16} color="var(--color-danger)" /></button>
@@ -199,12 +195,7 @@ export default function ManageLottery() {
               <form className="card card-pad" onSubmit={handleAddPrize} style={{ marginTop: 10 }}>
                 <FormGrid>
                   <strong>Add Prize</strong>
-                  <Field label="Name (English)">
-                    <Input required value={newPrize.name_en} onChange={(e) => setNewPrize({ ...newPrize, name_en: e.target.value })} />
-                  </Field>
-                  <Field label="Name (Telugu)">
-                    <Input required value={newPrize.name_te} onChange={(e) => setNewPrize({ ...newPrize, name_te: e.target.value })} />
-                  </Field>
+                  <BilingualField label="Name" baseName="name" form={newPrize} setForm={setNewPrize} required />
                   <Field label="Value">
                     <Input placeholder="₹10,000" value={newPrize.value} onChange={(e) => setNewPrize({ ...newPrize, value: e.target.value })} />
                   </Field>
@@ -226,7 +217,7 @@ export default function ManageLottery() {
                   <div key={w.id} className="card card-pad" style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
                     <div style={{ flex: 1 }}>
                       <div className="title">{w.winner_name}</div>
-                      <div className="meta">{w.lottery_prizes?.name_en || '—'}</div>
+                      <div className="meta">{w.lottery_prizes?.name_en || w.lottery_prizes?.name_te || '—'}</div>
                     </div>
                     <button className="icon-btn" onClick={() => setWinnerToDelete(w)} aria-label="Delete"><Trash2 size={16} color="var(--color-danger)" /></button>
                   </div>
@@ -241,7 +232,7 @@ export default function ManageLottery() {
                   <Field label="Prize">
                     <Select value={newWinner.prize_id} onChange={(e) => setNewWinner({ ...newWinner, prize_id: e.target.value })}>
                       <option value="">— None —</option>
-                      {prizes.map((p) => <option key={p.id} value={p.id}>{p.name_en}</option>)}
+                      {prizes.map((p) => <option key={p.id} value={p.id}>{p.name_en || p.name_te}</option>)}
                     </Select>
                   </Field>
                   <button className="btn btn-primary btn-block" disabled={addingWinner || !lottery}>
@@ -255,7 +246,7 @@ export default function ManageLottery() {
       </div>
       <ConfirmDialog
         open={!!prizeToDelete}
-        message={`Delete prize "${prizeToDelete?.name_en}"?`}
+        message={`Delete prize "${prizeToDelete?.name_en || prizeToDelete?.name_te}"?`}
         onConfirm={handleDeletePrize}
         onCancel={() => setPrizeToDelete(null)}
       />

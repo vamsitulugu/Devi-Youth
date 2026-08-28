@@ -18,6 +18,7 @@ import {
 } from '../../services/adminApi';
 import { PageSkeleton, PageError } from '../../components/LoadingStates';
 import PhotoViewer from '../../components/PhotoViewer';
+import { detectLanguage } from '../../lib/language';
 
 let _fileKey = 0;
 
@@ -153,8 +154,16 @@ export default function ManageGallery() {
     setSaving(true);
     try {
       const files = staged.map((s) => s.file);
+      const typed = form.name_en.trim();
+      const detected = detectLanguage(typed) || 'en';
       const { uploaded, failed } = await createAlbumWithPhotos(
-        { name_en: form.name_en.trim(), festival_id: festivalId, sort_order: albums.length },
+        {
+          name_en: detected === 'en' ? typed : '',
+          name_te: detected === 'te' ? typed : '',
+          name_source_lang: detected,
+          festival_id: festivalId,
+          sort_order: albums.length,
+        },
         festival.year,
         files,
         ({ index }) => {
@@ -230,6 +239,11 @@ export default function ManageGallery() {
                   onChange={(e) => setForm({ ...form, name_en: e.target.value })}
                   disabled={saving}
                 />
+                {form.name_en && (
+                  <span style={{ fontSize: 'var(--fs-xs)', color: 'var(--color-ink-soft)' }}>
+                    Detected language: {detectLanguage(form.name_en) === 'te' ? 'Telugu' : 'English'} — the other version is generated automatically.
+                  </span>
+                )}
               </Field>
               <Field label="Photos">
                 <PhotoDropzone staged={staged} setStaged={setStaged} disabled={saving} />
@@ -260,7 +274,7 @@ export default function ManageGallery() {
                     {a.photo_count > 0 && <span className="album-cover-badge">{a.photo_count} photo{a.photo_count === 1 ? '' : 's'}</span>}
                   </div>
                   <div className="album-info">
-                    <span className="album-name">{a.name_en}</span>
+                    <span className="album-name">{a.name_en || a.name_te}</span>
                     <ChevronRight size={18} className="album-chevron" />
                   </div>
                 </button>
@@ -279,7 +293,7 @@ export default function ManageGallery() {
       </div>
       <ConfirmDialog
         open={!!albumToDelete}
-        message={`Delete album "${albumToDelete?.name_en}" and all its photos?`}
+        message={`Delete album "${albumToDelete?.name_en || albumToDelete?.name_te}" and all its photos?`}
         onConfirm={handleDeleteAlbum}
         onCancel={() => setAlbumToDelete(null)}
       />
@@ -365,7 +379,7 @@ function AlbumDetail({ album, festivalYear, onBack, toast }) {
 
   return (
     <>
-      <AdminHeader title={album.name_en} showBack />
+      <AdminHeader title={album.name_en || album.name_te} showBack />
       <div className="page">
         <button
           onClick={onBack}

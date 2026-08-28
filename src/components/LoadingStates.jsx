@@ -1,4 +1,5 @@
 import { AlertTriangle } from 'lucide-react';
+import { useLanguage } from '../i18n/LanguageContext';
 
 export function PageSkeleton({ rows = 3 }) {
   return (
@@ -10,11 +11,12 @@ export function PageSkeleton({ rows = 3 }) {
   );
 }
 
-export function PageError({ message = "Couldn't load this page. Please try again." }) {
+export function PageError({ message }) {
+  const { t } = useLanguage();
   return (
     <div className="card empty-state">
       <AlertTriangle className="icon" size={28} />
-      <div>{message}</div>
+      <div>{message || t('page_error')}</div>
     </div>
   );
 }

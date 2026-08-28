@@ -3,13 +3,18 @@ import { Plus, Pencil, Trash2, X } from 'lucide-react';
 import { AdminHeader } from '../../components/admin/AdminLayout';
 import FestivalBanner from '../../components/admin/FestivalBanner';
 import ConfirmDialog from '../../components/admin/ConfirmDialog';
-import { Field, Input, Textarea, FormGrid } from '../../components/admin/FormField';
+import { Field, Input, FormGrid } from '../../components/admin/FormField';
+import BilingualField from '../../components/admin/BilingualField';
 import { useToast } from '../../components/admin/Toast';
 import { useActiveFestival } from '../../hooks/useActiveFestival';
 import { announcementsApi, uploadImage, publicUrl } from '../../services/adminApi';
 import { PageSkeleton, PageError } from '../../components/LoadingStates';
 
-const blank = { title_en: '', title_te: '', body_en: '', body_te: '', important: false, image_url: '' };
+const blank = {
+  title_en: '', title_te: '', title_source_lang: null,
+  body_en: '', body_te: '', body_source_lang: null,
+  important: false, image_url: '',
+};
 
 export default function ManageAnnouncements() {
   const toast = useToast();
@@ -49,8 +54,8 @@ export default function ManageAnnouncements() {
   }
   function openEdit(item) {
     setForm({
-      title_en: item.title_en, title_te: item.title_te,
-      body_en: item.body_en, body_te: item.body_te,
+      title_en: item.title_en, title_te: item.title_te, title_source_lang: item.title_source_lang,
+      body_en: item.body_en, body_te: item.body_te, body_source_lang: item.body_source_lang,
       important: item.important, image_url: item.image_url || '',
     });
     setFile(null);
@@ -113,18 +118,8 @@ export default function ManageAnnouncements() {
                 <strong>{editing.id ? 'Edit' : 'New'} Announcement</strong>
                 <button type="button" onClick={() => setEditing(null)} aria-label="Close"><X size={18} /></button>
               </div>
-              <Field label="Title (English)">
-                <Input required value={form.title_en} onChange={(e) => setForm({ ...form, title_en: e.target.value })} />
-              </Field>
-              <Field label="Title (Telugu)">
-                <Input required value={form.title_te} onChange={(e) => setForm({ ...form, title_te: e.target.value })} />
-              </Field>
-              <Field label="Message (English)">
-                <Textarea required value={form.body_en} onChange={(e) => setForm({ ...form, body_en: e.target.value })} />
-              </Field>
-              <Field label="Message (Telugu)">
-                <Textarea required value={form.body_te} onChange={(e) => setForm({ ...form, body_te: e.target.value })} />
-              </Field>
+              <BilingualField label="Title" baseName="title" form={form} setForm={setForm} required />
+              <BilingualField label="Message" baseName="body" form={form} setForm={setForm} required multiline />
               <Field label="Photo (optional)">
                 <Input type="file" accept="image/*" onChange={(e) => setFile(e.target.files?.[0] || null)} />
               </Field>
@@ -155,8 +150,8 @@ export default function ManageAnnouncements() {
             )}
             <div style={{ flex: 1, minWidth: 0 }}>
               {a.important && <span className="chip chip-danger" style={{ marginBottom: 4 }}>Important</span>}
-              <div className="title">{a.title_en}</div>
-              <div className="desc" style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{a.body_en}</div>
+              <div className="title">{a.title_en || a.title_te}</div>
+              <div className="desc" style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{a.body_en || a.body_te}</div>
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
               <button className="icon-btn" onClick={() => openEdit(a)} aria-label="Edit"><Pencil size={16} /></button>
@@ -167,7 +162,7 @@ export default function ManageAnnouncements() {
       </div>
       <ConfirmDialog
         open={!!toDelete}
-        message={`Delete "${toDelete?.title_en}"? This can't be undone.`}
+        message={`Delete "${toDelete?.title_en || toDelete?.title_te}"? This can't be undone.`}
         onConfirm={handleDelete}
         onCancel={() => setToDelete(null)}
       />

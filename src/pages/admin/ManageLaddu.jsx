@@ -2,14 +2,15 @@ import { useEffect, useState } from 'react';
 import { AdminHeader } from '../../components/admin/AdminLayout';
 import FestivalBanner from '../../components/admin/FestivalBanner';
 import { Field, Input, FormGrid } from '../../components/admin/FormField';
+import BilingualField from '../../components/admin/BilingualField';
 import { useToast } from '../../components/admin/Toast';
 import { useActiveFestival } from '../../hooks/useActiveFestival';
 import { getLadduForFestival, upsertLaddu, uploadImage, publicUrl } from '../../services/adminApi';
 import { PageSkeleton, PageError } from '../../components/LoadingStates';
 
 const blank = {
-  title_en: 'Laddu Velam', title_te: '', starting_price: '', final_price: '',
-  winner_name: '', auction_date: '', auction_time: '', location_en: '', location_te: '', image_url: '',
+  title_en: 'Laddu Velam', title_te: '', title_source_lang: 'en', starting_price: '', final_price: '',
+  winner_name: '', auction_date: '', auction_time: '', location_en: '', location_te: '', location_source_lang: null, image_url: '',
 };
 
 export default function ManageLaddu() {
@@ -28,11 +29,11 @@ export default function ManageLaddu() {
     try {
       const row = await getLadduForFestival(festivalId);
       setForm(row ? {
-        title_en: row.title_en, title_te: row.title_te,
+        title_en: row.title_en, title_te: row.title_te, title_source_lang: row.title_source_lang,
         starting_price: row.starting_price || '', final_price: row.final_price || '',
         winner_name: row.winner_name || '', auction_date: row.auction_date || '',
         auction_time: row.auction_time || '', location_en: row.location_en || '',
-        location_te: row.location_te || '', image_url: row.image_url || '',
+        location_te: row.location_te || '', location_source_lang: row.location_source_lang, image_url: row.image_url || '',
       } : blank);
       setError(null);
     } catch (e) {
@@ -81,12 +82,7 @@ export default function ManageLaddu() {
               {form.image_url && (
                 <img src={publicUrl(form.image_url)} alt="" loading="lazy" decoding="async" style={{ width: '100%', height: 160, objectFit: 'cover', borderRadius: 'var(--radius-md)' }} />
               )}
-              <Field label="Title (English)">
-                <Input required value={form.title_en} onChange={(e) => setForm({ ...form, title_en: e.target.value })} />
-              </Field>
-              <Field label="Title (Telugu)">
-                <Input required value={form.title_te} onChange={(e) => setForm({ ...form, title_te: e.target.value })} />
-              </Field>
+              <BilingualField label="Title" baseName="title" form={form} setForm={setForm} required />
               <Field label="Photo">
                 <Input type="file" accept="image/*" onChange={(e) => setFile(e.target.files?.[0] || null)} />
               </Field>
@@ -107,12 +103,7 @@ export default function ManageLaddu() {
                   <Input placeholder="7:00 PM" value={form.auction_time} onChange={(e) => setForm({ ...form, auction_time: e.target.value })} />
                 </Field>
               </div>
-              <Field label="Location (English)">
-                <Input value={form.location_en} onChange={(e) => setForm({ ...form, location_en: e.target.value })} />
-              </Field>
-              <Field label="Location (Telugu)">
-                <Input value={form.location_te} onChange={(e) => setForm({ ...form, location_te: e.target.value })} />
-              </Field>
+              <BilingualField label="Location" baseName="location" form={form} setForm={setForm} />
               <button className="btn btn-primary btn-block" disabled={saving}>
                 {saving ? 'Saving…' : 'Save'}
               </button>
