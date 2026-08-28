@@ -660,6 +660,8 @@
   color: var(--color-ink-soft);
 }
 .empty-state .icon { color: var(--color-border); margin-bottom: var(--space-2); }
+.empty-state .title { font-weight: 700; color: var(--color-ink); }
+.empty-state .subtitle { font-size: var(--fs-xs); color: var(--color-ink-soft); margin-top: 4px; }
 
 /* ---------- Splash ---------- */
 .splash {

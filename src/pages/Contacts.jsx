@@ -3,6 +3,7 @@ import { useLanguage } from '../i18n/LanguageContext';
 import { useAsyncData } from '../hooks/useAsyncData';
 import { getContacts } from '../services/api';
 import Header from '../components/Header';
+import EmptyState from '../components/EmptyState';
 import { PageSkeleton, PageError } from '../components/LoadingStates';
 
 export default function Contacts() {
@@ -15,9 +16,12 @@ export default function Contacts() {
       <div className="page">
         {loading && <PageSkeleton rows={4} />}
         {!loading && error && <PageError />}
-        {!loading && !error && (
+        {!loading && !error && (!contacts || contacts.length === 0) && (
+          <EmptyState icon={User} title={t('contacts_empty')} subtitle={t('contacts_empty_sub')} />
+        )}
+        {!loading && !error && contacts?.length > 0 && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-            {contacts?.map((c) => (
+            {contacts.map((c) => (
               <div className="card contact-row" key={c.id}>
                 <div className="icon-badge"><User size={20} /></div>
                 <div className="info">
