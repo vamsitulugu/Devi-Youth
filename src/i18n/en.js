@@ -18,6 +18,7 @@ export const en = {
   home_latest_photos: 'Latest Photos',
   home_committee: 'Our Committee',
   home_donations_public: 'Total Festival Donations',
+  home_no_festival: "This year's festival details will be posted here soon.",
 
   announcements_title: 'Announcements',
   important: 'Important',
@@ -27,6 +28,7 @@ export const en = {
 
   laddu_title: 'Laddu Velam',
   laddu_current: "This Year's Laddu",
+  laddu_empty: "This year's laddu auction details haven't been posted yet.",
   starting_price: 'Starting Price',
   final_price: 'Final Price',
   winner: 'Winner',
@@ -36,6 +38,7 @@ export const en = {
   result_pending: 'Result to be announced',
 
   lottery_title: 'Lottery',
+  lottery_empty: "This year's lottery details haven't been posted yet.",
   lottery_prizes: 'Prizes',
   draw_details: 'Draw Details',
   prize_value: 'Value',

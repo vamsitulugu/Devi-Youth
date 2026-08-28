@@ -43,16 +43,23 @@ function HomeContent({ data, t, lang }) {
   const { festival, announcements, events, laddu, lottery, committee } = data;
   const latestAnnouncement = announcements[0];
   const upcoming = events.slice(0, 3);
+  const hasFestival = Boolean(festival.id) || Boolean(festival.year);
 
   return (
     <>
       <section className="hero">
-        <div className="eyebrow">{festival.village[lang]} · {festival.year}</div>
-        <h1>{festival.name[lang]}</h1>
-        <div className="dates">
-          <CalendarDays size={14} style={{ verticalAlign: -2, marginRight: 4 }} />
-          {festival.dates[lang]}
-        </div>
+        {hasFestival ? (
+          <>
+            <div className="eyebrow">{festival.village[lang]} · {festival.year}</div>
+            <h1>{festival.name[lang]}</h1>
+            <div className="dates">
+              <CalendarDays size={14} style={{ verticalAlign: -2, marginRight: 4 }} />
+              {festival.dates[lang]}
+            </div>
+          </>
+        ) : (
+          <h1 style={{ fontSize: 'var(--fs-lg)' }}>{t('home_no_festival')}</h1>
+        )}
         <div className="modak-icon">
           <svg width="48" height="48" viewBox="0 0 48 48" fill="none">
             <path d="M24 10c9 0 16 8 16 16 0 8-7 12-16 12S8 34 8 26c0-8 7-16 16-16Z" fill="#F6B93B" opacity="0.9" />
@@ -103,31 +110,35 @@ function HomeContent({ data, t, lang }) {
         </section>
       )}
 
-      <section>
-        <div className="section-title"><h2>{t('home_laddu_highlight')}</h2></div>
-        <Link to="/laddu" className="card feature-card" style={{ display: 'block' }}>
-          <PhotoTile src={laddu.current.image} alt="" wide className="feature-img" />
-          <div className="content">
-            <div className="row"><span className="label">{t('starting_price')}</span><span className="value">{laddu.current.startingPrice}</span></div>
-            <div className="row"><span className="label">{t('auction_date')}</span><span className="value">{laddu.current.date}, {laddu.current.time}</span></div>
-          </div>
-        </Link>
-      </section>
-
-      <section>
-        <div className="section-title"><h2>{t('home_lottery_highlight')}</h2></div>
-        <Link to="/lottery" className="card card-pad" style={{ display: 'block' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
-            <span className="chip">{lottery.drawDate}</span>
-            <span className="chip chip-leaf">{lottery.prizes.length} {t('lottery_prizes')}</span>
-          </div>
-          {lottery.prizes[0] && (
-            <div style={{ fontSize: 'var(--fs-sm)', color: 'var(--color-ink-soft)' }}>
-              {lottery.prizes[0].name[lang]} — {lottery.prizes[0].value}
+      {laddu?.current && (
+        <section>
+          <div className="section-title"><h2>{t('home_laddu_highlight')}</h2></div>
+          <Link to="/laddu" className="card feature-card" style={{ display: 'block' }}>
+            <PhotoTile src={laddu.current.image} alt="" wide className="feature-img" />
+            <div className="content">
+              <div className="row"><span className="label">{t('starting_price')}</span><span className="value">{laddu.current.startingPrice}</span></div>
+              <div className="row"><span className="label">{t('auction_date')}</span><span className="value">{laddu.current.date}, {laddu.current.time}</span></div>
             </div>
-          )}
-        </Link>
-      </section>
+          </Link>
+        </section>
+      )}
+
+      {lottery && (
+        <section>
+          <div className="section-title"><h2>{t('home_lottery_highlight')}</h2></div>
+          <Link to="/lottery" className="card card-pad" style={{ display: 'block' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
+              <span className="chip">{lottery.drawDate}</span>
+              <span className="chip chip-leaf">{lottery.prizes.length} {t('lottery_prizes')}</span>
+            </div>
+            {lottery.prizes[0] && (
+              <div style={{ fontSize: 'var(--fs-sm)', color: 'var(--color-ink-soft)' }}>
+                {lottery.prizes[0].name[lang]} — {lottery.prizes[0].value}
+              </div>
+            )}
+          </Link>
+        </section>
+      )}
 
       <section>
         <div className="section-title"><h2>{t('home_latest_photos')}</h2></div>
@@ -156,12 +167,14 @@ function HomeContent({ data, t, lang }) {
         </section>
       )}
 
-      <section className="card card-pad" style={{ textAlign: 'center', background: 'var(--color-surface-alt)' }}>
-        <div style={{ fontSize: 'var(--fs-sm)', color: 'var(--color-ink-soft)' }}>{t('home_donations_public')}</div>
-        <div style={{ fontSize: 'var(--fs-xl)', fontWeight: 700, color: 'var(--color-vermillion-dark)', fontFamily: 'var(--font-display)' }}>
-          {festival.publicDonationTotal}
-        </div>
-      </section>
+      {festival.publicDonationTotal && (
+        <section className="card card-pad" style={{ textAlign: 'center', background: 'var(--color-surface-alt)' }}>
+          <div style={{ fontSize: 'var(--fs-sm)', color: 'var(--color-ink-soft)' }}>{t('home_donations_public')}</div>
+          <div style={{ fontSize: 'var(--fs-xl)', fontWeight: 700, color: 'var(--color-vermillion-dark)', fontFamily: 'var(--font-display)' }}>
+            {festival.publicDonationTotal}
+          </div>
+        </section>
+      )}
     </>
   );
 }

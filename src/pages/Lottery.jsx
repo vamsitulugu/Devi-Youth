@@ -16,6 +16,9 @@ export default function Lottery() {
       <div className="page">
         {loading && <PageSkeleton rows={3} />}
         {!loading && error && <PageError />}
+        {!loading && !error && !lottery && (
+          <div className="card empty-state">{t('lottery_empty')}</div>
+        )}
         {!loading && !error && lottery && (
           <>
             <div className="card card-pad">

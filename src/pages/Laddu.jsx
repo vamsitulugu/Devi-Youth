@@ -16,6 +16,9 @@ export default function Laddu() {
       <div className="page">
         {loading && <PageSkeleton rows={2} />}
         {!loading && error && <PageError />}
+        {!loading && !error && !laddu && (
+          <div className="card empty-state">{t('laddu_empty')}</div>
+        )}
         {!loading && !error && laddu && (
           <>
             <div className="card feature-card">

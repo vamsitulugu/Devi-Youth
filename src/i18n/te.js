@@ -18,6 +18,7 @@ export const te = {
   home_latest_photos: 'తాజా ఫోటోలు',
   home_committee: 'మా కమిటీ',
   home_donations_public: 'మొత్తం ఉత్సవ విరాళాలు',
+  home_no_festival: 'ఈ సంవత్సరం ఉత్సవ వివరాలు త్వరలో ఇక్కడ ప్రచురించబడతాయి.',
 
   announcements_title: 'ప్రకటనలు',
   important: 'ముఖ్యం',
@@ -27,6 +28,7 @@ export const te = {
 
   laddu_title: 'లడ్డు వేలం',
   laddu_current: 'ఈ సంవత్సరం లడ్డు',
+  laddu_empty: 'ఈ సంవత్సరం లడ్డు వేలం వివరాలు ఇంకా ప్రచురించలేదు.',
   starting_price: 'ప్రారంభ ధర',
   final_price: 'తుది ధర',
   winner: 'విజేత',
@@ -36,6 +38,7 @@ export const te = {
   result_pending: 'ఫలితం త్వరలో ప్రకటించబడుతుంది',
 
   lottery_title: 'లాటరీ',
+  lottery_empty: 'ఈ సంవత్సరం లాటరీ వివరాలు ఇంకా ప్రచురించలేదు.',
   lottery_prizes: 'బహుమతులు',
   draw_details: 'డ్రా వివరాలు',
   prize_value: 'విలువ',

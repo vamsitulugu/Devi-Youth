@@ -4,8 +4,16 @@
 // (bilingual fields as { en, te } objects) so page components never need
 // to know whether they're looking at Supabase rows or sample data.
 //
-// When Supabase isn't configured (no .env), everything falls back to the
-// sample data used in Phase 1 — handy for local UI work without a backend.
+// IMPORTANT: sample data is ONLY used when Supabase isn't configured at
+// all (local dev with no .env — see src/lib/supabaseClient.js). Once
+// Supabase is configured, this file never silently substitutes fake
+// content for real gaps or errors — visitors would otherwise see
+// realistic-looking fabricated announcements/events with no way to tell
+// they aren't real. Instead:
+//   - no active festival configured  -> real empty/placeholder results
+//   - a genuine Supabase query error -> thrown, so the page's existing
+//     error state (see PageError in components/LoadingStates) shows up
+//     instead of quietly rendering sample content.
 
 import { supabase, isSupabaseConfigured } from '../lib/supabaseClient';
 import * as sample from '../data/sampleData';
@@ -17,6 +25,21 @@ export function publicImageUrl(path) {
   const { data } = supabase.storage.from('gallery').getPublicUrl(path);
   return data?.publicUrl ?? null;
 }
+
+function throwIfError(error) {
+  if (error) throw new Error(error.message || 'Something went wrong while loading data.');
+}
+
+// A festival with id === null means "no active festival configured yet"
+// (as opposed to Supabase not being configured, or a genuine fetch error).
+const EMPTY_FESTIVAL = {
+  id: null,
+  year: null,
+  name: { en: '', te: '' },
+  village: { en: '', te: '' },
+  dates: { en: '', te: '' },
+  publicDonationTotal: null,
+};
 
 // ---------- active festival (cached per session) ----------
 let _festivalCache = null;
@@ -42,16 +65,12 @@ async function getActiveFestival() {
     .limit(1)
     .maybeSingle();
 
-  if (error || !data) {
-    // Fail soft to sample data rather than breaking the page.
-    return {
-      id: null,
-      year: sample.festival.year,
-      name: sample.festival.name,
-      village: sample.festival.village,
-      dates: sample.festival.dates,
-      publicDonationTotal: sample.festival.publicDonationTotal,
-    };
+  throwIfError(error);
+  if (!data) {
+    // No active festival has been set up yet in Admin > Settings.
+    // This is a real, expected state — not an error — so we return an
+    // honest empty placeholder rather than fabricated sample content.
+    return EMPTY_FESTIVAL;
   }
 
   const start = new Date(data.start_date);
@@ -77,13 +96,14 @@ export async function getFestival() {
 export async function getAnnouncements() {
   if (!isSupabaseConfigured) return sample.announcements;
   const festival = await getActiveFestival();
+  if (!festival.id) return [];
   const { data, error } = await supabase
     .from('announcements')
     .select('*')
     .eq('festival_id', festival.id)
     .order('published_at', { ascending: false });
-  if (error || !data) return sample.announcements;
-  return data.map((a) => ({
+  throwIfError(error);
+  return (data || []).map((a) => ({
     id: a.id,
     important: a.important,
     date: a.published_at?.slice(0, 10),
@@ -97,14 +117,15 @@ export async function getAnnouncements() {
 export async function getEvents() {
   if (!isSupabaseConfigured) return sample.events;
   const festival = await getActiveFestival();
+  if (!festival.id) return [];
   const { data, error } = await supabase
     .from('events')
     .select('*')
     .eq('festival_id', festival.id)
     .order('event_date', { ascending: true })
     .order('sort_order', { ascending: true });
-  if (error || !data) return sample.events;
-  return data.map((e) => ({
+  throwIfError(error);
+  return (data || []).map((e) => ({
     id: e.id,
     date: e.event_date,
     time: e.event_time,
@@ -118,13 +139,14 @@ export async function getEvents() {
 export async function getCommittee() {
   if (!isSupabaseConfigured) return sample.committee;
   const festival = await getActiveFestival();
+  if (!festival.id) return [];
   const { data, error } = await supabase
     .from('committee_members')
     .select('*')
     .eq('festival_id', festival.id)
     .order('sort_order', { ascending: true });
-  if (error || !data) return sample.committee;
-  return data.map((m) => ({
+  throwIfError(error);
+  return (data || []).map((m) => ({
     id: m.id,
     name: m.name,
     position: { en: m.position_en, te: m.position_te },
@@ -134,11 +156,15 @@ export async function getCommittee() {
 }
 
 // ---------- laddu velam ----------
+// Returns null when there's nothing to show yet (no active festival, or
+// the committee hasn't entered this year's auction details) — callers
+// must handle a null result (see Home.jsx / Laddu.jsx).
 export async function getLaddu() {
   if (!isSupabaseConfigured) return sample.laddu;
   const festival = await getActiveFestival();
+  if (!festival.id) return null;
 
-  const [{ data: current }, { data: history }] = await Promise.all([
+  const [{ data: current, error: currentError }, { data: history, error: historyError }] = await Promise.all([
     supabase.from('laddu_auctions').select('*').eq('festival_id', festival.id).maybeSingle(),
     supabase
       .from('laddu_auctions')
@@ -146,41 +172,48 @@ export async function getLaddu() {
       .neq('festival_id', festival.id)
       .order('festivals(year)', { ascending: false }),
   ]);
+  throwIfError(currentError);
+  throwIfError(historyError);
+
+  if (!current) return null;
 
   return {
-    current: current
-      ? {
-          year: festival.year,
-          title: { en: current.title_en, te: current.title_te },
-          image: publicImageUrl(current.image_url),
-          startingPrice: current.starting_price,
-          finalPrice: current.final_price,
-          winner: current.winner_name,
-          date: current.auction_date,
-          time: current.auction_time,
-          location: { en: current.location_en, te: current.location_te },
-        }
-      : sample.laddu.current,
-    history: history?.length
-      ? history.map((h) => ({ year: h.festivals.year, finalPrice: h.final_price, winner: h.winner_name }))
-      : sample.laddu.history,
+    current: {
+      year: festival.year,
+      title: { en: current.title_en, te: current.title_te },
+      image: publicImageUrl(current.image_url),
+      startingPrice: current.starting_price,
+      finalPrice: current.final_price,
+      winner: current.winner_name,
+      date: current.auction_date,
+      time: current.auction_time,
+      location: { en: current.location_en, te: current.location_te },
+    },
+    history: (history || []).map((h) => ({ year: h.festivals.year, finalPrice: h.final_price, winner: h.winner_name })),
   };
 }
 
 // ---------- lottery ----------
+// Returns null when there's nothing to show yet — callers must handle a
+// null result (see Home.jsx / Lottery.jsx).
 export async function getLottery() {
   if (!isSupabaseConfigured) return sample.lottery;
   const festival = await getActiveFestival();
+  if (!festival.id) return null;
 
-  const { data: lotteryRow } = await supabase
+  const { data: lotteryRow, error: lotteryError } = await supabase
     .from('lottery')
     .select('*')
     .eq('festival_id', festival.id)
     .maybeSingle();
+  throwIfError(lotteryError);
+  if (!lotteryRow) return null;
 
-  if (!lotteryRow) return sample.lottery;
-
-  const [{ data: prizes }, { data: winners }, { data: historyRows }] = await Promise.all([
+  const [
+    { data: prizes, error: prizesError },
+    { data: winners, error: winnersError },
+    { data: historyRows, error: historyError },
+  ] = await Promise.all([
     supabase.from('lottery_prizes').select('*').eq('lottery_id', lotteryRow.id).order('sort_order'),
     supabase.from('lottery_winners').select('*, lottery_prizes(name_en)').eq('lottery_id', lotteryRow.id),
     supabase
@@ -189,6 +222,9 @@ export async function getLottery() {
       .neq('festival_id', festival.id)
       .order('festivals(year)', { ascending: false }),
   ]);
+  throwIfError(prizesError);
+  throwIfError(winnersError);
+  throwIfError(historyError);
 
   return {
     drawDate: lotteryRow.draw_date,
@@ -201,13 +237,11 @@ export async function getLottery() {
       image: publicImageUrl(p.image_url),
     })),
     winners: (winners || []).map((w) => ({ name: w.winner_name, prize: w.lottery_prizes?.name_en })),
-    history: historyRows?.length
-      ? historyRows.map((h) => ({
-          year: h.festivals.year,
-          topPrize: { en: h.lottery_prizes?.[0]?.name_en, te: h.lottery_prizes?.[0]?.name_te },
-          winner: h.lottery_winners?.[0]?.winner_name,
-        }))
-      : sample.lottery.history,
+    history: (historyRows || []).map((h) => ({
+      year: h.festivals.year,
+      topPrize: { en: h.lottery_prizes?.[0]?.name_en, te: h.lottery_prizes?.[0]?.name_te },
+      winner: h.lottery_winners?.[0]?.winner_name,
+    })),
   };
 }
 
@@ -215,21 +249,22 @@ export async function getLottery() {
 export async function getGalleryYears() {
   if (!isSupabaseConfigured) return sample.galleryYears;
   const { data, error } = await supabase.from('festivals').select('year').order('year', { ascending: false });
-  if (error || !data?.length) return sample.galleryYears;
-  return data.map((f) => f.year);
+  throwIfError(error);
+  return (data || []).map((f) => f.year);
 }
 
 export async function getGalleryAlbums(year) {
   if (!isSupabaseConfigured) return sample.galleryPhotos[year] || [];
-  const { data: festivalRow } = await supabase.from('festivals').select('id').eq('year', year).maybeSingle();
+  const { data: festivalRow, error: festivalError } = await supabase.from('festivals').select('id').eq('year', year).maybeSingle();
+  throwIfError(festivalError);
   if (!festivalRow) return [];
   const { data: albums, error } = await supabase
     .from('photo_albums')
     .select('*')
     .eq('festival_id', festivalRow.id)
     .order('sort_order');
-  if (error || !albums) return sample.galleryPhotos[year] || [];
-  return albums.map((a) => ({
+  throwIfError(error);
+  return (albums || []).map((a) => ({
     id: a.id,
     album: { en: a.name_en, te: a.name_te },
     cover: publicImageUrl(a.cover_photo_url),
@@ -243,8 +278,8 @@ export async function getHistory() {
     .from('festivals')
     .select('year, public_donation_total')
     .order('year', { ascending: false });
-  if (error || !data?.length) return sample.history;
-  return data.map((f) => ({
+  throwIfError(error);
+  return (data || []).map((f) => ({
     year: f.year,
     highlight: { en: f.public_donation_total ? `Total donations: ${f.public_donation_total}` : '', te: '' },
   }));
@@ -254,8 +289,8 @@ export async function getHistory() {
 export async function getContacts() {
   if (!isSupabaseConfigured) return sample.contacts;
   const { data, error } = await supabase.from('contacts').select('*').order('sort_order');
-  if (error || !data) return sample.contacts;
-  return data.map((c) => ({
+  throwIfError(error);
+  return (data || []).map((c) => ({
     id: c.id,
     name: c.name,
     role: { en: c.role_en, te: c.role_te },
