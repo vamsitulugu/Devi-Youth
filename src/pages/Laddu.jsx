@@ -50,7 +50,7 @@ export default function Laddu() {
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
                   {laddu.history.map((h) => (
                     <div className="card list-card" key={h.year}>
-                      <PhotoTile />
+                      <PhotoTile className="thumb" />
                       <div className="body">
                         <div className="title">{h.year}</div>
                         <div className="meta">{t('final_price')}: {h.finalPrice}</div>

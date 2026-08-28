@@ -9,6 +9,7 @@ export default function PhotoViewer({ photos, index, onClose, onIndexChange }) {
   const [zoom, setZoom] = useState(1);
   const [pos, setPos] = useState({ x: 0, y: 0 });
   const dragRef = useRef(null);
+  const pinchRef = useRef(null); // { startDist, startZoom }
   const photo = photos[index];
 
   const resetZoom = useCallback(() => {
@@ -64,23 +65,57 @@ export default function PhotoViewer({ photos, index, onClose, onIndexChange }) {
   // Simple drag-to-pan when zoomed in (mouse + touch), and pinch-free
   // double-tap/click to toggle zoom for a quick mobile-friendly gesture.
   function onPointerDown(e) {
+    if (e.touches && e.touches.length === 2) {
+      // Two fingers landed — start of a pinch gesture, not a drag.
+      dragRef.current = null;
+      const [t1, t2] = e.touches;
+      const dist = Math.hypot(t2.clientX - t1.clientX, t2.clientY - t1.clientY);
+      pinchRef.current = { startDist: dist, startZoom: zoom };
+      return;
+    }
     if (zoom <= MIN_ZOOM) return;
     const point = e.touches ? e.touches[0] : e;
     dragRef.current = { startX: point.clientX, startY: point.clientY, origin: pos };
   }
   function onPointerMove(e) {
+    if (e.touches && e.touches.length === 2 && pinchRef.current) {
+      e.preventDefault();
+      const [t1, t2] = e.touches;
+      const dist = Math.hypot(t2.clientX - t1.clientX, t2.clientY - t1.clientY);
+      const { startDist, startZoom } = pinchRef.current;
+      if (startDist > 0) {
+        const nextZoom = Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, startZoom * (dist / startDist)));
+        setZoom(+nextZoom.toFixed(2));
+        if (nextZoom <= MIN_ZOOM) setPos({ x: 0, y: 0 });
+      }
+      return;
+    }
     if (!dragRef.current) return;
     const point = e.touches ? e.touches[0] : e;
     const dx = point.clientX - dragRef.current.startX;
     const dy = point.clientY - dragRef.current.startY;
     setPos({ x: dragRef.current.origin.x + dx, y: dragRef.current.origin.y + dy });
   }
-  function onPointerUp() {
+  function onPointerUp(e) {
+    if (e?.touches && e.touches.length > 0) return; // still have a finger down
     dragRef.current = null;
+    pinchRef.current = null;
   }
   function onDoubleClick() {
     if (zoom > MIN_ZOOM) resetZoom();
     else setZoom(2);
+  }
+
+  // Mouse-wheel / trackpad zoom for desktop, centered roughly on the
+  // cursor so zooming feels natural rather than always zooming to center.
+  function onWheel(e) {
+    e.preventDefault();
+    const delta = -e.deltaY;
+    setZoom((z) => {
+      const next = Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, +(z + delta * 0.0015 * z).toFixed(2)));
+      if (next === MIN_ZOOM) setPos({ x: 0, y: 0 });
+      return next;
+    });
   }
 
   if (!photo) return null;
@@ -112,6 +147,8 @@ export default function PhotoViewer({ photos, index, onClose, onIndexChange }) {
         onTouchMove={onPointerMove}
         onTouchEnd={onPointerUp}
         onDoubleClick={onDoubleClick}
+        onWheel={onWheel}
+        style={{ touchAction: 'none' }}
       >
         {index > 0 && (
           <button className="photo-viewer-nav prev" onClick={(e) => { e.stopPropagation(); goPrev(); }} aria-label="Previous photo">

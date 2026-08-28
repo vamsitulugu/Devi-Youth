@@ -3,6 +3,7 @@ import { HashRouter, Routes, Route, useLocation } from 'react-router-dom';
 import { LanguageProvider } from './i18n/LanguageContext';
 import { AuthProvider } from './auth/AuthContext';
 import { ToastProvider } from './components/admin/Toast';
+import { ImageViewerProvider } from './components/ImageViewerContext';
 import ProtectedRoute from './auth/ProtectedRoute';
 import Splash from './components/Splash';
 import BottomNav from './components/BottomNav';
@@ -229,13 +230,15 @@ export default function App() {
     <LanguageProvider>
       <AuthProvider>
         <ToastProvider>
-          {showSplash ? (
-            <Splash />
-          ) : (
-            <HashRouter>
-              <Root />
-            </HashRouter>
-          )}
+          <ImageViewerProvider>
+            {showSplash ? (
+              <Splash />
+            ) : (
+              <HashRouter>
+                <Root />
+              </HashRouter>
+            )}
+          </ImageViewerProvider>
         </ToastProvider>
       </AuthProvider>
     </LanguageProvider>

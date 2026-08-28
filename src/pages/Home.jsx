@@ -1,4 +1,4 @@
-import { useCallback } from 'react';
+import { useCallback, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { CalendarDays, MapPin, ChevronRight } from 'lucide-react';
 import { useLanguage } from '../i18n/LanguageContext';
@@ -6,6 +6,7 @@ import { useAsyncData } from '../hooks/useAsyncData';
 import { getFestival, getAnnouncements, getEvents, getLaddu, getLottery, getCommittee, getLatestPhotos } from '../services/api';
 import PhotoTile from '../components/PhotoTile';
 import Header from '../components/Header';
+import PhotoViewer from '../components/PhotoViewer';
 import { PageSkeleton, PageError } from '../components/LoadingStates';
 
 export default function Home() {
@@ -46,6 +47,12 @@ function HomeContent({ data, t, lang }) {
   const upcoming = events.slice(0, 3);
   const hasFestival = Boolean(festival.id) || Boolean(festival.year);
 
+  // Single shared lightbox for every clickable photo on this page —
+  // holds { photos, index } and renders <PhotoViewer /> when set.
+  const [viewer, setViewer] = useState(null);
+  const openViewer = (photos, index = 0) => setViewer({ photos, index });
+  const closeViewer = () => setViewer(null);
+
   return (
     <>
       <section className="hero">
@@ -76,7 +83,13 @@ function HomeContent({ data, t, lang }) {
             <Link to="/announcements" className="see-all">{t('see_all')}</Link>
           </div>
           <div className="card list-card">
-            <PhotoTile src={latestAnnouncement.image} alt="" />
+            <PhotoTile
+              src={latestAnnouncement.image}
+              alt=""
+              className="thumb"
+              onClick={latestAnnouncement.image ? () => openViewer([{ id: 'announcement', src: latestAnnouncement.image, caption: latestAnnouncement.title[lang] }]) : undefined}
+              style={latestAnnouncement.image ? { cursor: 'zoom-in' } : undefined}
+            />
             <div className="body">
               {latestAnnouncement.important && <span className="chip chip-danger">{t('important')}</span>}
               <div className="title">{latestAnnouncement.title[lang]}</div>
