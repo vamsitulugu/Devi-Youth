@@ -48,19 +48,21 @@ function ScrollToTop() {
 function Shell() {
   return (
     <div className="app-shell">
-      <Routes>
-        <Route path="/" element={<Home />} />
-        <Route path="/announcements" element={<Announcements />} />
-        <Route path="/events" element={<Events />} />
-        <Route path="/laddu" element={<Laddu />} />
-        <Route path="/lottery" element={<Lottery />} />
-        <Route path="/committee" element={<Committee />} />
-        <Route path="/gallery" element={<Gallery />} />
-        <Route path="/history" element={<History />} />
-        <Route path="/contacts" element={<Contacts />} />
-        <Route path="/more" element={<More />} />
-        <Route path="*" element={<NotFound />} />
-      </Routes>
+      <div className="app-shell-content">
+        <Routes>
+          <Route path="/" element={<Home />} />
+          <Route path="/announcements" element={<Announcements />} />
+          <Route path="/events" element={<Events />} />
+          <Route path="/laddu" element={<Laddu />} />
+          <Route path="/lottery" element={<Lottery />} />
+          <Route path="/committee" element={<Committee />} />
+          <Route path="/gallery" element={<Gallery />} />
+          <Route path="/history" element={<History />} />
+          <Route path="/contacts" element={<Contacts />} />
+          <Route path="/more" element={<More />} />
+          <Route path="*" element={<NotFound />} />
+        </Routes>
+      </div>
       <BottomNav />
     </div>
   );
@@ -69,8 +71,10 @@ function Shell() {
 function AdminFallback() {
   return (
     <div className="app-shell" style={{ paddingBottom: 0 }}>
-      <div className="page" style={{ minHeight: '100vh', justifyContent: 'center' }}>
-        <div className="card card-pad" style={{ height: 76, background: 'var(--color-surface-alt)', opacity: 0.6 }} />
+      <div className="app-shell-content">
+        <div className="page" style={{ minHeight: '100vh', justifyContent: 'center' }}>
+          <div className="card card-pad skeleton-row" style={{ height: 76 }} />
+        </div>
       </div>
     </div>
   );

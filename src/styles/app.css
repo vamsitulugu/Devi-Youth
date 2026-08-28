@@ -538,9 +538,12 @@
     padding: var(--space-6) var(--space-5);
   }
 
-  /* every routed page is the shell's first child; the nav is the second */
-  .app-shell > *:not(.bottom-nav) {
+  /* every routed page renders inside .app-shell-content — a single real
+     wrapper element, so the grid always sees exactly one item in column 2
+     no matter how many top-level siblings (Header + .page) a page returns */
+  .app-shell-content {
     grid-column: 2;
+    grid-row: 1;
     min-width: 0;
   }
 

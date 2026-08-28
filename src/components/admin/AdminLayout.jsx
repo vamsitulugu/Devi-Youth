@@ -49,7 +49,9 @@ export default function AdminLayout({ children }) {
 
   return (
     <div className="app-shell">
-      {children}
+      <div className="app-shell-content">
+        {children}
+      </div>
       <nav className="bottom-nav">
         {navItems.map(({ to, icon: Icon, label, exact }) => {
           const active = exact ? location.pathname === to : location.pathname.startsWith(to);
