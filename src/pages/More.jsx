@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { Gift, Ticket, Users, Clock3, Phone, ChevronRight, ShieldCheck } from 'lucide-react';
+import { Gift, Ticket, Users, Clock3, Phone, ChevronRight } from 'lucide-react';
 import { useLanguage } from '../i18n/LanguageContext';
 import Header from '../components/Header';
 
@@ -36,16 +36,6 @@ export default function More() {
             </Link>
           ))}
         </div>
-
-        <Link
-          to="/admin/login"
-          className="card card-pad"
-          style={{ display: 'flex', alignItems: 'center', gap: 12 }}
-        >
-          <div className="icon-badge"><ShieldCheck size={18} /></div>
-          <span style={{ flex: 1, fontWeight: 600, color: 'var(--color-ink-soft)' }}>Committee Login</span>
-          <ChevronRight size={18} color="var(--color-border)" />
-        </Link>
       </div>
     </>
   );
