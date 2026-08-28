@@ -123,7 +123,6 @@ create table if not exists photo_albums (
   id uuid primary key default gen_random_uuid(),
   festival_id uuid not null references festivals(id) on delete cascade,
   name_en text not null,
-  name_te text not null,
   cover_photo_url text,
   sort_order int not null default 0
 );

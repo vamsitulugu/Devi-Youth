@@ -249,6 +249,18 @@ export const lotteryWinnersApi = {
   },
 };
 
+// ---------- albums (with photo counts, for the album-card list) ----------
+export async function listAlbumsWithCounts(festivalId) {
+  assertReady();
+  const { data, error } = await supabase
+    .from('photo_albums')
+    .select('*, photos(count)')
+    .eq('festival_id', festivalId)
+    .order('sort_order', { ascending: true });
+  up(error);
+  return (data || []).map((a) => ({ ...a, photo_count: a.photos?.[0]?.count ?? 0 }));
+}
+
 // ---------- photos ----------
 export async function listPhotos(albumId) {
   assertReady();
@@ -271,6 +283,12 @@ export async function deletePhoto(photo) {
 }
 
 // ---------- storage upload ----------
+const ACCEPTED_IMAGE_TYPES = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
+
+export function isAcceptedImage(file) {
+  return ACCEPTED_IMAGE_TYPES.includes(file.type) || /\.(jpe?g|png|webp)$/i.test(file.name || '');
+}
+
 export async function uploadImage(file, path) {
   assertReady();
   const { error } = await supabase.storage.from('gallery').upload(path, file, { upsert: true, cacheControl: '3600' });
@@ -282,6 +300,56 @@ export function publicUrl(path) {
   if (!path) return null;
   const { data } = supabase.storage.from('gallery').getPublicUrl(path);
   return data?.publicUrl ?? null;
+}
+
+function slugify(name) {
+  return (name || 'album').toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '') || 'album';
+}
+
+// Uploads a batch of photo files into `album` (storage + `photos` row for
+// each), reporting progress as it goes. Never throws for individual file
+// failures — those are collected and returned so the caller can show a
+// clear "N uploaded, M failed" message instead of silently pretending
+// everything succeeded. Returns { uploaded: [...photoRows], failed: [{file, error}] }.
+export async function uploadPhotosToAlbum(album, festivalYear, files, onProgress) {
+  assertReady();
+  const uploaded = [];
+  const failed = [];
+  for (let i = 0; i < files.length; i++) {
+    const file = files[i];
+    onProgress?.({ index: i, total: files.length, file });
+    try {
+      if (!isAcceptedImage(file)) throw new Error(`${file.name}: unsupported file type`);
+      const path = `${festivalYear}/${slugify(album.name_en)}/${Date.now()}-${i}-${file.name}`;
+      await uploadImage(file, path);
+      const row = await addPhotoRecord({ album_id: album.id, storage_path: path });
+      uploaded.push(row);
+    } catch (err) {
+      failed.push({ file, error: err.message || 'Upload failed' });
+    }
+  }
+  onProgress?.({ index: files.length, total: files.length, done: true });
+  return { uploaded, failed };
+}
+
+// Creates an album and uploads its first batch of photos in one flow, so
+// the admin never has to create an empty album and open a separate
+// upload screen. Sets the first successfully-uploaded photo as the
+// album's cover. Throws only if the album row itself can't be created;
+// individual photo failures are reported back via `failed`.
+export async function createAlbumWithPhotos({ name_en, festival_id, sort_order }, festivalYear, files, onProgress) {
+  assertReady();
+  const album = await albumsApi.add({ name_en, festival_id, sort_order });
+  const { uploaded, failed } = await uploadPhotosToAlbum(album, festivalYear, files, onProgress);
+  if (uploaded[0]) {
+    try {
+      await albumsApi.update(album.id, { cover_photo_url: uploaded[0].storage_path });
+      album.cover_photo_url = uploaded[0].storage_path;
+    } catch {
+      // Cover is cosmetic — don't fail the whole creation over it.
+    }
+  }
+  return { album, uploaded, failed };
 }
 
 // ---------- profiles / users ----------

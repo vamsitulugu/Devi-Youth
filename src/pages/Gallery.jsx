@@ -1,23 +1,34 @@
 import { useCallback, useState } from 'react';
-import { X } from 'lucide-react';
+import { ArrowLeft, ChevronRight, ImageIcon } from 'lucide-react';
 import { useLanguage } from '../i18n/LanguageContext';
 import { useAsyncData } from '../hooks/useAsyncData';
-import { getGalleryYears, getGalleryAlbums } from '../services/api';
-import PhotoTile from '../components/PhotoTile';
+import { getGalleryYears, getGalleryAlbums, getAlbumPhotos } from '../services/api';
 import Header from '../components/Header';
+import PhotoViewer from '../components/PhotoViewer';
 import { PageSkeleton, PageError } from '../components/LoadingStates';
 
 export default function Gallery() {
   const { t, lang } = useLanguage();
   const { data: years, loading: yearsLoading } = useAsyncData(getGalleryYears, []);
   const [year, setYear] = useState(null);
-  const [active, setActive] = useState(null);
+  const [openAlbum, setOpenAlbum] = useState(null);
 
   const activeYear = year ?? years?.[0];
   const fetchAlbums = useCallback(() => getGalleryAlbums(activeYear), [activeYear]);
   const { data: albums, loading: albumsLoading, error } = useAsyncData(fetchAlbums, [activeYear]);
 
   const loading = yearsLoading || (!!activeYear && albumsLoading);
+
+  if (openAlbum) {
+    return (
+      <AlbumView
+        album={openAlbum}
+        lang={lang}
+        t={t}
+        onBack={() => setOpenAlbum(null)}
+      />
+    );
+  }
 
   return (
     <>
@@ -43,22 +54,79 @@ export default function Gallery() {
           <div className="card empty-state">{t('gallery_empty')}</div>
         )}
         {!loading && !error && albums?.length > 0 && (
+          <div className="album-grid">
+            {albums.map((a) => (
+              <button key={a.id} className="card album-card" onClick={() => setOpenAlbum(a)}>
+                <div className="album-cover">
+                  {a.cover ? (
+                    <img src={a.cover} alt="" loading="lazy" decoding="async" />
+                  ) : (
+                    <div className="album-cover-empty">
+                      <ImageIcon size={28} strokeWidth={1.5} />
+                    </div>
+                  )}
+                  {a.count > 0 && (
+                    <span className="album-cover-badge">{a.count} {t('gallery_photos_word')}</span>
+                  )}
+                </div>
+                <div className="album-info">
+                  <span className="album-name">{a.album[lang]}</span>
+                  <ChevronRight size={18} className="album-chevron" />
+                </div>
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
+    </>
+  );
+}
+
+function AlbumView({ album, lang, t, onBack }) {
+  const fetchPhotos = useCallback(() => getAlbumPhotos(album.id), [album.id]);
+  const { data: photos, loading, error } = useAsyncData(fetchPhotos, [album.id]);
+  const [viewerIndex, setViewerIndex] = useState(null);
+
+  return (
+    <>
+      <Header title={album.album[lang]} />
+      <div className="page">
+        <button
+          onClick={onBack}
+          style={{ display: 'flex', alignItems: 'center', gap: 6, alignSelf: 'flex-start', fontWeight: 600, color: 'var(--color-vermillion)' }}
+        >
+          <ArrowLeft size={16} /> {t('gallery_all_albums')}
+        </button>
+
+        {loading && <PageSkeleton rows={2} />}
+        {!loading && error && <PageError />}
+        {!loading && !error && (!photos || photos.length === 0) && (
+          <div className="card empty-state">{t('gallery_album_empty')}</div>
+        )}
+        {!loading && !error && photos?.length > 0 && (
           <div className="gallery-grid">
-            {albums.map((p) => (
-              <PhotoTile key={p.id} src={p.cover} onClick={() => setActive(p)} />
+            {photos.map((p, i) => (
+              <img
+                key={p.id}
+                src={p.src}
+                alt=""
+                loading="lazy"
+                decoding="async"
+                onClick={() => setViewerIndex(i)}
+                style={{ cursor: 'pointer' }}
+              />
             ))}
           </div>
         )}
       </div>
 
-      {active && (
-        <div className="lightbox" onClick={() => setActive(null)}>
-          <button className="close-btn" onClick={() => setActive(null)} aria-label="Close">
-            <X size={26} />
-          </button>
-          <PhotoTile src={active.cover} wide />
-          <div className="caption">{active.album[lang]} · {activeYear}</div>
-        </div>
+      {viewerIndex !== null && photos && (
+        <PhotoViewer
+          photos={photos}
+          index={viewerIndex}
+          onIndexChange={setViewerIndex}
+          onClose={() => setViewerIndex(null)}
+        />
       )}
     </>
   );

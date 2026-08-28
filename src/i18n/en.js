@@ -48,7 +48,11 @@ export const en = {
   contact: 'Contact',
 
   gallery_title: 'Gallery',
-  gallery_empty: 'No photos yet for this year.',
+  gallery_empty: 'No albums yet.',
+  gallery_album_empty: 'No photos in this album yet.',
+  gallery_all_albums: 'All Albums',
+  gallery_photos_word: 'photos',
+  home_latest_photos_empty: 'Photos will appear here once the committee starts uploading.',
   announcements_empty: 'No announcements yet.',
   events_empty: 'No events scheduled yet.',
 

@@ -260,15 +260,55 @@ export async function getGalleryAlbums(year) {
   if (!festivalRow) return [];
   const { data: albums, error } = await supabase
     .from('photo_albums')
-    .select('*')
+    .select('*, photos(count)')
     .eq('festival_id', festivalRow.id)
     .order('sort_order');
   throwIfError(error);
   return (albums || []).map((a) => ({
     id: a.id,
-    album: { en: a.name_en, te: a.name_te },
+    // Album names are English-only; { en, te } is kept so pages that key
+    // off lang[album] (e.g. captions) keep working without special-casing.
+    album: { en: a.name_en, te: a.name_en },
     cover: publicImageUrl(a.cover_photo_url),
+    count: a.photos?.[0]?.count ?? 0,
   }));
+}
+
+// All photos in one album, newest first — used by the album viewer.
+export async function getAlbumPhotos(albumId) {
+  if (!isSupabaseConfigured) return [];
+  const { data, error } = await supabase
+    .from('photos')
+    .select('*')
+    .eq('album_id', albumId)
+    .order('created_at', { ascending: false });
+  throwIfError(error);
+  return (data || []).map((p) => ({ id: p.id, src: publicImageUrl(p.storage_path) }));
+}
+
+// Most recently uploaded photos across every album for the active
+// festival — used for the "Latest Photos" preview on Home. Real data
+// only: if nothing has been uploaded yet, this returns an empty array
+// and the caller should hide the section rather than fake placeholders.
+export async function getLatestPhotos(limit = 6) {
+  if (!isSupabaseConfigured) return [];
+  const festival = await getActiveFestival();
+  if (!festival.id) return [];
+  const { data: albums, error: albumsError } = await supabase
+    .from('photo_albums')
+    .select('id')
+    .eq('festival_id', festival.id);
+  throwIfError(albumsError);
+  const albumIds = (albums || []).map((a) => a.id);
+  if (!albumIds.length) return [];
+  const { data, error } = await supabase
+    .from('photos')
+    .select('id, storage_path')
+    .in('album_id', albumIds)
+    .order('created_at', { ascending: false })
+    .limit(limit);
+  throwIfError(error);
+  return (data || []).map((p) => ({ id: p.id, src: publicImageUrl(p.storage_path) }));
 }
 
 // ---------- history ----------

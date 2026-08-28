@@ -64,12 +64,12 @@ begin
     (lid, 'Third Prize — Mixer Grinder', 'తృతీయ బహుమతి — మిక్సర్ గ్రైండర్', '₹4,500', 3),
     (lid, 'Fourth Prize — Steel Cookware Set', 'నాలుగవ బహుమతి — స్టీల్ వంటపాత్రల సెట్', '₹2,500', 4);
 
-  insert into photo_albums (festival_id, name_en, name_te, sort_order)
+  insert into photo_albums (festival_id, name_en, sort_order)
   values
-    (fid, 'Prathishta', 'ప్రతిష్ఠ', 1),
-    (fid, 'Cultural Program', 'సాంస్కృతిక కార్యక్రమం', 2),
-    (fid, 'Annadanam', 'అన్నదానం', 3),
-    (fid, 'Procession', 'ఊరేగింపు', 4);
+    (fid, 'Prathishta', 1),
+    (fid, 'Cultural Program', 2),
+    (fid, 'Annadanam', 3),
+    (fid, 'Procession', 4);
 
   insert into contacts (name, role_en, role_te, phone, sort_order)
   values

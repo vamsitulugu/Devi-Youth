@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { CalendarDays, MapPin, ChevronRight } from 'lucide-react';
 import { useLanguage } from '../i18n/LanguageContext';
 import { useAsyncData } from '../hooks/useAsyncData';
-import { getFestival, getAnnouncements, getEvents, getLaddu, getLottery, getCommittee } from '../services/api';
+import { getFestival, getAnnouncements, getEvents, getLaddu, getLottery, getCommittee, getLatestPhotos } from '../services/api';
 import PhotoTile from '../components/PhotoTile';
 import Header from '../components/Header';
 import { PageSkeleton, PageError } from '../components/LoadingStates';
@@ -12,15 +12,16 @@ export default function Home() {
   const { t, lang } = useLanguage();
 
   const fetcher = useCallback(async () => {
-    const [festival, announcements, events, laddu, lottery, committee] = await Promise.all([
+    const [festival, announcements, events, laddu, lottery, committee, latestPhotos] = await Promise.all([
       getFestival(),
       getAnnouncements(),
       getEvents(),
       getLaddu(),
       getLottery(),
       getCommittee(),
+      getLatestPhotos(6),
     ]);
-    return { festival, announcements, events, laddu, lottery, committee };
+    return { festival, announcements, events, laddu, lottery, committee, latestPhotos };
   }, []);
 
   const { data, loading, error } = useAsyncData(fetcher, []);
@@ -40,7 +41,7 @@ export default function Home() {
 }
 
 function HomeContent({ data, t, lang }) {
-  const { festival, announcements, events, laddu, lottery, committee } = data;
+  const { festival, announcements, events, laddu, lottery, committee, latestPhotos } = data;
   const latestAnnouncement = announcements[0];
   const upcoming = events.slice(0, 3);
   const hasFestival = Boolean(festival.id) || Boolean(festival.year);
@@ -140,14 +141,21 @@ function HomeContent({ data, t, lang }) {
         </section>
       )}
 
-      <section>
-        <div className="section-title"><h2>{t('home_latest_photos')}</h2></div>
-        <div className="gallery-grid">
-          {Array.from({ length: 6 }).map((_, i) => (
-            <PhotoTile key={i} />
-          ))}
-        </div>
-      </section>
+      {latestPhotos?.length > 0 && (
+        <section>
+          <div className="section-title">
+            <h2>{t('home_latest_photos')}</h2>
+            <Link to="/gallery" className="see-all">{t('see_all')}</Link>
+          </div>
+          <div className="gallery-grid">
+            {latestPhotos.map((p) => (
+              <Link key={p.id} to="/gallery">
+                <PhotoTile src={p.src} alt="" />
+              </Link>
+            ))}
+          </div>
+        </section>
+      )}
 
       {committee.length > 0 && (
         <section>

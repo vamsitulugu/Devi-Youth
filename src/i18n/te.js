@@ -48,7 +48,11 @@ export const te = {
   contact: 'సంప్రదించండి',
 
   gallery_title: 'గ్యాలరీ',
-  gallery_empty: 'ఈ సంవత్సరానికి ఇంకా ఫోటోలు లేవు.',
+  gallery_empty: 'ఇంకా ఆల్బమ్‌లు లేవు.',
+  gallery_album_empty: 'ఈ ఆల్బమ్‌లో ఇంకా ఫోటోలు లేవు.',
+  gallery_all_albums: 'అన్ని ఆల్బమ్‌లు',
+  gallery_photos_word: 'ఫోటోలు',
+  home_latest_photos_empty: 'కమిటీ అప్‌లోడ్ చేయడం మొదలుపెట్టిన తర్వాత ఫోటోలు ఇక్కడ కనిపిస్తాయి.',
   announcements_empty: 'ఇంకా ప్రకటనలు లేవు.',
   events_empty: 'ఇంకా కార్యక్రమాలు నిర్ణయించలేదు.',
 
