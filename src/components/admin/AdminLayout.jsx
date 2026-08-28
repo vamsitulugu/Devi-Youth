@@ -1,6 +1,7 @@
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { ChevronLeft, LayoutDashboard, Megaphone, Wallet, Images, Settings, LogOut } from 'lucide-react';
 import { useAuth } from '../../auth/AuthContext';
+import Toranam from '../Toranam';
 
 const navItems = [
   { to: '/admin', icon: LayoutDashboard, label: 'Dashboard', exact: true },
@@ -16,25 +17,29 @@ export function AdminHeader({ title, showBack = false }) {
 
   return (
     <header className="app-header">
-      {showBack ? (
-        <button className="back-btn" onClick={() => navigate(-1)} aria-label="Go back">
-          <ChevronLeft size={22} />
+      <div className="app-header-row">
+        {showBack ? (
+          <button className="back-btn" onClick={() => navigate(-1)} aria-label="Go back">
+            <ChevronLeft size={22} />
+          </button>
+        ) : (
+          <Link to="/admin" className="brand" aria-label="Admin dashboard">
+            <img src="/icon-192.png" alt="" className="brand-logo" />
+          </Link>
+        )}
+        <h1 className="title">{title}</h1>
+        <button
+          className="lang-toggle"
+          onClick={async () => {
+            await signOut();
+            navigate('/admin/login');
+          }}
+          aria-label="Log out"
+        >
+          <LogOut size={13} /> Exit
         </button>
-      ) : (
-        <span style={{ width: 22 }} />
-      )}
-      <h1 className="title">{title}</h1>
-      <button
-        className="lang-toggle"
-        onClick={async () => {
-          await signOut();
-          navigate('/admin/login');
-        }}
-        aria-label="Log out"
-        style={{ display: 'flex', alignItems: 'center', gap: 4 }}
-      >
-        <LogOut size={13} /> Exit
-      </button>
+      </div>
+      <Toranam />
     </header>
   );
 }

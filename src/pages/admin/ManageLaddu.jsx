@@ -14,7 +14,7 @@ const blank = {
 
 export default function ManageLaddu() {
   const toast = useToast();
-  const { festival, festivalId } = useActiveFestival();
+  const { festival, festivalId, loading: festivalLoading } = useActiveFestival();
   const [form, setForm] = useState(blank);
   const [file, setFile] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -22,7 +22,8 @@ export default function ManageLaddu() {
   const [saving, setSaving] = useState(false);
 
   async function reload() {
-    if (!festivalId) return;
+    if (festivalLoading) return;
+    if (!festivalId) { setForm(blank); setError(null); setLoading(false); return; }
     setLoading(true);
     try {
       const row = await getLadduForFestival(festivalId);
@@ -44,7 +45,7 @@ export default function ManageLaddu() {
   useEffect(() => {
     reload();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [festivalId]);
+  }, [festivalId, festivalLoading]);
 
   async function handleSave(e) {
     e.preventDefault();

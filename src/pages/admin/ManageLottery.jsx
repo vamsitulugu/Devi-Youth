@@ -17,7 +17,7 @@ const blankWinner = { winner_name: '', prize_id: '' };
 
 export default function ManageLottery() {
   const toast = useToast();
-  const { festival, festivalId } = useActiveFestival();
+  const { festival, festivalId, loading: festivalLoading } = useActiveFestival();
   const [lottery, setLottery] = useState(null);
   const [draw, setDraw] = useState(blankDraw);
   const [prizes, setPrizes] = useState([]);
@@ -36,7 +36,8 @@ export default function ManageLottery() {
   const [winnerToDelete, setWinnerToDelete] = useState(null);
 
   async function reload() {
-    if (!festivalId) return;
+    if (festivalLoading) return;
+    if (!festivalId) { setError(null); setLoading(false); return; }
     setLoading(true);
     try {
       const row = await getLotteryForFestival(festivalId);
@@ -64,7 +65,7 @@ export default function ManageLottery() {
   useEffect(() => {
     reload();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [festivalId]);
+  }, [festivalId, festivalLoading]);
 
   async function handleSaveDraw(e) {
     e.preventDefault();

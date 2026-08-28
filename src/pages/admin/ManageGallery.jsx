@@ -13,7 +13,7 @@ const blankAlbum = { name_en: '', name_te: '' };
 
 export default function ManageGallery() {
   const toast = useToast();
-  const { festival, festivalId } = useActiveFestival();
+  const { festival, festivalId, loading: festivalLoading } = useActiveFestival();
   const [albums, setAlbums] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -29,7 +29,8 @@ export default function ManageGallery() {
   const [photoToDelete, setPhotoToDelete] = useState(null);
 
   async function reload() {
-    if (!festivalId) return;
+    if (festivalLoading) return;
+    if (!festivalId) { setAlbums([]); setError(null); setLoading(false); return; }
     setLoading(true);
     try {
       setAlbums(await albumsApi.list(festivalId));
@@ -45,7 +46,7 @@ export default function ManageGallery() {
     reload();
     setOpenAlbum(null);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [festivalId]);
+  }, [festivalId, festivalLoading]);
 
   async function handleAddAlbum(e) {
     e.preventDefault();

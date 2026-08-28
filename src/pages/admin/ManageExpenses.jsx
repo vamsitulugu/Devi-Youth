@@ -15,7 +15,7 @@ const blank = { name: '', category: 'Decoration', amount: '', expense_date: new 
 
 export default function ManageExpenses() {
   const toast = useToast();
-  const { festival, festivalId } = useActiveFestival();
+  const { festival, festivalId, loading: festivalLoading } = useActiveFestival();
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -25,7 +25,8 @@ export default function ManageExpenses() {
   const [toDelete, setToDelete] = useState(null);
 
   async function reload() {
-    if (!festivalId) return;
+    if (festivalLoading) return;
+    if (!festivalId) { setItems([]); setError(null); setLoading(false); return; }
     setLoading(true);
     try {
       setItems(await expensesApi.list(festivalId));
@@ -40,7 +41,7 @@ export default function ManageExpenses() {
   useEffect(() => {
     reload();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [festivalId]);
+  }, [festivalId, festivalLoading]);
 
   const total = useMemo(() => items.reduce((s, e) => s + Number(e.amount || 0), 0), [items]);
 

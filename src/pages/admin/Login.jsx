@@ -32,8 +32,8 @@ export default function Login() {
   }
 
   return (
-    <div className="app-shell" style={{ paddingBottom: 0 }}>
-      <div className="page" style={{ justifyContent: 'center', minHeight: '100vh' }}>
+    <div className="auth-shell">
+      <div className="auth-card-wrap page">
         <div style={{ textAlign: 'center', marginBottom: 4 }}>
           <div
             style={{
@@ -96,3 +96,4 @@ export default function Login() {
     </div>
   );
 }
+

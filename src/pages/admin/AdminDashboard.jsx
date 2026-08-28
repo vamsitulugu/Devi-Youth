@@ -41,13 +41,19 @@ const quickActions = [
 
 export default function AdminDashboard() {
   const { profile } = useAuth();
-  const { festival, festivalId, loading: festivalLoading } = useActiveFestival();
+  const { festival, festivalId, loading: festivalLoading, error: festivalError } = useActiveFestival();
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    if (!festivalId) return;
+    if (festivalLoading) return;
+    if (!festivalId) {
+      setStats(null);
+      setError(null);
+      setLoading(false);
+      return;
+    }
     let alive = true;
     setLoading(true);
     getDashboardStats(festivalId)
@@ -57,7 +63,7 @@ export default function AdminDashboard() {
     return () => {
       alive = false;
     };
-  }, [festivalId]);
+  }, [festivalId, festivalLoading]);
 
   return (
     <>
@@ -72,14 +78,16 @@ export default function AdminDashboard() {
         </div>
 
         {(loading || festivalLoading) && <PageSkeleton rows={4} />}
-        {!loading && error && <PageError message="Couldn't load stats." />}
-        {!loading && !error && !festival && (
+        {!loading && !festivalLoading && (error || festivalError) && (
+          <PageError message="Couldn't load stats." />
+        )}
+        {!loading && !festivalLoading && !error && !festivalError && !festival && (
           <div className="card card-pad empty-state">
             No festival year set up yet. Create one in Settings to get started.
           </div>
         )}
 
-        {!loading && !error && stats && (
+        {!loading && !festivalLoading && !error && !festivalError && stats && (
           <>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
               <StatCard icon={IndianRupee} label="Total Donations" value={inr(stats.totalDonations)} tone="var(--color-leaf)" />

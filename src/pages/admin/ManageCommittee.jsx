@@ -13,7 +13,7 @@ const blank = { name: '', position_en: '', position_te: '', phone: '', sort_orde
 
 export default function ManageCommittee() {
   const toast = useToast();
-  const { festival, festivalId } = useActiveFestival();
+  const { festival, festivalId, loading: festivalLoading } = useActiveFestival();
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -24,7 +24,8 @@ export default function ManageCommittee() {
   const [toDelete, setToDelete] = useState(null);
 
   async function reload() {
-    if (!festivalId) return;
+    if (festivalLoading) return;
+    if (!festivalId) { setItems([]); setError(null); setLoading(false); return; }
     setLoading(true);
     try {
       setItems(await committeeApi.list(festivalId));
@@ -39,7 +40,7 @@ export default function ManageCommittee() {
   useEffect(() => {
     reload();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [festivalId]);
+  }, [festivalId, festivalLoading]);
 
   function openNew() {
     setForm(blank);
