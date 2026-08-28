@@ -134,7 +134,17 @@ function HomeContent({ data, t, lang }) {
         <section>
           <div className="section-title"><h2>{t('home_laddu_highlight')}</h2></div>
           <Link to="/laddu" className="card feature-card" style={{ display: 'block' }}>
-            <PhotoTile src={laddu.current.image} alt="" wide className="feature-img" />
+            <PhotoTile
+              src={laddu.current.image}
+              alt=""
+              wide
+              className="feature-img"
+              onClick={laddu.current.image ? (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                openViewer([{ id: 'laddu-current', src: laddu.current.image, caption: laddu.current.title?.[lang] }]);
+              } : undefined}
+            />
             <div className="content">
               <div className="row"><span className="label">{t('starting_price')}</span><span className="value">{laddu.current.startingPrice}</span></div>
               <div className="row"><span className="label">{t('auction_date')}</span><span className="value">{laddu.current.date}, {laddu.current.time}</span></div>
@@ -185,7 +195,11 @@ function HomeContent({ data, t, lang }) {
           <div className="hscroll">
             {committee.slice(0, 4).map((m) => (
               <div className="card member-card" key={m.id} style={{ width: 130 }}>
-                <PhotoTile src={m.photo} className="avatar" />
+                <PhotoTile
+                  src={m.photo}
+                  className="avatar"
+                  onClick={m.photo ? () => openViewer([{ id: m.id, src: m.photo, caption: m.name }]) : undefined}
+                />
                 <div className="name">{m.name}</div>
                 <div className="position">{m.position[lang]}</div>
               </div>
@@ -201,6 +215,15 @@ function HomeContent({ data, t, lang }) {
             {festival.publicDonationTotal}
           </div>
         </section>
+      )}
+
+      {viewer && (
+        <PhotoViewer
+          photos={viewer.photos}
+          index={viewer.index}
+          onIndexChange={(i) => setViewer((v) => ({ ...v, index: i }))}
+          onClose={closeViewer}
+        />
       )}
     </>
   );

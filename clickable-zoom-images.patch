@@ -1,0 +1,369 @@
+diff --git a/src/components/PhotoTile.jsx b/src/components/PhotoTile.jsx
+index 0623eee..d0d39ae 100644
+--- a/src/components/PhotoTile.jsx
++++ b/src/components/PhotoTile.jsx
+@@ -1,6 +1,6 @@
+ import { ImageIcon } from 'lucide-react';
+ 
+-export default function PhotoTile({ src, alt, className = '', onClick, wide = false }) {
++export default function PhotoTile({ src, alt, className = '', onClick, wide = false, style }) {
+   if (src) {
+     return (
+       <img
+@@ -9,6 +9,7 @@ export default function PhotoTile({ src, alt, className = '', onClick, wide = fa
+         className={`${wide ? 'wide-photo' : ''} ${className}`}
+         onClick={onClick}
+         loading="lazy"
++        style={onClick ? { cursor: 'zoom-in', ...style } : style}
+       />
+     );
+   }
+@@ -16,7 +17,14 @@ export default function PhotoTile({ src, alt, className = '', onClick, wide = fa
+     <div
+       className={`g-item ${wide ? 'wide-photo' : ''} ${className}`}
+       onClick={onClick}
+-      style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--color-border)' }}
++      style={{
++        display: 'flex',
++        alignItems: 'center',
++        justifyContent: 'center',
++        color: 'var(--color-border)',
++        ...(onClick ? { cursor: 'zoom-in' } : null),
++        ...style,
++      }}
+     >
+       <ImageIcon size={wide ? 32 : 20} strokeWidth={1.5} />
+     </div>
+diff --git a/src/pages/Announcements.jsx b/src/pages/Announcements.jsx
+index fc8a0a2..bbc8c5a 100644
+--- a/src/pages/Announcements.jsx
++++ b/src/pages/Announcements.jsx
+@@ -1,3 +1,4 @@
++import { useMemo, useState } from 'react';
+ import { CalendarDays } from 'lucide-react';
+ import { useLanguage } from '../i18n/LanguageContext';
+ import { useAsyncData } from '../hooks/useAsyncData';
+@@ -5,11 +6,20 @@ import { getAnnouncements } from '../services/api';
+ import PhotoTile from '../components/PhotoTile';
+ import WhatsAppShare from '../components/WhatsAppShare';
+ import Header from '../components/Header';
++import PhotoViewer from '../components/PhotoViewer';
+ import { PageSkeleton, PageError } from '../components/LoadingStates';
+ 
+ export default function Announcements() {
+   const { t, lang } = useLanguage();
+   const { data: announcements, loading, error } = useAsyncData(getAnnouncements, []);
++  const [viewerIndex, setViewerIndex] = useState(null);
++
++  const photos = useMemo(
++    () => (announcements || [])
++      .filter((a) => a.image)
++      .map((a) => ({ id: a.id, src: a.image, caption: a.title?.[lang] })),
++    [announcements, lang]
++  );
+ 
+   return (
+     <>
+@@ -20,9 +30,18 @@ export default function Announcements() {
+         {!loading && !error && announcements?.length === 0 && (
+           <div className="card empty-state">{t('announcements_empty')}</div>
+         )}
+-        {!loading && !error && announcements?.map((a) => (
++        {!loading && !error && announcements?.map((a) => {
++          const photoIndex = a.image ? photos.findIndex((p) => p.id === a.id) : -1;
++          return (
+           <div className="card card-pad" key={a.id} style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+-            {a.image && <PhotoTile src={a.image} alt="" wide />}
++            {a.image && (
++              <PhotoTile
++                src={a.image}
++                alt=""
++                wide
++                onClick={photoIndex >= 0 ? () => setViewerIndex(photoIndex) : undefined}
++              />
++            )}
+             <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+               {a.important && <span className="chip chip-danger">{t('important')}</span>}
+               <span className="meta" style={{ fontSize: 'var(--fs-xs)', color: 'var(--color-ink-soft)' }}>
+@@ -35,8 +54,18 @@ export default function Announcements() {
+               <WhatsAppShare text={`🙏 ${a.title?.[lang] || ''}\n\n${a.body?.[lang] || ''}`} />
+             </div>
+           </div>
+-        ))}
++          );
++        })}
+       </div>
++
++      {viewerIndex !== null && photos.length > 0 && (
++        <PhotoViewer
++          photos={photos}
++          index={viewerIndex}
++          onIndexChange={setViewerIndex}
++          onClose={() => setViewerIndex(null)}
++        />
++      )}
+     </>
+   );
+ }
+\ No newline at end of file
+diff --git a/src/pages/Committee.jsx b/src/pages/Committee.jsx
+index 75459b2..2a9013b 100644
+--- a/src/pages/Committee.jsx
++++ b/src/pages/Committee.jsx
+@@ -1,14 +1,26 @@
++import { useMemo, useState } from 'react';
+ import { Phone } from 'lucide-react';
+ import { useLanguage } from '../i18n/LanguageContext';
+ import { useAsyncData } from '../hooks/useAsyncData';
+ import { getCommittee } from '../services/api';
+ import PhotoTile from '../components/PhotoTile';
+ import Header from '../components/Header';
++import PhotoViewer from '../components/PhotoViewer';
+ import { PageSkeleton, PageError } from '../components/LoadingStates';
+ 
+ export default function Committee() {
+   const { t, lang } = useLanguage();
+   const { data: committee, loading, error } = useAsyncData(getCommittee, []);
++  const [viewerIndex, setViewerIndex] = useState(null);
++
++  // Only members with a real photo can be opened in the lightbox; keep a
++  // parallel index map so clicking a tile opens the right photo.
++  const photos = useMemo(
++    () => (committee || [])
++      .filter((m) => m.photo)
++      .map((m) => ({ id: m.id, src: m.photo, caption: m.name })),
++    [committee]
++  );
+ 
+   return (
+     <>
+@@ -18,21 +30,38 @@ export default function Committee() {
+         {!loading && error && <PageError />}
+         {!loading && !error && (
+           <div className="committee-grid">
+-            {committee?.map((m) => (
+-              <div className="card member-card" key={m.id}>
+-                <PhotoTile src={m.photo} className="avatar" />
+-                <div className="name">{m.name}</div>
+-                <div className="position">{m.position[lang]}</div>
+-                {m.phone && (
+-                  <a className="btn btn-outline btn-sm" href={`tel:${m.phone}`}>
+-                    <Phone size={13} /> {t('contact')}
+-                  </a>
+-                )}
+-              </div>
+-            ))}
++            {committee?.map((m) => {
++              const photoIndex = m.photo ? photos.findIndex((p) => p.id === m.id) : -1;
++              return (
++                <div className="card member-card" key={m.id}>
++                  <PhotoTile
++                    src={m.photo}
++                    className="avatar"
++                    style={photoIndex >= 0 ? { cursor: 'zoom-in' } : undefined}
++                    onClick={photoIndex >= 0 ? () => setViewerIndex(photoIndex) : undefined}
++                  />
++                  <div className="name">{m.name}</div>
++                  <div className="position">{m.position[lang]}</div>
++                  {m.phone && (
++                    <a className="btn btn-outline btn-sm" href={`tel:${m.phone}`}>
++                      <Phone size={13} /> {t('contact')}
++                    </a>
++                  )}
++                </div>
++              );
++            })}
+           </div>
+         )}
+       </div>
++
++      {viewerIndex !== null && photos.length > 0 && (
++        <PhotoViewer
++          photos={photos}
++          index={viewerIndex}
++          onIndexChange={setViewerIndex}
++          onClose={() => setViewerIndex(null)}
++        />
++      )}
+     </>
+   );
+ }
+diff --git a/src/pages/Home.jsx b/src/pages/Home.jsx
+index 6cfabee..d694580 100644
+--- a/src/pages/Home.jsx
++++ b/src/pages/Home.jsx
+@@ -134,7 +134,17 @@ function HomeContent({ data, t, lang }) {
+         <section>
+           <div className="section-title"><h2>{t('home_laddu_highlight')}</h2></div>
+           <Link to="/laddu" className="card feature-card" style={{ display: 'block' }}>
+-            <PhotoTile src={laddu.current.image} alt="" wide className="feature-img" />
++            <PhotoTile
++              src={laddu.current.image}
++              alt=""
++              wide
++              className="feature-img"
++              onClick={laddu.current.image ? (e) => {
++                e.preventDefault();
++                e.stopPropagation();
++                openViewer([{ id: 'laddu-current', src: laddu.current.image, caption: laddu.current.title?.[lang] }]);
++              } : undefined}
++            />
+             <div className="content">
+               <div className="row"><span className="label">{t('starting_price')}</span><span className="value">{laddu.current.startingPrice}</span></div>
+               <div className="row"><span className="label">{t('auction_date')}</span><span className="value">{laddu.current.date}, {laddu.current.time}</span></div>
+@@ -185,7 +195,11 @@ function HomeContent({ data, t, lang }) {
+           <div className="hscroll">
+             {committee.slice(0, 4).map((m) => (
+               <div className="card member-card" key={m.id} style={{ width: 130 }}>
+-                <PhotoTile src={m.photo} className="avatar" />
++                <PhotoTile
++                  src={m.photo}
++                  className="avatar"
++                  onClick={m.photo ? () => openViewer([{ id: m.id, src: m.photo, caption: m.name }]) : undefined}
++                />
+                 <div className="name">{m.name}</div>
+                 <div className="position">{m.position[lang]}</div>
+               </div>
+@@ -202,6 +216,15 @@ function HomeContent({ data, t, lang }) {
+           </div>
+         </section>
+       )}
++
++      {viewer && (
++        <PhotoViewer
++          photos={viewer.photos}
++          index={viewer.index}
++          onIndexChange={(i) => setViewer((v) => ({ ...v, index: i }))}
++          onClose={closeViewer}
++        />
++      )}
+     </>
+   );
+ }
+\ No newline at end of file
+diff --git a/src/pages/Laddu.jsx b/src/pages/Laddu.jsx
+index 1f2ec9a..411e436 100644
+--- a/src/pages/Laddu.jsx
++++ b/src/pages/Laddu.jsx
+@@ -1,14 +1,17 @@
++import { useState } from 'react';
+ import { Info } from 'lucide-react';
+ import { useLanguage } from '../i18n/LanguageContext';
+ import { useAsyncData } from '../hooks/useAsyncData';
+ import { getLaddu } from '../services/api';
+ import PhotoTile from '../components/PhotoTile';
+ import Header from '../components/Header';
++import PhotoViewer from '../components/PhotoViewer';
+ import { PageSkeleton, PageError } from '../components/LoadingStates';
+ 
+ export default function Laddu() {
+   const { t, lang } = useLanguage();
+   const { data: laddu, loading, error } = useAsyncData(getLaddu, []);
++  const [showPhoto, setShowPhoto] = useState(false);
+ 
+   return (
+     <>
+@@ -22,7 +25,13 @@ export default function Laddu() {
+         {!loading && !error && laddu && (
+           <>
+             <div className="card feature-card">
+-              <PhotoTile src={laddu.current.image} wide className="feature-img" alt="" />
++              <PhotoTile
++                src={laddu.current.image}
++                wide
++                className="feature-img"
++                alt=""
++                onClick={laddu.current.image ? () => setShowPhoto(true) : undefined}
++              />
+               <div className="content">
+                 <div className="title" style={{ fontSize: 'var(--fs-md)', marginBottom: 8 }}>{laddu.current.title[lang]}</div>
+                 <div className="row"><span className="label">{t('starting_price')}</span><span className="value">{laddu.current.startingPrice}</span></div>
+@@ -64,6 +73,15 @@ export default function Laddu() {
+           </>
+         )}
+       </div>
++
++      {showPhoto && laddu?.current?.image && (
++        <PhotoViewer
++          photos={[{ id: 'laddu-current', src: laddu.current.image, caption: laddu.current.title?.[lang] }]}
++          index={0}
++          onIndexChange={() => {}}
++          onClose={() => setShowPhoto(false)}
++        />
++      )}
+     </>
+   );
+ }
+\ No newline at end of file
+diff --git a/src/pages/Lottery.jsx b/src/pages/Lottery.jsx
+index 440383f..5f55d05 100644
+--- a/src/pages/Lottery.jsx
++++ b/src/pages/Lottery.jsx
+@@ -1,14 +1,24 @@
++import { useMemo, useState } from 'react';
+ import { CalendarDays, MapPin, Info, Trophy } from 'lucide-react';
+ import { useLanguage } from '../i18n/LanguageContext';
+ import { useAsyncData } from '../hooks/useAsyncData';
+ import { getLottery } from '../services/api';
+ import PhotoTile from '../components/PhotoTile';
+ import Header from '../components/Header';
++import PhotoViewer from '../components/PhotoViewer';
+ import { PageSkeleton, PageError } from '../components/LoadingStates';
+ 
+ export default function Lottery() {
+   const { t, lang } = useLanguage();
+   const { data: lottery, loading, error } = useAsyncData(getLottery, []);
++  const [viewerIndex, setViewerIndex] = useState(null);
++
++  const prizePhotos = useMemo(
++    () => (lottery?.prizes || [])
++      .filter((p) => p.image)
++      .map((p) => ({ id: p.id, src: p.image, caption: p.name?.[lang] })),
++    [lottery, lang]
++  );
+ 
+   return (
+     <>
+@@ -36,15 +46,22 @@ export default function Lottery() {
+             <section>
+               <div className="section-title"><h2>{t('lottery_prizes')}</h2></div>
+               <div className="prize-grid">
+-                {lottery.prizes.map((p) => (
++                {lottery.prizes.map((p) => {
++                  const photoIndex = p.image ? prizePhotos.findIndex((ph) => ph.id === p.id) : -1;
++                  return (
+                   <div className="card prize-card" key={p.id}>
+-                    <PhotoTile src={p.image} alt="" />
++                    <PhotoTile
++                      src={p.image}
++                      alt=""
++                      onClick={photoIndex >= 0 ? () => setViewerIndex(photoIndex) : undefined}
++                    />
+                     <div className="content">
+                       <div className="name">{p.name[lang]}</div>
+                       <div className="value">{p.value}</div>
+                     </div>
+                   </div>
+-                ))}
++                  );
++                })}
+               </div>
+             </section>
+ 
+@@ -94,6 +111,15 @@ export default function Lottery() {
+           </>
+         )}
+       </div>
++
++      {viewerIndex !== null && prizePhotos.length > 0 && (
++        <PhotoViewer
++          photos={prizePhotos}
++          index={viewerIndex}
++          onIndexChange={setViewerIndex}
++          onClose={() => setViewerIndex(null)}
++        />
++      )}
+     </>
+   );
+ }
+\ No newline at end of file

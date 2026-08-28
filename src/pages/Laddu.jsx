@@ -1,14 +1,17 @@
+import { useState } from 'react';
 import { Info } from 'lucide-react';
 import { useLanguage } from '../i18n/LanguageContext';
 import { useAsyncData } from '../hooks/useAsyncData';
 import { getLaddu } from '../services/api';
 import PhotoTile from '../components/PhotoTile';
 import Header from '../components/Header';
+import PhotoViewer from '../components/PhotoViewer';
 import { PageSkeleton, PageError } from '../components/LoadingStates';
 
 export default function Laddu() {
   const { t, lang } = useLanguage();
   const { data: laddu, loading, error } = useAsyncData(getLaddu, []);
+  const [showPhoto, setShowPhoto] = useState(false);
 
   return (
     <>
@@ -22,7 +25,13 @@ export default function Laddu() {
         {!loading && !error && laddu && (
           <>
             <div className="card feature-card">
-              <PhotoTile src={laddu.current.image} wide className="feature-img" alt="" />
+              <PhotoTile
+                src={laddu.current.image}
+                wide
+                className="feature-img"
+                alt=""
+                onClick={laddu.current.image ? () => setShowPhoto(true) : undefined}
+              />
               <div className="content">
                 <div className="title" style={{ fontSize: 'var(--fs-md)', marginBottom: 8 }}>{laddu.current.title[lang]}</div>
                 <div className="row"><span className="label">{t('starting_price')}</span><span className="value">{laddu.current.startingPrice}</span></div>
@@ -64,6 +73,15 @@ export default function Laddu() {
           </>
         )}
       </div>
+
+      {showPhoto && laddu?.current?.image && (
+        <PhotoViewer
+          photos={[{ id: 'laddu-current', src: laddu.current.image, caption: laddu.current.title?.[lang] }]}
+          index={0}
+          onIndexChange={() => {}}
+          onClose={() => setShowPhoto(false)}
+        />
+      )}
     </>
   );
 }

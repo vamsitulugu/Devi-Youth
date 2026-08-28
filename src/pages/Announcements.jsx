@@ -1,3 +1,4 @@
+import { useMemo, useState } from 'react';
 import { CalendarDays } from 'lucide-react';
 import { useLanguage } from '../i18n/LanguageContext';
 import { useAsyncData } from '../hooks/useAsyncData';
@@ -5,11 +6,20 @@ import { getAnnouncements } from '../services/api';
 import PhotoTile from '../components/PhotoTile';
 import WhatsAppShare from '../components/WhatsAppShare';
 import Header from '../components/Header';
+import PhotoViewer from '../components/PhotoViewer';
 import { PageSkeleton, PageError } from '../components/LoadingStates';
 
 export default function Announcements() {
   const { t, lang } = useLanguage();
   const { data: announcements, loading, error } = useAsyncData(getAnnouncements, []);
+  const [viewerIndex, setViewerIndex] = useState(null);
+
+  const photos = useMemo(
+    () => (announcements || [])
+      .filter((a) => a.image)
+      .map((a) => ({ id: a.id, src: a.image, caption: a.title?.[lang] })),
+    [announcements, lang]
+  );
 
   return (
     <>
@@ -20,9 +30,18 @@ export default function Announcements() {
         {!loading && !error && announcements?.length === 0 && (
           <div className="card empty-state">{t('announcements_empty')}</div>
         )}
-        {!loading && !error && announcements?.map((a) => (
+        {!loading && !error && announcements?.map((a) => {
+          const photoIndex = a.image ? photos.findIndex((p) => p.id === a.id) : -1;
+          return (
           <div className="card card-pad" key={a.id} style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-            {a.image && <PhotoTile src={a.image} alt="" wide />}
+            {a.image && (
+              <PhotoTile
+                src={a.image}
+                alt=""
+                wide
+                onClick={photoIndex >= 0 ? () => setViewerIndex(photoIndex) : undefined}
+              />
+            )}
             <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
               {a.important && <span className="chip chip-danger">{t('important')}</span>}
               <span className="meta" style={{ fontSize: 'var(--fs-xs)', color: 'var(--color-ink-soft)' }}>
@@ -35,8 +54,18 @@ export default function Announcements() {
               <WhatsAppShare text={`🙏 ${a.title?.[lang] || ''}\n\n${a.body?.[lang] || ''}`} />
             </div>
           </div>
-        ))}
+          );
+        })}
       </div>
+
+      {viewerIndex !== null && photos.length > 0 && (
+        <PhotoViewer
+          photos={photos}
+          index={viewerIndex}
+          onIndexChange={setViewerIndex}
+          onClose={() => setViewerIndex(null)}
+        />
+      )}
     </>
   );
 }

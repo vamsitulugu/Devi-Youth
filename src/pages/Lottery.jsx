@@ -1,14 +1,24 @@
+import { useMemo, useState } from 'react';
 import { CalendarDays, MapPin, Info, Trophy } from 'lucide-react';
 import { useLanguage } from '../i18n/LanguageContext';
 import { useAsyncData } from '../hooks/useAsyncData';
 import { getLottery } from '../services/api';
 import PhotoTile from '../components/PhotoTile';
 import Header from '../components/Header';
+import PhotoViewer from '../components/PhotoViewer';
 import { PageSkeleton, PageError } from '../components/LoadingStates';
 
 export default function Lottery() {
   const { t, lang } = useLanguage();
   const { data: lottery, loading, error } = useAsyncData(getLottery, []);
+  const [viewerIndex, setViewerIndex] = useState(null);
+
+  const prizePhotos = useMemo(
+    () => (lottery?.prizes || [])
+      .filter((p) => p.image)
+      .map((p) => ({ id: p.id, src: p.image, caption: p.name?.[lang] })),
+    [lottery, lang]
+  );
 
   return (
     <>
@@ -36,15 +46,22 @@ export default function Lottery() {
             <section>
               <div className="section-title"><h2>{t('lottery_prizes')}</h2></div>
               <div className="prize-grid">
-                {lottery.prizes.map((p) => (
+                {lottery.prizes.map((p) => {
+                  const photoIndex = p.image ? prizePhotos.findIndex((ph) => ph.id === p.id) : -1;
+                  return (
                   <div className="card prize-card" key={p.id}>
-                    <PhotoTile src={p.image} alt="" />
+                    <PhotoTile
+                      src={p.image}
+                      alt=""
+                      onClick={photoIndex >= 0 ? () => setViewerIndex(photoIndex) : undefined}
+                    />
                     <div className="content">
                       <div className="name">{p.name[lang]}</div>
                       <div className="value">{p.value}</div>
                     </div>
                   </div>
-                ))}
+                  );
+                })}
               </div>
             </section>
 
@@ -94,6 +111,15 @@ export default function Lottery() {
           </>
         )}
       </div>
+
+      {viewerIndex !== null && prizePhotos.length > 0 && (
+        <PhotoViewer
+          photos={prizePhotos}
+          index={viewerIndex}
+          onIndexChange={setViewerIndex}
+          onClose={() => setViewerIndex(null)}
+        />
+      )}
     </>
   );
 }
