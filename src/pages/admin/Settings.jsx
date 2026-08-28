@@ -90,6 +90,15 @@ export default function Settings() {
       <div className="page">
         <div>
           <div className="section-title"><h2>Festival Years</h2></div>
+          {!isAdmin && !festivalsLoading && festivals.length === 0 && (
+            <div className="card card-pad empty-state" style={{ marginBottom: 10 }}>
+              No festival year has been created yet, and only an admin
+              account can create one. If you're setting this up for the
+              first time, promote your account to admin directly in the
+              Supabase table editor (<code>profiles.role = 'admin'</code>),
+              then refresh this page.
+            </div>
+          )}
           {festivalsLoading && <PageSkeleton rows={2} />}
           {!festivalsLoading && festivals.map((f) => (
             <div key={f.id} className="card card-pad" style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 10 }}>
