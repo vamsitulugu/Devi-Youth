@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { CalendarDays } from 'lucide-react';
+import { CalendarDays, Megaphone } from 'lucide-react';
 import { useLanguage } from '../i18n/LanguageContext';
 import { useAsyncData } from '../hooks/useAsyncData';
 import { getAnnouncements } from '../services/api';
@@ -7,6 +7,7 @@ import PhotoTile from '../components/PhotoTile';
 import WhatsAppShare from '../components/WhatsAppShare';
 import Header from '../components/Header';
 import PhotoViewer from '../components/PhotoViewer';
+import EmptyState from '../components/EmptyState';
 import { PageSkeleton, PageError } from '../components/LoadingStates';
 
 export default function Announcements() {
@@ -28,7 +29,7 @@ export default function Announcements() {
         {loading && <PageSkeleton />}
         {!loading && error && <PageError />}
         {!loading && !error && announcements?.length === 0 && (
-          <div className="card empty-state">{t('announcements_empty')}</div>
+          <EmptyState icon={Megaphone} title={t('announcements_empty')} subtitle={t('announcements_empty_sub')} />
         )}
         {!loading && !error && announcements?.map((a) => {
           const photoIndex = a.image ? photos.findIndex((p) => p.id === a.id) : -1;

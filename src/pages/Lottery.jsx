@@ -6,6 +6,7 @@ import { getLottery } from '../services/api';
 import PhotoTile from '../components/PhotoTile';
 import Header from '../components/Header';
 import PhotoViewer from '../components/PhotoViewer';
+import EmptyState from '../components/EmptyState';
 import { PageSkeleton, PageError } from '../components/LoadingStates';
 
 export default function Lottery() {
@@ -27,7 +28,7 @@ export default function Lottery() {
         {loading && <PageSkeleton rows={3} />}
         {!loading && error && <PageError />}
         {!loading && !error && !lottery && (
-          <div className="card empty-state">{t('lottery_empty')}</div>
+          <EmptyState icon={Trophy} title={t('lottery_empty')} subtitle={t('lottery_empty_sub')} />
         )}
         {!loading && !error && lottery && (
           <>
@@ -45,8 +46,11 @@ export default function Lottery() {
 
             <section>
               <div className="section-title"><h2>{t('lottery_prizes')}</h2></div>
+              {(!lottery.prizes || lottery.prizes.length === 0) && (
+                <EmptyState icon={Trophy} title={t('lottery_empty')} subtitle={t('lottery_empty_sub')} />
+              )}
               <div className="prize-grid">
-                {lottery.prizes.map((p) => {
+                {lottery.prizes?.map((p) => {
                   const photoIndex = p.image ? prizePhotos.findIndex((ph) => ph.id === p.id) : -1;
                   return (
                   <div className="card prize-card" key={p.id}>
@@ -68,10 +72,7 @@ export default function Lottery() {
             <section>
               <div className="section-title"><h2>{t('winners_title')}</h2></div>
               {lottery.winners.length === 0 ? (
-                <div className="card empty-state">
-                  <Trophy className="icon" size={30} />
-                  <div>{t('result_pending')}</div>
-                </div>
+                <EmptyState icon={Trophy} title={t('result_pending')} />
               ) : (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
                   {lottery.winners.map((w, i) => (

@@ -1,11 +1,12 @@
 import { useState } from 'react';
-import { Info } from 'lucide-react';
+import { Info, Gift } from 'lucide-react';
 import { useLanguage } from '../i18n/LanguageContext';
 import { useAsyncData } from '../hooks/useAsyncData';
 import { getLaddu } from '../services/api';
 import PhotoTile from '../components/PhotoTile';
 import Header from '../components/Header';
 import PhotoViewer from '../components/PhotoViewer';
+import EmptyState from '../components/EmptyState';
 import { PageSkeleton, PageError } from '../components/LoadingStates';
 
 export default function Laddu() {
@@ -20,7 +21,7 @@ export default function Laddu() {
         {loading && <PageSkeleton rows={2} />}
         {!loading && error && <PageError />}
         {!loading && !error && !laddu && (
-          <div className="card empty-state">{t('laddu_empty')}</div>
+          <EmptyState icon={Gift} title={t('laddu_empty')} subtitle={t('laddu_empty_sub')} />
         )}
         {!loading && !error && laddu && (
           <>

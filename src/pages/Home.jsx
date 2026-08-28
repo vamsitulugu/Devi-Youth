@@ -1,12 +1,13 @@
 import { useCallback, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { CalendarDays, MapPin, ChevronRight } from 'lucide-react';
+import { CalendarDays, MapPin, ChevronRight, Sparkles } from 'lucide-react';
 import { useLanguage } from '../i18n/LanguageContext';
 import { useAsyncData } from '../hooks/useAsyncData';
 import { getFestival, getAnnouncements, getEvents, getLaddu, getLottery, getCommittee, getLatestPhotos } from '../services/api';
 import PhotoTile from '../components/PhotoTile';
 import Header from '../components/Header';
 import PhotoViewer from '../components/PhotoViewer';
+import EmptyState from '../components/EmptyState';
 import { PageSkeleton, PageError } from '../components/LoadingStates';
 
 export default function Home() {
@@ -47,6 +48,16 @@ function HomeContent({ data, t, lang }) {
   const upcoming = events.slice(0, 3);
   const hasFestival = Boolean(festival.id) || Boolean(festival.year);
 
+  const nothingPublishedYet =
+    !hasFestival &&
+    !latestAnnouncement &&
+    upcoming.length === 0 &&
+    !laddu?.current &&
+    !lottery &&
+    !(latestPhotos?.length > 0) &&
+    !(committee.length > 0) &&
+    !festival.publicDonationTotal;
+
   // Single shared lightbox for every clickable photo on this page —
   // holds { photos, index } and renders <PhotoViewer /> when set.
   const [viewer, setViewer] = useState(null);
@@ -75,6 +86,10 @@ function HomeContent({ data, t, lang }) {
           </svg>
         </div>
       </section>
+
+      {nothingPublishedYet && (
+        <EmptyState icon={Sparkles} title={t('home_empty')} subtitle={t('home_empty_sub')} />
+      )}
 
       {latestAnnouncement && (
         <section>

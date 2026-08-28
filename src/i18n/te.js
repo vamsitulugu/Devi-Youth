@@ -19,6 +19,8 @@ export const te = {
   home_committee: 'మా కమిటీ',
   home_donations_public: 'మొత్తం ఉత్సవ విరాళాలు',
   home_no_festival: 'ఈ సంవత్సరం ఉత్సవ వివరాలు త్వరలో ఇక్కడ ప్రచురించబడతాయి.',
+  home_empty: 'స్వాగతం! ఇంకా ఏమీ ప్రచురించలేదు.',
+  home_empty_sub: 'కమిటీ చేర్చిన వెంటనే ప్రకటనలు, కార్యక్రమాలు మరియు ఫోటోలు ఇక్కడ కనిపిస్తాయి.',
 
   announcements_title: 'ప్రకటనలు',
   important: 'ముఖ్యం',

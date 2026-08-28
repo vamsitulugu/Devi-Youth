@@ -1,8 +1,10 @@
+import { Clock3 } from 'lucide-react';
 import { useLanguage } from '../i18n/LanguageContext';
 import { useAsyncData } from '../hooks/useAsyncData';
 import { getHistory } from '../services/api';
 import PhotoTile from '../components/PhotoTile';
 import Header from '../components/Header';
+import EmptyState from '../components/EmptyState';
 import { PageSkeleton, PageError } from '../components/LoadingStates';
 
 export default function History() {
@@ -15,9 +17,12 @@ export default function History() {
       <div className="page">
         {loading && <PageSkeleton rows={3} />}
         {!loading && error && <PageError />}
-        {!loading && !error && (
+        {!loading && !error && (!history || history.length === 0) && (
+          <EmptyState icon={Clock3} title={t('history_empty')} subtitle={t('history_empty_sub')} />
+        )}
+        {!loading && !error && history?.length > 0 && (
           <div className="timeline">
-            {history?.map((h) => (
+            {history.map((h) => (
               <div className="timeline-item" key={h.year}>
                 <h3>{h.year}</h3>
                 <div className="card card-pad" style={{ marginTop: 8 }}>

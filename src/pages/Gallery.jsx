@@ -5,6 +5,7 @@ import { useAsyncData } from '../hooks/useAsyncData';
 import { getGalleryYears, getGalleryAlbums, getAlbumPhotos } from '../services/api';
 import Header from '../components/Header';
 import PhotoViewer from '../components/PhotoViewer';
+import EmptyState from '../components/EmptyState';
 import { PageSkeleton, PageError } from '../components/LoadingStates';
 
 export default function Gallery() {
@@ -51,7 +52,7 @@ export default function Gallery() {
         {loading && <PageSkeleton rows={2} />}
         {!loading && error && <PageError />}
         {!loading && !error && albums?.length === 0 && (
-          <div className="card empty-state">{t('gallery_empty')}</div>
+          <EmptyState icon={ImageIcon} title={t('gallery_empty')} subtitle={t('gallery_empty_sub')} />
         )}
         {!loading && !error && albums?.length > 0 && (
           <div className="album-grid">
@@ -101,7 +102,7 @@ function AlbumView({ album, lang, t, onBack }) {
         {loading && <PageSkeleton rows={2} />}
         {!loading && error && <PageError />}
         {!loading && !error && (!photos || photos.length === 0) && (
-          <div className="card empty-state">{t('gallery_album_empty')}</div>
+          <EmptyState icon={ImageIcon} title={t('gallery_album_empty')} subtitle={t('gallery_album_empty_sub')} />
         )}
         {!loading && !error && photos?.length > 0 && (
           <div className="gallery-grid">

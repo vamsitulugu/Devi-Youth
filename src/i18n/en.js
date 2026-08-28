@@ -19,6 +19,8 @@ export const en = {
   home_committee: 'Our Committee',
   home_donations_public: 'Total Festival Donations',
   home_no_festival: "This year's festival details will be posted here soon.",
+  home_empty: 'Welcome! Nothing has been published yet.',
+  home_empty_sub: 'Announcements, events, and photos will appear here as soon as the committee adds them.',
 
   announcements_title: 'Announcements',
   important: 'Important',

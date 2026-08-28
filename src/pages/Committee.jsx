@@ -1,11 +1,12 @@
 import { useMemo, useState } from 'react';
-import { Phone } from 'lucide-react';
+import { Phone, Users } from 'lucide-react';
 import { useLanguage } from '../i18n/LanguageContext';
 import { useAsyncData } from '../hooks/useAsyncData';
 import { getCommittee } from '../services/api';
 import PhotoTile from '../components/PhotoTile';
 import Header from '../components/Header';
 import PhotoViewer from '../components/PhotoViewer';
+import EmptyState from '../components/EmptyState';
 import { PageSkeleton, PageError } from '../components/LoadingStates';
 
 export default function Committee() {
@@ -28,9 +29,12 @@ export default function Committee() {
       <div className="page">
         {loading && <PageSkeleton rows={4} />}
         {!loading && error && <PageError />}
-        {!loading && !error && (
+        {!loading && !error && (!committee || committee.length === 0) && (
+          <EmptyState icon={Users} title={t('committee_empty')} subtitle={t('committee_empty_sub')} />
+        )}
+        {!loading && !error && committee?.length > 0 && (
           <div className="committee-grid">
-            {committee?.map((m) => {
+            {committee.map((m) => {
               const photoIndex = m.photo ? photos.findIndex((p) => p.id === m.id) : -1;
               return (
                 <div className="card member-card" key={m.id}>

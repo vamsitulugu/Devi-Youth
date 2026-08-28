@@ -3,6 +3,7 @@ import { useLanguage } from '../i18n/LanguageContext';
 import { useAsyncData } from '../hooks/useAsyncData';
 import { getEvents } from '../services/api';
 import Header from '../components/Header';
+import EmptyState from '../components/EmptyState';
 import { PageSkeleton, PageError } from '../components/LoadingStates';
 
 export default function Events() {
@@ -16,7 +17,7 @@ export default function Events() {
         {loading && <PageSkeleton />}
         {!loading && error && <PageError />}
         {!loading && !error && events?.length === 0 && (
-          <div className="card empty-state">{t('events_empty')}</div>
+          <EmptyState icon={CalendarDays} title={t('events_empty')} subtitle={t('events_empty_sub')} />
         )}
         {!loading && !error && events?.length > 0 && (
           <div className="timeline">
