@@ -10,6 +10,7 @@ export default function Header({ title, showBack = false, onBack }) {
   return (
     <>
       <header className="app-header">
+        <Toranam />
         <div className="app-header-row">
           {showBack && (
             <button className="back-btn" onClick={onBack || (() => navigate(-1))} aria-label="Go back">
@@ -30,7 +31,6 @@ export default function Header({ title, showBack = false, onBack }) {
             <span className={lang === 'te' ? 'active' : ''}>తెలుగు</span>
           </button>
         </div>
-        <Toranam />
       </header>
       {title && <h1 className="page-title-bar">{title}</h1>}
     </>
