@@ -6,6 +6,7 @@ import { Field, Input, Select, FormGrid } from '../../components/admin/FormField
 import BilingualField from '../../components/admin/BilingualField';
 import { useToast } from '../../components/admin/Toast';
 import { useAuth } from '../../auth/AuthContext';
+import { supabase, isSupabaseConfigured } from '../../lib/supabaseClient';
 import { useActiveFestival } from '../../hooks/useActiveFestival';
 import { upsertFestival, setActiveFestival, deleteFestival, listProfiles, updateProfileRole, updateProfileDetails } from '../../services/adminApi';
 import { listInviteCodes, createInviteCode, revokeInviteCode, buildWhatsAppInviteLink } from '../../services/inviteApi';
@@ -31,13 +32,14 @@ export default function Settings() {
   const [profiles, setProfiles] = useState([]);
   const [profilesLoading, setProfilesLoading] = useState(true);
 
+  function reloadProfiles() {
+    return listProfiles().then(setProfiles).catch((err) => toast(err.message, 'error'));
+  }
+
   useEffect(() => {
     if (!isAdmin) return;
     setProfilesLoading(true);
-    listProfiles()
-      .then(setProfiles)
-      .catch((err) => toast(err.message, 'error'))
-      .finally(() => setProfilesLoading(false));
+    reloadProfiles().finally(() => setProfilesLoading(false));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isAdmin]);
 
@@ -152,13 +154,29 @@ export default function Settings() {
   const [inviteRole, setInviteRole] = useState('committee');
   const [creatingInvite, setCreatingInvite] = useState(false);
 
+  function reloadInvites() {
+    return listInviteCodes().then(setInvites).catch((err) => toast(err.message, 'error'));
+  }
+
   useEffect(() => {
     if (!isAdmin) return;
     setInvitesLoading(true);
-    listInviteCodes()
-      .then(setInvites)
-      .catch((err) => toast(err.message, 'error'))
-      .finally(() => setInvitesLoading(false));
+    reloadInvites().finally(() => setInvitesLoading(false));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isAdmin]);
+
+  // Live sync: the moment someone redeems an invite code (joins from
+  // their own phone), both lists below update on their own here — no
+  // reload, no "Refresh" button, no waiting for the admin to reopen
+  // the page. Mirrors the same pattern already used on Money Dashboard.
+  useEffect(() => {
+    if (!isSupabaseConfigured || !isAdmin) return;
+    const channel = supabase
+      .channel('settings-users-invites')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'invite_codes' }, reloadInvites)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'profiles' }, reloadProfiles)
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isAdmin]);
 
