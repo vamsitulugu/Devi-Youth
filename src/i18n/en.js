@@ -19,6 +19,11 @@ export const en = {
   home_committee: 'Our Committee',
   home_donations_public: 'Total Festival Donations',
   home_no_festival: "This year's festival details will be posted here soon.",
+  countdown_today: "It's happening today!",
+  countdown_live: 'The festival is on right now!',
+  countdown_over: 'See you next year 🙏',
+  countdown_days_one: '1 day to go',
+  countdown_days_other: '{n} days to go',
   home_empty: 'Welcome! Nothing has been published yet.',
   home_empty_sub: 'Announcements, events, and photos will appear here as soon as the committee adds them.',
 

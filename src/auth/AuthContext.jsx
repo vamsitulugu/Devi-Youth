@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState, useCallback } from 'react';
+import { createContext, useContext, useEffect, useRef, useState, useCallback } from 'react';
 import { supabase, isSupabaseConfigured } from '../lib/supabaseClient';
 
 const AuthContext = createContext(null);
@@ -13,6 +13,13 @@ export function AuthProvider({ children }) {
   // admin's page flashes for a frame before the role mismatch signs
   // them back out — see signIn() below.
   const [verifyingRole, setVerifyingRole] = useState(false);
+  // Flips true when we were logged in and got silently logged out
+  // without the person choosing to (their token expired / was
+  // revoked). ProtectedRoute shows a clear "please log in again"
+  // message instead of just bouncing them to a blank login screen.
+  const [sessionExpired, setSessionExpired] = useState(false);
+  const wasSignedInRef = useRef(false);
+  const manualSignOutRef = useRef(false);
 
   const loadProfile = useCallback(async (userId) => {
     if (!isSupabaseConfigured || !userId) {
@@ -32,14 +39,25 @@ export function AuthProvider({ children }) {
     supabase.auth.getSession().then(async ({ data }) => {
       const sessionUser = data?.session?.user || null;
       setUser(sessionUser);
+      wasSignedInRef.current = Boolean(sessionUser);
       if (sessionUser) await loadProfile(sessionUser.id);
       setLoading(false);
     });
 
-    const { data: sub } = supabase.auth.onAuthStateChange(async (_event, session) => {
+    const { data: sub } = supabase.auth.onAuthStateChange(async (event, session) => {
       const sessionUser = session?.user || null;
+
+      if (event === 'SIGNED_OUT' && wasSignedInRef.current && !manualSignOutRef.current) {
+        // Not a click on "Log Out" — the token expired or was revoked
+        // elsewhere. Surface that plainly instead of a silent bounce.
+        setSessionExpired(true);
+      }
+      manualSignOutRef.current = false;
+
       setUser(sessionUser);
+      wasSignedInRef.current = Boolean(sessionUser);
       if (sessionUser) {
+        setSessionExpired(false);
         await loadProfile(sessionUser.id);
       } else {
         setProfile(null);
@@ -79,6 +97,7 @@ export function AuthProvider({ children }) {
 
   const signOut = useCallback(async () => {
     if (!isSupabaseConfigured) return;
+    manualSignOutRef.current = true;
     await supabase.auth.signOut();
   }, []);
 
@@ -94,6 +113,8 @@ export function AuthProvider({ children }) {
     isCommitteeOrAdmin,
     loading,
     verifyingRole,
+    sessionExpired,
+    clearSessionExpired: () => setSessionExpired(false),
     signIn,
     signOut,
     refreshProfile: () => user && loadProfile(user.id),

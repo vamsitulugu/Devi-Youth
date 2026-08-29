@@ -63,6 +63,8 @@ async function getActiveFestival() {
       name: sample.festival.name,
       village: sample.festival.village,
       dates: sample.festival.dates,
+      startDate: sample.festival.startDate,
+      endDate: sample.festival.endDate,
       publicDonationTotal: sample.festival.publicDonationTotal,
     };
   }
@@ -99,6 +101,8 @@ async function getActiveFestival() {
     name,
     village,
     dates: { en: `${fmt(start)} – ${fmt(end)} ${data.year}`, te: `${fmt(start)} – ${fmt(end)}, ${data.year}` },
+    startDate: data.start_date,
+    endDate: data.end_date,
     publicDonationTotal: data.public_donation_total,
   };
   return _festivalCache;

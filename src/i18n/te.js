@@ -19,6 +19,11 @@ export const te = {
   home_committee: 'మా కమిటీ',
   home_donations_public: 'మొత్తం ఉత్సవ విరాళాలు',
   home_no_festival: 'ఈ సంవత్సరం ఉత్సవ వివరాలు త్వరలో ఇక్కడ ప్రచురించబడతాయి.',
+  countdown_today: 'ఇది ఈరోజే జరుగుతుంది!',
+  countdown_live: 'ఉత్సవం ప్రస్తుతం జరుగుతోంది!',
+  countdown_over: 'వచ్చే సంవత్సరం కలుద్దాం 🙏',
+  countdown_days_one: 'ఇంకా 1 రోజు',
+  countdown_days_other: 'ఇంకా {n} రోజులు',
   home_empty: 'స్వాగతం! ఇంకా ఏమీ ప్రచురించలేదు.',
   home_empty_sub: 'కమిటీ చేర్చిన వెంటనే ప్రకటనలు, కార్యక్రమాలు మరియు ఫోటోలు ఇక్కడ కనిపిస్తాయి.',
 

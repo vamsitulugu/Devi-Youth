@@ -10,7 +10,12 @@ function assertReady() {
 }
 
 function up(err) {
-  if (err) throw new Error(err.message || 'Something went wrong.');
+  if (!err) return;
+  const msg = err.message || '';
+  if (/jwt|token/i.test(msg) && /(expired|invalid)/i.test(msg)) {
+    throw new Error('Your session expired — please log in again.');
+  }
+  throw new Error(msg || 'Something went wrong.');
 }
 
 function generateCode() {

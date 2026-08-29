@@ -71,6 +71,7 @@ export default function Receipt() {
   return (
     <div className="receipt-wrap">
       <div className="receipt-card">
+        <div className="receipt-seal">ॐ</div>
         <div className="receipt-om">।। ॐ श्री गणेशाय नमः ।।</div>
         <h1 className="receipt-title">{receipt.festival_name}</h1>
         <div className="receipt-sub">Sarvajanik Ganeshotsav</div>

@@ -1,5 +1,5 @@
 import { useCallback, useState } from 'react';
-import { ArrowLeft, ChevronRight, ImageIcon } from 'lucide-react';
+import { ChevronRight, ImageIcon } from 'lucide-react';
 import { useLanguage } from '../i18n/LanguageContext';
 import { useAsyncData } from '../hooks/useAsyncData';
 import { getGalleryYears, getGalleryAlbums, getAlbumPhotos } from '../services/api';
@@ -90,15 +90,8 @@ function AlbumView({ album, lang, t, onBack }) {
 
   return (
     <>
-      <Header title={album.album[lang]} />
+      <Header title={album.album[lang]} showBack onBack={onBack} />
       <div className="page">
-        <button
-          onClick={onBack}
-          style={{ display: 'flex', alignItems: 'center', gap: 6, alignSelf: 'flex-start', fontWeight: 600, color: 'var(--color-vermillion)' }}
-        >
-          <ArrowLeft size={16} /> {t('gallery_all_albums')}
-        </button>
-
         {loading && <PageSkeleton rows={2} />}
         {!loading && error && <PageError onRetry={reload} />}
         {!loading && !error && (!photos || photos.length === 0) && (

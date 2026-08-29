@@ -116,6 +116,21 @@ export default function Settings() {
     }
   }
 
+  const [pendingRoleChange, setPendingRoleChange] = useState(null); // { profile, role }
+
+  function requestRoleChange(targetProfile, role) {
+    if (targetProfile.role === role) return;
+    // Guard against the one mistake that's genuinely hard to undo:
+    // demoting the only admin locks everyone (including you) out of
+    // Settings, since only an admin can promote anyone back.
+    const otherAdmins = profiles.filter((p) => p.role === 'admin' && p.id !== targetProfile.id);
+    if (targetProfile.role === 'admin' && role !== 'admin' && otherAdmins.length === 0) {
+      toast('This is the only admin account — promote someone else to admin first.', 'error');
+      return;
+    }
+    setPendingRoleChange({ profile: targetProfile, role });
+  }
+
   async function handleRoleChange(profile, role) {
     try {
       await updateProfileRole(profile.id, role);
@@ -123,6 +138,8 @@ export default function Settings() {
       toast(`${profile.full_name || 'User'} is now ${role}`);
     } catch (err) {
       toast(err.message, 'error');
+    } finally {
+      setPendingRoleChange(null);
     }
   }
 
@@ -182,7 +199,11 @@ export default function Settings() {
 
   async function handleCreateInvite(e) {
     e.preventDefault();
-    if (!invitePhone.trim()) return;
+    const digits = invitePhone.replace(/[^\d]/g, '');
+    if (digits.length < 10) {
+      toast('Enter a full phone number with country code (at least 10 digits).', 'error');
+      return;
+    }
     setCreatingInvite(true);
     try {
       const invite = await createInviteCode(invitePhone.trim(), inviteRole);
@@ -197,13 +218,17 @@ export default function Settings() {
     }
   }
 
-  async function handleRevokeInvite(id) {
+  const [toRevoke, setToRevoke] = useState(null);
+  async function handleRevokeInvite() {
+    const id = toRevoke.id;
     try {
       await revokeInviteCode(id);
       setInvites((list) => list.filter((i) => i.id !== id));
       toast('Invite code revoked');
     } catch (err) {
       toast(err.message, 'error');
+    } finally {
+      setToRevoke(null);
     }
   }
 
@@ -289,7 +314,13 @@ export default function Settings() {
 
         <div>
           <div className="section-title"><h2>My Profile</h2></div>
-          <div className="card card-pad" style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 10, flexWrap: 'wrap' }}>
+          <div
+            className="card card-pad"
+            style={{
+              display: 'flex', alignItems: 'center', gap: 12, marginBottom: profile?.full_name ? 10 : 4, flexWrap: 'wrap',
+              ...(!profile?.full_name && { borderColor: 'var(--color-vermillion)' }),
+            }}
+          >
             <div style={{ flex: 1, minWidth: 160 }}>
               <Input
                 value={myName}
@@ -302,6 +333,11 @@ export default function Settings() {
             </div>
             <span className="chip">{profile?.role || 'villager'}</span>
           </div>
+          {!profile?.full_name && (
+            <p style={{ fontSize: 'var(--fs-xs)', color: 'var(--color-vermillion)', marginBottom: 10 }}>
+              Add your name so the rest of the committee can tell it's you — it shows as "Unnamed User" to admins until you do.
+            </p>
+          )}
         </div>
 
         {isAdmin && (
@@ -311,7 +347,14 @@ export default function Settings() {
               Pick a role, send the code over WhatsApp — no email, no server secrets. They set their own name, email &amp; password when they join.
             </p>
             <form className="card card-pad" onSubmit={handleCreateInvite} style={{ display: 'flex', gap: 10, marginBottom: 10, flexWrap: 'wrap', alignItems: 'flex-end' }}>
-              <Field label="Phone Number" hint="With country code, e.g. +91…" >
+              <Field
+                label="Phone Number"
+                hint={
+                  invitePhone && invitePhone.replace(/[^\d]/g, '').length < 10
+                    ? 'Looks too short — include the country code.'
+                    : 'With country code, e.g. +91…'
+                }
+              >
                 <Input required value={invitePhone} onChange={(e) => setInvitePhone(e.target.value)} placeholder="+91 98765 43210" style={{ minWidth: 180 }} />
               </Field>
               <Field label="Role">
@@ -344,7 +387,7 @@ export default function Settings() {
                 {!inv.used && (
                   <>
                     <button type="button" className="icon-btn" onClick={() => handleCopyInviteLink(inv)} aria-label="Copy WhatsApp link"><Copy size={16} /></button>
-                    <button type="button" className="icon-btn" onClick={() => handleRevokeInvite(inv.id)} aria-label="Revoke invite"><Trash2 size={16} color="var(--color-danger)" /></button>
+                    <button type="button" className="icon-btn" onClick={() => setToRevoke(inv)} aria-label="Revoke invite"><Trash2 size={16} color="var(--color-danger)" /></button>
                   </>
                 )}
               </div>
@@ -366,7 +409,7 @@ export default function Settings() {
                   <div className="title">{p.full_name || 'Unnamed User'}</div>
                   <div className="meta">{p.phone || '—'}</div>
                 </div>
-                <Select value={p.role} onChange={(e) => handleRoleChange(p, e.target.value)} style={{ width: 130 }}>
+                <Select value={p.role} onChange={(e) => requestRoleChange(p, e.target.value)} style={{ width: 130 }}>
                   <option value="villager">Villager</option>
                   <option value="committee">Committee</option>
                   <option value="admin">Admin</option>
@@ -386,6 +429,23 @@ export default function Settings() {
         message="All its announcements, events, donations, expenses, and photos will be permanently deleted."
         onConfirm={handleDeleteFestival}
         onCancel={() => setToDelete(null)}
+      />
+      <ConfirmDialog
+        open={!!pendingRoleChange}
+        danger={false}
+        title="Change this person's role?"
+        message={pendingRoleChange ? `${pendingRoleChange.profile.full_name || 'This user'} will become ${pendingRoleChange.role} and their access will change immediately.` : ''}
+        confirmLabel="Change Role"
+        onConfirm={() => handleRoleChange(pendingRoleChange.profile, pendingRoleChange.role)}
+        onCancel={() => setPendingRoleChange(null)}
+      />
+      <ConfirmDialog
+        open={!!toRevoke}
+        title="Revoke this invite code?"
+        message={toRevoke ? `${toRevoke.code} for ${toRevoke.phone} will stop working. You can send a new one anytime.` : ''}
+        confirmLabel="Revoke"
+        onConfirm={handleRevokeInvite}
+        onCancel={() => setToRevoke(null)}
       />
     </>
   );

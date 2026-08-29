@@ -1,7 +1,9 @@
+import { useEffect, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { ChevronLeft, LayoutDashboard, Megaphone, Wallet, Images, Settings, LogOut } from 'lucide-react';
 import { useAuth } from '../../auth/AuthContext';
 import { useLanguage } from '../../i18n/LanguageContext';
+import { supabase, isSupabaseConfigured } from '../../lib/supabaseClient';
 import Toranam from '../Toranam';
 
 function useNavItems() {
@@ -60,9 +62,45 @@ export function AdminHeader({ title, showBack = false }) {
   );
 }
 
+// A small red dot on the Settings tab so an admin notices a pending
+// invite without having to open Settings first. Live-updates the same
+// way Settings itself does, via Supabase Realtime on invite_codes.
+function usePendingInviteCount(isAdmin) {
+  const [count, setCount] = useState(0);
+
+  useEffect(() => {
+    if (!isSupabaseConfigured || !isAdmin) {
+      setCount(0);
+      return;
+    }
+    let cancelled = false;
+    async function load() {
+      const { count: c } = await supabase
+        .from('invite_codes')
+        .select('id', { count: 'exact', head: true })
+        .eq('used', false)
+        .gt('expires_at', new Date().toISOString());
+      if (!cancelled) setCount(c || 0);
+    }
+    load();
+    const channel = supabase
+      .channel('admin-nav-pending-invites')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'invite_codes' }, load)
+      .subscribe();
+    return () => {
+      cancelled = true;
+      supabase.removeChannel(channel);
+    };
+  }, [isAdmin]);
+
+  return count;
+}
+
 export default function AdminLayout({ children }) {
   const location = useLocation();
   const navItems = useNavItems();
+  const { isAdmin } = useAuth();
+  const pendingInvites = usePendingInviteCount(isAdmin);
 
   return (
     <div className="app-shell">
@@ -72,9 +110,21 @@ export default function AdminLayout({ children }) {
       <nav className="bottom-nav">
         {navItems.map(({ to, icon: Icon, label, exact }) => {
           const active = exact ? location.pathname === to : location.pathname.startsWith(to);
+          const showDot = to === '/admin/settings' && pendingInvites > 0;
           return (
             <Link key={to} to={to} className={`nav-item ${active ? 'active' : ''}`}>
-              <Icon size={20} />
+              <span style={{ position: 'relative', display: 'inline-flex' }}>
+                <Icon size={20} />
+                {showDot && (
+                  <span
+                    aria-label={`${pendingInvites} pending invite${pendingInvites === 1 ? '' : 's'}`}
+                    style={{
+                      position: 'absolute', top: -2, right: -4, width: 8, height: 8, borderRadius: '50%',
+                      background: 'var(--color-vermillion)', border: '1.5px solid var(--color-surface)',
+                    }}
+                  />
+                )}
+              </span>
               <span className="nav-label">{label}</span>
             </Link>
           );

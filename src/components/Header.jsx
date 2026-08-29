@@ -3,7 +3,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { useLanguage } from '../i18n/LanguageContext';
 import Toranam from './Toranam';
 
-export default function Header({ title, showBack = false }) {
+export default function Header({ title, showBack = false, onBack }) {
   const navigate = useNavigate();
   const { lang, setLang } = useLanguage();
 
@@ -11,7 +11,7 @@ export default function Header({ title, showBack = false }) {
     <header className="app-header">
       <div className="app-header-row">
         {showBack ? (
-          <button className="back-btn" onClick={() => navigate(-1)} aria-label="Go back">
+          <button className="back-btn" onClick={onBack || (() => navigate(-1))} aria-label="Go back">
             <ChevronLeft size={22} />
           </button>
         ) : (

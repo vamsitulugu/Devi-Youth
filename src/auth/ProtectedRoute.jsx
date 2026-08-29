@@ -5,7 +5,7 @@ import { isSupabaseConfigured } from '../lib/supabaseClient';
 // requireAdmin: true  -> admin only (Committee management, Users/settings, deletes)
 // requireAdmin: false -> committee or admin
 export default function ProtectedRoute({ children, requireAdmin = false }) {
-  const { user, loading, verifyingRole, isAdmin, isCommitteeOrAdmin } = useAuth();
+  const { user, loading, verifyingRole, isAdmin, isCommitteeOrAdmin, sessionExpired, clearSessionExpired } = useAuth();
   const location = useLocation();
 
   if (!isSupabaseConfigured) {
@@ -27,6 +27,16 @@ export default function ProtectedRoute({ children, requireAdmin = false }) {
   }
 
   if (!user) {
+    if (sessionExpired) {
+      clearSessionExpired();
+      return (
+        <Navigate
+          to="/admin/login"
+          replace
+          state={{ from: location, sessionExpiredMessage: "You were signed out — please log in again." }}
+        />
+      );
+    }
     return <Navigate to="/admin/login" replace state={{ from: location }} />;
   }
 

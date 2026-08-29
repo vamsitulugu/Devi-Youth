@@ -9,6 +9,8 @@ export const festival = {
   name: { en: 'Ganesh Chaturthi', te: 'గణేష్ చతుర్థి' },
   village: { en: 'Our Village', te: 'మన గ్రామం' },
   dates: { en: '14 Sep – 24 Sep 2026', te: 'సెప్టెంబర్ 14 – 24, 2026' },
+  startDate: '2026-09-14',
+  endDate: '2026-09-24',
   publicDonationTotal: '₹8,50,000',
 };
 

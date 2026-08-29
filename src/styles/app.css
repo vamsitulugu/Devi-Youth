@@ -6,7 +6,9 @@
   max-width: 520px;
   margin: 0 auto;
   min-height: 100%;
-  background: var(--color-bg);
+  background:
+    radial-gradient(circle, rgba(168,121,31,0.09) 1.5px, transparent 1.6px) 0 0 / 26px 26px,
+    var(--color-bg);
   position: relative;
   padding-bottom: calc(var(--nav-height) + var(--space-4) + env(safe-area-inset-bottom, 0px));
 }
@@ -18,7 +20,9 @@
   z-index: 20;
   display: flex;
   flex-direction: column;
-  background: linear-gradient(180deg, var(--color-vermillion) 0%, var(--color-vermillion-dark) 100%);
+  background:
+    radial-gradient(circle, rgba(255,255,255,0.10) 1.5px, transparent 1.6px) 0 0 / 20px 20px,
+    linear-gradient(180deg, var(--color-vermillion) 0%, var(--color-vermillion-dark) 100%);
   color: #fff;
   overflow: hidden;
 }
@@ -104,7 +108,9 @@
   align-items: center;
   justify-content: center;
   padding: var(--space-5);
-  background: var(--color-bg);
+  background:
+    radial-gradient(circle, rgba(168,121,31,0.09) 1.5px, transparent 1.6px) 0 0 / 26px 26px,
+    var(--color-bg);
 }
 .auth-card-wrap {
   width: 100%;
@@ -119,12 +125,28 @@
   display: flex;
   flex-direction: column;
   gap: var(--space-5);
-  animation: fadeUp 0.35s ease both;
 }
 
 @keyframes fadeUp {
   from { opacity: 0; transform: translateY(8px); }
   to { opacity: 1; transform: translateY(0); }
+}
+
+/* Sections cascade in one after another instead of the whole page
+   popping in as one flat block — small touch, makes every screen feel
+   considered rather than just "loaded". */
+.page > * {
+  animation: fadeUp 0.4s ease both;
+}
+.page > *:nth-child(1) { animation-delay: 0s; }
+.page > *:nth-child(2) { animation-delay: 0.05s; }
+.page > *:nth-child(3) { animation-delay: 0.1s; }
+.page > *:nth-child(4) { animation-delay: 0.15s; }
+.page > *:nth-child(5) { animation-delay: 0.2s; }
+.page > *:nth-child(n+6) { animation-delay: 0.24s; }
+
+@media (prefers-reduced-motion: reduce) {
+  .page > * { animation: none; }
 }
 
 .section-title {
@@ -135,6 +157,19 @@
 }
 .section-title h2 {
   font-size: var(--fs-lg);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.section-title h2::before {
+  content: "";
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  flex-shrink: 0;
+  background: var(--color-marigold);
+  transform: rotate(45deg);
+  border-radius: 2px;
 }
 .section-title .see-all {
   font-size: var(--fs-sm);
@@ -180,6 +215,7 @@
   height: 3px;
   border-radius: var(--radius-pill);
   background: var(--color-marigold);
+  box-shadow: 0 0 8px rgba(240,148,15,0.7);
 }
 .nav-item .nav-label {
   max-width: 62px;
@@ -219,6 +255,20 @@
   border-radius: var(--radius-md);
   box-shadow: var(--shadow-card);
   overflow: hidden;
+  transition: transform 0.12s ease, box-shadow 0.12s ease;
+}
+
+/* Tap feedback on every card that acts as a link/button — a link or
+   button element wrapping .card, or .card itself when clickable — so
+   tapping anything anywhere in the app gives the same immediate,
+   tactile "yes, that registered" feedback. */
+a.card:active,
+button.card:active,
+.card[role="button"]:active,
+a > .card:active,
+button > .card:active {
+  transform: scale(0.98);
+  box-shadow: 0 2px 8px rgba(56, 34, 15, 0.10);
 }
 
 .card-pad { padding: var(--space-4); }
@@ -246,6 +296,17 @@
   overflow: hidden;
   box-shadow: var(--shadow-pop);
 }
+.hero::before {
+  /* Subtle repeating mandala-dot motif, temple-brass on vermillion —
+     decorative texture only, never touches contrast of the text above it. */
+  content: "";
+  position: absolute;
+  inset: 0;
+  opacity: 0.10;
+  background-image: radial-gradient(circle, #fff 1.5px, transparent 1.6px);
+  background-size: 18px 18px;
+  pointer-events: none;
+}
 .hero::after {
   content: "";
   position: absolute;
@@ -262,17 +323,42 @@
   letter-spacing: 1.4px;
   text-transform: uppercase;
   color: var(--color-turmeric);
+  position: relative;
 }
 .hero h1 {
   color: #fff;
   font-size: var(--fs-xxl);
   margin-top: var(--space-1);
   line-height: 1.1;
+  position: relative;
 }
 .hero .dates {
   margin-top: var(--space-2);
   font-size: var(--fs-sm);
   color: rgba(255,255,255,0.88);
+  position: relative;
+}
+.hero-countdown {
+  display: inline-flex;
+  align-items: center;
+  margin-top: var(--space-3);
+  padding: 7px 14px;
+  border-radius: var(--radius-pill);
+  background: rgba(255,255,255,0.16);
+  border: 1px solid rgba(255,255,255,0.3);
+  backdrop-filter: blur(2px);
+  font-size: var(--fs-sm);
+  font-weight: 700;
+  color: var(--color-turmeric);
+  position: relative;
+  animation: pulseGlow 2.4s ease-in-out infinite;
+}
+@keyframes pulseGlow {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(246,185,59,0.35); }
+  50% { box-shadow: 0 0 0 6px rgba(246,185,59,0); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .hero-countdown { animation: none; }
 }
 .hero .modak-icon {
   position: absolute;
@@ -291,9 +377,15 @@
   border-radius: var(--radius-pill);
   font-weight: 600;
   font-size: var(--fs-sm);
+  transition: transform 0.12s ease;
 }
-.btn-primary { background: var(--color-marigold-text); color: #fff; }
-.btn-primary:active { background: #8a4d07; }
+.btn:active { transform: scale(0.97); }
+.btn-primary {
+  background: linear-gradient(180deg, #C97A12 0%, var(--color-marigold-text) 100%);
+  color: #fff;
+  box-shadow: 0 2px 8px rgba(168,95,9,0.35);
+}
+.btn-primary:active { background: #8a4d07; box-shadow: none; }
 .btn-outline { background: transparent; border: 1.5px solid var(--color-vermillion); color: var(--color-vermillion); }
 .btn-leaf { background: var(--color-leaf); color: #fff; }
 .btn-block { width: 100%; }
@@ -370,6 +462,15 @@
 /* ---------- Prize / laddu feature card ---------- */
 .feature-card {
   padding: 0;
+  position: relative;
+}
+.feature-card::before {
+  content: "";
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 4px;
+  background: linear-gradient(90deg, var(--color-vermillion), var(--color-marigold), var(--color-leaf));
+  z-index: 1;
 }
 .feature-card img { width: 100%; height: 180px; object-fit: cover; }
 .feature-card .content { padding: var(--space-4); }
@@ -407,7 +508,8 @@
   aspect-ratio: 1;
   object-fit: cover;
   background: var(--color-surface-alt);
-  border-radius: 4px;
+  border-radius: var(--radius-sm);
+  box-shadow: 0 0 0 1px var(--color-border) inset;
 }
 .year-pills { display: flex; gap: var(--space-2); overflow-x: auto; padding-bottom: 2px; }
 .year-pill {
@@ -619,7 +721,11 @@
   top: 6px;
   bottom: 6px;
   width: 2px;
-  background: var(--color-border);
+  background: repeating-linear-gradient(
+    to bottom,
+    var(--color-border) 0, var(--color-border) 4px,
+    transparent 4px, transparent 8px
+  );
 }
 .timeline-item { position: relative; margin-bottom: var(--space-5); }
 .timeline-item::before {
@@ -633,6 +739,10 @@
   background: var(--color-marigold);
   border: 2px solid #fff;
   box-shadow: 0 0 0 2px var(--color-marigold);
+}
+.timeline-item:nth-child(even)::before {
+  background: var(--color-leaf);
+  box-shadow: 0 0 0 2px var(--color-leaf);
 }
 .timeline-item h3 { color: var(--color-vermillion); font-size: var(--fs-md); }
 
@@ -671,7 +781,16 @@
   padding: var(--space-6) var(--space-4);
   color: var(--color-ink-soft);
 }
-.empty-state .icon { color: var(--color-border); margin-bottom: var(--space-2); }
+.empty-state .icon {
+  color: var(--color-marigold-text);
+  margin-bottom: var(--space-3);
+  width: 56px;
+  height: 56px;
+  padding: 14px;
+  border-radius: 50%;
+  background: radial-gradient(circle, var(--color-surface-alt) 55%, transparent 100%);
+  box-shadow: 0 0 0 1px var(--color-border) inset;
+}
 .empty-state .title { font-weight: 700; color: var(--color-ink); }
 .empty-state .subtitle { font-size: var(--fs-xs); color: var(--color-ink-soft); margin-top: 4px; }
 
@@ -683,7 +802,9 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  background: radial-gradient(circle at 50% 30%, var(--color-vermillion) 0%, var(--color-vermillion-dark) 75%);
+  background:
+    radial-gradient(circle, rgba(255,255,255,0.12) 1.5px, transparent 1.6px) 0 0 / 22px 22px,
+    radial-gradient(circle at 50% 30%, var(--color-vermillion) 0%, var(--color-vermillion-dark) 75%);
   color: #fff;
   gap: var(--space-3);
 }
@@ -692,6 +813,7 @@
   border-radius: 50%;
   background: rgba(255,255,255,0.14);
   display: flex; align-items: center; justify-content: center;
+  box-shadow: 0 0 0 1px rgba(255,255,255,0.25), 0 0 40px rgba(246,185,59,0.35);
   animation: pulse 1.8s ease-in-out infinite;
 }
 @keyframes pulse {
@@ -814,14 +936,46 @@
 @media (min-width: 480px) {
   .hero h1 { font-size: 2.4rem; }
 }
-/* ---------- Public donation receipt (/r/:id) ---------- */
+/* ---------- Public donation total (Home) ---------- */
+.donation-total-card {
+  text-align: center;
+  padding: var(--space-5) var(--space-4);
+  border-radius: var(--radius-lg);
+  background:
+    radial-gradient(circle at 50% 0%, rgba(246,185,59,0.25), transparent 65%),
+    var(--color-surface-alt);
+  box-shadow: var(--shadow-card), 0 0 0 1px rgba(240,148,15,0.18) inset;
+  position: relative;
+  overflow: hidden;
+}
+.donation-total-card::before {
+  content: "";
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 4px;
+  background: linear-gradient(90deg, var(--color-vermillion), var(--color-marigold), var(--color-leaf));
+}
+.donation-total-card .label {
+  font-size: var(--fs-sm);
+  color: var(--color-ink-soft);
+  margin-top: var(--space-2);
+}
+.donation-total-card .amount {
+  font-family: var(--font-display);
+  font-size: var(--fs-xxl);
+  font-weight: 700;
+  color: var(--color-vermillion-dark);
+  margin-top: 2px;
+}
 .receipt-wrap {
   min-height: 100vh;
   display: flex;
   align-items: flex-start;
   justify-content: center;
   padding: var(--space-5) var(--space-3);
-  background: #EFE6D2;
+  background:
+    radial-gradient(circle, rgba(168,121,31,0.10) 1.5px, transparent 1.6px) 0 0 / 24px 24px,
+    #EFE6D2;
 }
 .receipt-card {
   width: 100%;
@@ -829,37 +983,84 @@
   background: #FBF6E9;
   border: 1px solid var(--color-border);
   border-radius: var(--radius-md);
-  padding: var(--space-5) var(--space-4);
+  padding: var(--space-6) var(--space-4) var(--space-5);
   text-align: center;
-  box-shadow: 0 10px 30px rgba(56, 34, 15, 0.08);
+  box-shadow: 0 10px 30px rgba(56, 34, 15, 0.12);
+  position: relative;
+  overflow: hidden;
+}
+.receipt-card::before {
+  /* Tricolor seal strip across the top — same festival colors used
+     everywhere else in the app (vermillion / marigold / leaf), so the
+     one thing people actually screenshot and keep still reads as part
+     of the same app, not a bolted-on invoice template. */
+  content: "";
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 6px;
+  background: linear-gradient(90deg, var(--color-vermillion), var(--color-marigold), var(--color-leaf));
+}
+.receipt-card::after {
+  /* Faint corner mandala watermark — decorative only, sits well behind
+     the text so it never competes with the numbers that actually matter. */
+  content: "";
+  position: absolute;
+  right: -40px;
+  bottom: -40px;
+  width: 180px;
+  height: 180px;
+  border-radius: 50%;
+  border: 16px solid rgba(194,43,31,0.05);
+  pointer-events: none;
 }
 .receipt-skeleton { min-height: 420px; }
 .receipt-om {
   color: var(--color-vermillion-dark);
   font-size: var(--fs-sm);
   margin-bottom: var(--space-2);
+  position: relative;
+}
+.receipt-seal {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  color: var(--color-vermillion-dark);
+  font-size: 1.1rem;
+  background: radial-gradient(circle, rgba(240,148,15,0.16) 55%, transparent 100%);
+  box-shadow: 0 0 0 1px rgba(194,43,31,0.15);
+  margin-bottom: var(--space-2);
+  position: relative;
 }
 .receipt-title {
-  font-family: var(--font-heading, var(--font-body));
+  font-family: var(--font-display);
+  color: var(--color-vermillion-dark);
   font-size: var(--fs-xl);
   margin: 0 0 2px;
+  position: relative;
 }
 .receipt-sub {
   color: var(--color-ink-soft);
   font-style: italic;
   font-size: var(--fs-sm);
   margin-bottom: var(--space-3);
+  position: relative;
 }
 .receipt-badge {
   display: inline-block;
-  border: 1px solid var(--color-border);
+  border: 1px solid var(--color-marigold-text);
+  color: var(--color-marigold-text);
+  background: rgba(240,148,15,0.08);
   border-radius: var(--radius-pill);
   padding: 4px 16px;
   font-size: var(--fs-xs);
+  font-weight: 700;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: var(--color-ink-soft);
   margin-bottom: var(--space-4);
+  position: relative;
 }
 .receipt-row {
   display: flex;
@@ -868,6 +1069,7 @@
   border-bottom: 1px dashed var(--color-border);
   padding: var(--space-3) 0;
   margin-bottom: var(--space-4);
+  position: relative;
 }
 .receipt-label {
   font-size: var(--fs-xs);
@@ -876,19 +1078,20 @@
   color: var(--color-ink-soft);
 }
 .receipt-value { font-weight: 600; }
-.receipt-center { margin-bottom: var(--space-5); }
+.receipt-center { margin-bottom: var(--space-5); position: relative; }
 .receipt-donor {
-  font-family: var(--font-heading, var(--font-body));
+  font-family: var(--font-display);
   font-size: var(--fs-lg);
   font-weight: 700;
   margin: 6px 0;
 }
 .receipt-amount {
-  font-family: var(--font-heading, var(--font-body));
+  font-family: var(--font-display);
   color: var(--color-vermillion-dark);
   font-size: 2.4rem;
   font-weight: 700;
   margin-top: 4px;
+  text-shadow: 0 2px 0 rgba(255,255,255,0.6);
 }
 .receipt-words {
   font-style: italic;
@@ -901,4 +1104,5 @@
   color: var(--color-ink-soft);
   font-size: var(--fs-xs);
   font-style: italic;
+  position: relative;
 }

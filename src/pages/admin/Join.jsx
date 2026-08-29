@@ -99,7 +99,9 @@ export default function Join() {
         <div style={{ textAlign: 'center', marginBottom: 4 }}>
           <div
             style={{
-              width: 64, height: 64, borderRadius: '50%', background: 'var(--color-vermillion)',
+              width: 64, height: 64, borderRadius: '50%',
+              background: 'linear-gradient(160deg, var(--color-vermillion) 0%, var(--color-vermillion-dark) 100%)',
+              boxShadow: '0 0 0 1px rgba(255,255,255,0.4) inset, 0 0 24px rgba(246,185,59,0.35)',
               display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 12px', color: '#fff',
             }}
           >

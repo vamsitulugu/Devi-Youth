@@ -1,6 +1,6 @@
 import { useCallback, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { CalendarDays, MapPin, ChevronRight, Sparkles } from 'lucide-react';
+import { CalendarDays, MapPin, ChevronRight, Sparkles, Gift } from 'lucide-react';
 import { useLanguage } from '../i18n/LanguageContext';
 import { useAsyncData } from '../hooks/useAsyncData';
 import { getFestival, getAnnouncements, getEvents, getLaddu, getLottery, getCommittee, getLatestPhotos } from '../services/api';
@@ -42,6 +42,26 @@ export default function Home() {
   );
 }
 
+function FestivalCountdown({ festival, t }) {
+  if (!festival.startDate || !festival.endDate) return null;
+  const startOfDay = (d) => { const x = new Date(d); x.setHours(0, 0, 0, 0); return x; };
+  const today = startOfDay(new Date());
+  const start = startOfDay(festival.startDate);
+  const end = startOfDay(festival.endDate);
+
+  let label;
+  if (today > end) {
+    label = t('countdown_over');
+  } else if (today >= start) {
+    label = today.getTime() === start.getTime() ? t('countdown_today') : t('countdown_live');
+  } else {
+    const days = Math.round((start - today) / 86400000);
+    label = (days === 1 ? t('countdown_days_one') : t('countdown_days_other')).replace('{n}', days);
+  }
+
+  return <div className="hero-countdown">{label}</div>;
+}
+
 function HomeContent({ data, t, lang }) {
   const { festival, announcements, events, laddu, lottery, committee, latestPhotos } = data;
   const latestAnnouncement = announcements[0];
@@ -75,6 +95,7 @@ function HomeContent({ data, t, lang }) {
               <CalendarDays size={14} style={{ verticalAlign: -2, marginRight: 4 }} />
               {festival.dates[lang]}
             </div>
+            <FestivalCountdown festival={festival} t={t} />
           </>
         ) : (
           <h1 style={{ fontSize: 'var(--fs-lg)' }}>{t('home_no_festival')}</h1>
@@ -224,11 +245,10 @@ function HomeContent({ data, t, lang }) {
       )}
 
       {festival.publicDonationTotal && (
-        <section className="card card-pad" style={{ textAlign: 'center', background: 'var(--color-surface-alt)' }}>
-          <div style={{ fontSize: 'var(--fs-sm)', color: 'var(--color-ink-soft)' }}>{t('home_donations_public')}</div>
-          <div style={{ fontSize: 'var(--fs-xl)', fontWeight: 700, color: 'var(--color-vermillion-dark)', fontFamily: 'var(--font-display)' }}>
-            {festival.publicDonationTotal}
-          </div>
+        <section className="donation-total-card">
+          <Gift size={20} color="var(--color-marigold-text)" />
+          <div className="label">{t('home_donations_public')}</div>
+          <div className="amount">{festival.publicDonationTotal}</div>
         </section>
       )}
 

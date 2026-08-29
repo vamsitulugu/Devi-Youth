@@ -12,7 +12,7 @@ export default function Login() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [role, setRole] = useState('committee');
-  const [error, setError] = useState('');
+  const [error, setError] = useState(location.state?.sessionExpiredMessage || '');
   const [submitting, setSubmitting] = useState(false);
 
   if (!loading && !verifyingRole && user) {
@@ -41,7 +41,8 @@ export default function Login() {
               width: 64,
               height: 64,
               borderRadius: '50%',
-              background: 'var(--color-vermillion)',
+              background: 'linear-gradient(160deg, var(--color-vermillion) 0%, var(--color-vermillion-dark) 100%)',
+              boxShadow: '0 0 0 1px rgba(255,255,255,0.4) inset, 0 0 24px rgba(246,185,59,0.35)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
