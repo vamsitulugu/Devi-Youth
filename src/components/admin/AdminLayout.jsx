@@ -26,15 +26,15 @@ export function AdminHeader({ title, showBack = false }) {
     <>
       <header className="app-header">
         <div className="app-header-row">
-          {showBack ? (
+          {showBack && (
             <button className="back-btn" onClick={() => navigate(-1)} aria-label="Go back">
               <ChevronLeft size={22} />
             </button>
-          ) : (
-            <Link to="/admin" className="brand" aria-label="Admin dashboard">
-              <img src="/icon-192.png" alt="" className="brand-logo" />
-            </Link>
           )}
+          <Link to="/admin" className="brand" aria-label="Admin dashboard">
+            <img src="/icon-192.png" alt="" className="brand-logo" />
+            <span className="brand-name">{t('app_name')}</span>
+          </Link>
           <div className="app-header-actions">
             <button
               className="lang-toggle"

@@ -1,0 +1,157 @@
+diff --git a/src/components/Header.jsx b/src/components/Header.jsx
+index 0f2cfce..e436859 100644
+--- a/src/components/Header.jsx
++++ b/src/components/Header.jsx
+@@ -5,32 +5,34 @@ import Toranam from './Toranam';
+ 
+ export default function Header({ title, showBack = false, onBack }) {
+   const navigate = useNavigate();
+-  const { lang, setLang } = useLanguage();
++  const { t, lang, setLang } = useLanguage();
+ 
+   return (
+-    <header className="app-header">
+-      <div className="app-header-row">
+-        {showBack ? (
+-          <button className="back-btn" onClick={onBack || (() => navigate(-1))} aria-label="Go back">
+-            <ChevronLeft size={22} />
+-          </button>
+-        ) : (
++    <>
++      <header className="app-header">
++        <div className="app-header-row">
++          {showBack && (
++            <button className="back-btn" onClick={onBack || (() => navigate(-1))} aria-label="Go back">
++              <ChevronLeft size={22} />
++            </button>
++          )}
+           <Link to="/" className="brand" aria-label="Home">
+             <img src="/icon-192.png" alt="" className="brand-logo" />
++            <span className="brand-name">{t('app_name')}</span>
+           </Link>
+-        )}
+-        <h1 className="title">{title}</h1>
+-        <button
+-          className="lang-toggle"
+-          onClick={() => setLang(lang === 'en' ? 'te' : 'en')}
+-          aria-label="Switch language"
+-        >
+-          <span className={lang === 'en' ? 'active' : ''}>EN</span>
+-          <span className="sep">|</span>
+-          <span className={lang === 'te' ? 'active' : ''}>తెలుగు</span>
+-        </button>
+-      </div>
+-      <Toranam />
+-    </header>
++          <button
++            className="lang-toggle"
++            onClick={() => setLang(lang === 'en' ? 'te' : 'en')}
++            aria-label="Switch language"
++          >
++            <span className={lang === 'en' ? 'active' : ''}>EN</span>
++            <span className="sep">|</span>
++            <span className={lang === 'te' ? 'active' : ''}>తెలుగు</span>
++          </button>
++        </div>
++        <Toranam />
++      </header>
++      {title && <h1 className="page-title-bar">{title}</h1>}
++    </>
+   );
+ }
+\ No newline at end of file
+diff --git a/src/components/admin/AdminLayout.jsx b/src/components/admin/AdminLayout.jsx
+index f6c9757..dc29d39 100644
+--- a/src/components/admin/AdminLayout.jsx
++++ b/src/components/admin/AdminLayout.jsx
+@@ -26,15 +26,15 @@ export function AdminHeader({ title, showBack = false }) {
+     <>
+       <header className="app-header">
+         <div className="app-header-row">
+-          {showBack ? (
++          {showBack && (
+             <button className="back-btn" onClick={() => navigate(-1)} aria-label="Go back">
+               <ChevronLeft size={22} />
+             </button>
+-          ) : (
+-            <Link to="/admin" className="brand" aria-label="Admin dashboard">
+-              <img src="/icon-192.png" alt="" className="brand-logo" />
+-            </Link>
+           )}
++          <Link to="/admin" className="brand" aria-label="Admin dashboard">
++            <img src="/icon-192.png" alt="" className="brand-logo" />
++            <span className="brand-name">{t('app_name')}</span>
++          </Link>
+           <div className="app-header-actions">
+             <button
+               className="lang-toggle"
+diff --git a/src/pages/Home.jsx b/src/pages/Home.jsx
+index 484ff88..d94f8ed 100644
+--- a/src/pages/Home.jsx
++++ b/src/pages/Home.jsx
+@@ -30,7 +30,7 @@ export default function Home() {
+ 
+   return (
+     <>
+-      <Header title={t('app_name')} />
++      <Header />
+       <div className="page">
+         {loading && <PageSkeleton rows={4} />}
+         {!loading && error && <PageError onRetry={reload} />}
+diff --git a/src/styles/app.css b/src/styles/app.css
+index 4fdec10..472a87b 100644
+--- a/src/styles/app.css
++++ b/src/styles/app.css
+@@ -55,7 +55,11 @@
+ .brand {
+   display: flex;
+   align-items: center;
+-  flex-shrink: 0;
++  gap: 8px;
++  flex: 1;
++  min-width: 0;
++  justify-content: center;
++  color: #fff;
+ }
+ .brand-logo {
+   width: 34px;
+@@ -63,19 +67,15 @@
+   border-radius: 50%;
+   box-shadow: 0 0 0 2px rgba(255,255,255,0.55);
+   display: block;
++  flex-shrink: 0;
+ }
+-
+-.app-header .title {
++.brand-name {
+   font-family: var(--font-display);
+   font-size: var(--fs-md);
+   color: #fff;
+-  flex: 1;
+-  min-width: 0;
+-  text-align: center;
+   white-space: nowrap;
+   overflow: hidden;
+   text-overflow: ellipsis;
+-  padding: 0 var(--space-2);
+ }
+ 
+ /* ---------- Page title, moved below the red header bar ---------- */
+@@ -244,7 +244,7 @@
+ 
+ @media (max-width: 360px) {
+   .nav-item .nav-label { font-size: 10px; max-width: 52px; }
+-  .app-header .title { font-size: var(--fs-base); }
++  .brand-name { font-size: var(--fs-base); }
+   .brand-logo { width: 28px; height: 28px; }
+ }
+ 
+@@ -985,7 +985,7 @@ button > .card:active {
+ 
+   .brand-logo { width: 40px; height: 40px; }
+ 
+-  .app-header .title {
++  .brand-name {
+     text-align: left;
+     font-size: var(--fs-lg);
+   }

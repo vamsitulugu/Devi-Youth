@@ -30,7 +30,7 @@ export default function Home() {
 
   return (
     <>
-      <Header title={t('app_name')} />
+      <Header />
       <div className="page">
         {loading && <PageSkeleton rows={4} />}
         {!loading && error && <PageError onRetry={reload} />}
