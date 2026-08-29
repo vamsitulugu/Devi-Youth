@@ -14,7 +14,7 @@ import { PageSkeleton } from '../../components/LoadingStates';
 
 const blankFestival = {
   year: new Date().getFullYear(),
-  name_en: 'Bala Ganesh Puja', name_te: '', name_source_lang: 'en',
+  name_en: 'Sree Bala Ganesh', name_te: '', name_source_lang: 'en',
   village_en: '', village_te: '', village_source_lang: null,
   start_date: '', end_date: '', public_donation_total: '',
 };

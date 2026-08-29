@@ -1,5 +1,5 @@
 -- ============================================================
--- Devi Youth — Bala Ganesh Puja — optional seed data
+-- Devi Youth — Sree Bala Ganesh — optional seed data
 -- Mirrors src/data/sampleData.js so you can see the live-data path
 -- working end to end before real committee data is entered.
 -- Run AFTER 01_schema.sql, 02_policies.sql and 03_storage.sql,

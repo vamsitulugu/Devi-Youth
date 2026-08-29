@@ -1,4 +1,4 @@
-# Devi Youth — Bala Ganesh Puja
+# Devi Youth — Sree Bala Ganesh
 
 Phase 1 (App Foundation + Public UI) of the four-phase build. React + Vite,
 mobile-first, bilingual (English / Telugu), running entirely on sample data

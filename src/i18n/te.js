@@ -1,6 +1,6 @@
 export const te = {
   app_name: 'దేవి యూత్',
-  app_tag: 'బాల గణేష్ పూజ',
+  app_tag: 'శ్రీ బాల గణేష్',
   splash_loading: 'మండపం సిద్ధమవుతోంది…',
 
   nav_home: 'హోమ్',

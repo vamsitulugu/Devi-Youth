@@ -1,5 +1,5 @@
 -- ============================================================
--- Devi Youth — Bala Ganesh Puja — live-sync Settings
+-- Devi Youth — Sree Bala Ganesh — live-sync Settings
 -- Run this AFTER 07 and 08.
 --
 -- The Money Dashboard already updates live because `donations` and
