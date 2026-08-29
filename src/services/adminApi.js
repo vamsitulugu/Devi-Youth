@@ -154,6 +154,21 @@ expensesApi.list = async (festivalId) => {
   return data || [];
 };
 
+// Idempotent add, same pattern as donationsApi.add: payload must carry a
+// `client_id` so a lost response + retry can never double-record an
+// expense. See supabase/11_expense_reliability.sql.
+expensesApi.add = async (payload) => {
+  assertReady();
+  if (!payload.client_id) throw new Error('Missing client_id for expense add.');
+  const { data, error } = await supabase
+    .from('expenses')
+    .upsert(payload, { onConflict: 'client_id' })
+    .select()
+    .single();
+  up(error);
+  return data;
+};
+
 export async function getDonorHistory(donorName) {
   assertReady();
   const { data, error } = await supabase
