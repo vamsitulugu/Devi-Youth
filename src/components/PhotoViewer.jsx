@@ -216,7 +216,12 @@ export default function PhotoViewer({ photos, index, onClose, onIndexChange }) {
         )}
       </div>
 
-      {photo.caption && <div className="photo-viewer-caption">{photo.caption}</div>}
+      {(photo.caption || photo.subtitle) && (
+        <div className="photo-viewer-caption">
+          {photo.caption && <div className="photo-viewer-caption-title">{photo.caption}</div>}
+          {photo.subtitle && <div className="photo-viewer-caption-subtitle">{photo.subtitle}</div>}
+        </div>
+      )}
     </div>
   );
 }

@@ -519,7 +519,10 @@ button > .card:active {
 }
 .member-card {
   text-align: center;
-  padding: var(--space-4) var(--space-3);
+  padding: 0;
+  background: transparent;
+  box-shadow: none;
+  border: none;
 }
 .member-card .avatar {
   width: 72px;
@@ -527,7 +530,7 @@ button > .card:active {
   border-radius: 50%;
   object-fit: cover;
   margin: 0 auto var(--space-2);
-  border: 3px solid var(--color-turmeric);
+  border: 3px solid var(--color-vermillion);
   background: var(--color-surface-alt);
 }
 .member-card .name { font-weight: 700; }
@@ -748,6 +751,8 @@ button > .card:active {
 .photo-viewer-nav.prev { left: var(--space-3); }
 .photo-viewer-nav.next { right: var(--space-3); }
 .photo-viewer-caption { color: #fff; text-align: center; padding: 0 var(--space-4) var(--space-4); font-size: var(--fs-sm); flex-shrink: 0; }
+.photo-viewer-caption-title { font-weight: 700; }
+.photo-viewer-caption-subtitle { color: rgba(255,255,255,0.75); font-size: var(--fs-xs); margin-top: 2px; }
 
 /* ---------- Photo upload dropzone (admin: create album / add photos) ---------- */
 .photo-dropzone {

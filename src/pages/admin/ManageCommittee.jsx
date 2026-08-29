@@ -9,8 +9,9 @@ import { useToast } from '../../components/admin/Toast';
 import { useActiveFestival } from '../../hooks/useActiveFestival';
 import { committeeApi, uploadImage, publicUrl } from '../../services/adminApi';
 import { PageSkeleton, PageError } from '../../components/LoadingStates';
+import PhotoViewer from '../../components/PhotoViewer';
 
-const blank = { name: '', position_en: '', position_te: '', position_source_lang: null, phone: '', sort_order: 0, photo_url: '' };
+const blank = { name: '', position_en: 'Committee Member', position_te: '', position_source_lang: 'en', phone: '', sort_order: 0, photo_url: '' };
 
 export default function ManageCommittee() {
   const toast = useToast();
@@ -23,6 +24,7 @@ export default function ManageCommittee() {
   const [file, setFile] = useState(null);
   const [saving, setSaving] = useState(false);
   const [toDelete, setToDelete] = useState(null);
+  const [viewing, setViewing] = useState(null);
 
   async function reload() {
     if (festivalLoading) return;
@@ -144,7 +146,15 @@ export default function ManageCommittee() {
               className="thumb"
               loading="lazy"
               decoding="async"
-              style={{ width: 48, height: 48, borderRadius: '50%' }}
+              onClick={m.photo_url ? () => setViewing(m) : undefined}
+              style={{
+                width: 48,
+                height: 48,
+                borderRadius: '50%',
+                objectFit: 'cover',
+                border: '2px solid var(--color-vermillion)',
+                cursor: m.photo_url ? 'zoom-in' : undefined,
+              }}
             />
             <div style={{ flex: 1, minWidth: 0 }}>
               <div className="title">{m.name}</div>
@@ -163,6 +173,19 @@ export default function ManageCommittee() {
         onConfirm={handleDelete}
         onCancel={() => setToDelete(null)}
       />
+      {viewing && (
+        <PhotoViewer
+          photos={[{
+            id: viewing.id,
+            src: publicUrl(viewing.photo_url),
+            caption: viewing.name,
+            subtitle: [viewing.position_en || viewing.position_te, viewing.phone].filter(Boolean).join(' · '),
+          }]}
+          index={0}
+          onIndexChange={() => {}}
+          onClose={() => setViewing(null)}
+        />
+      )}
     </>
   );
 }

@@ -230,14 +230,18 @@ function HomeContent({ data, t, lang }) {
           </div>
           <div className="hscroll">
             {committee.slice(0, 4).map((m) => (
-              <div className="card member-card" key={m.id} style={{ width: 130 }}>
+              <div className="member-card" key={m.id} style={{ width: 90 }}>
                 <PhotoTile
                   src={m.photo}
                   className="avatar"
-                  onClick={m.photo ? () => openViewer([{ id: m.id, src: m.photo, caption: m.name }]) : undefined}
+                  onClick={m.photo ? () => openViewer([{
+                    id: m.id,
+                    src: m.photo,
+                    caption: m.name,
+                    subtitle: [m.position[lang], m.phone].filter(Boolean).join(' · '),
+                  }]) : undefined}
                 />
                 <div className="name">{m.name}</div>
-                <div className="position">{m.position[lang]}</div>
               </div>
             ))}
           </div>

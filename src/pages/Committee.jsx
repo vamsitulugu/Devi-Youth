@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { Phone, Users } from 'lucide-react';
+import { Users } from 'lucide-react';
 import { useLanguage } from '../i18n/LanguageContext';
 import { useAsyncData } from '../hooks/useAsyncData';
 import { getCommittee } from '../services/api';
@@ -19,8 +19,13 @@ export default function Committee() {
   const photos = useMemo(
     () => (committee || [])
       .filter((m) => m.photo)
-      .map((m) => ({ id: m.id, src: m.photo, caption: m.name })),
-    [committee]
+      .map((m) => ({
+        id: m.id,
+        src: m.photo,
+        caption: m.name,
+        subtitle: [m.position[lang], m.phone].filter(Boolean).join(' · '),
+      })),
+    [committee, lang]
   );
 
   return (
@@ -37,7 +42,7 @@ export default function Committee() {
             {committee.map((m) => {
               const photoIndex = m.photo ? photos.findIndex((p) => p.id === m.id) : -1;
               return (
-                <div className="card member-card" key={m.id}>
+                <div className="member-card" key={m.id}>
                   <PhotoTile
                     src={m.photo}
                     className="avatar"
@@ -45,12 +50,6 @@ export default function Committee() {
                     onClick={photoIndex >= 0 ? () => setViewerIndex(photoIndex) : undefined}
                   />
                   <div className="name">{m.name}</div>
-                  <div className="position">{m.position[lang]}</div>
-                  {m.phone && (
-                    <a className="btn btn-outline btn-sm" href={`tel:${m.phone}`}>
-                      <Phone size={13} /> {t('contact')}
-                    </a>
-                  )}
                 </div>
               );
             })}
