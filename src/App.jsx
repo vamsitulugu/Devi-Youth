@@ -34,6 +34,7 @@ const ManageLaddu = lazy(() => import('./pages/admin/ManageLaddu'));
 const ManageLottery = lazy(() => import('./pages/admin/ManageLottery'));
 const ManageContacts = lazy(() => import('./pages/admin/ManageContacts'));
 const ManageDonations = lazy(() => import('./pages/admin/ManageDonations'));
+const ManageDeletedDonations = lazy(() => import('./pages/admin/ManageDeletedDonations'));
 const ManageExpenses = lazy(() => import('./pages/admin/ManageExpenses'));
 const ManageGallery = lazy(() => import('./pages/admin/ManageGallery'));
 const Settings = lazy(() => import('./pages/admin/Settings'));
@@ -171,6 +172,14 @@ function AdminRoutes() {
         element={
           <ProtectedRoute>
             <AdminLayout><MoneyHub /></AdminLayout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/admin/money/deleted-donations"
+        element={
+          <ProtectedRoute>
+            <AdminLayout><ManageDeletedDonations /></AdminLayout>
           </ProtectedRoute>
         }
       />

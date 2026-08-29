@@ -142,6 +142,32 @@ export async function getDonorHistory(donorName) {
   return data || [];
 }
 
+// Deleting a donation always requires a reason and the name of whoever is
+// removing it — see supabase/07_donation_deletion.sql. This calls a
+// SECURITY DEFINER function that atomically archives the row into
+// deleted_donations (visible on the Deleted Donations tab) and removes it
+// from the live donations list, rather than a plain table delete.
+export async function deleteDonationWithReason(donationId, reason, deletedByName) {
+  assertReady();
+  const { error } = await supabase.rpc('delete_donation_with_reason', {
+    p_donation_id: donationId,
+    p_reason: reason,
+    p_deleted_by_name: deletedByName,
+  });
+  up(error);
+}
+
+export async function getDeletedDonations(festivalId) {
+  assertReady();
+  const { data, error } = await supabase
+    .from('deleted_donations')
+    .select('*')
+    .eq('festival_id', festivalId)
+    .order('deleted_at', { ascending: false });
+  up(error);
+  return data || [];
+}
+
 // ---------- contacts (not year-scoped) ----------
 export const contactsApi = {
   async list() {

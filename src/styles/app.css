@@ -41,6 +41,13 @@
   flex-shrink: 0;
 }
 
+.app-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
 .brand {
   display: flex;
   align-items: center;
