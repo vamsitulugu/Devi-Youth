@@ -1,0 +1,300 @@
+From 0c4a68bf07cf9848eda5494366ccbabcaca13e02 Mon Sep 17 00:00:00 2001
+From: Vamsi <vamsi@example.com>
+Date: Sat, 29 Aug 2026 17:10:37 +0000
+Subject: [PATCH] UI: compact expandable donation rows, smaller money-page
+ action buttons, page title moved below header
+
+---
+ src/components/admin/AdminLayout.jsx | 72 +++++++++++++-------------
+ src/pages/admin/ManageDonations.jsx  | 76 +++++++++++++++++-----------
+ src/styles/app.css                   | 73 ++++++++++++++++++++++++++
+ 3 files changed, 157 insertions(+), 64 deletions(-)
+
+diff --git a/src/components/admin/AdminLayout.jsx b/src/components/admin/AdminLayout.jsx
+index 142ef39..f6c9757 100644
+--- a/src/components/admin/AdminLayout.jsx
++++ b/src/components/admin/AdminLayout.jsx
+@@ -23,42 +23,44 @@ export function AdminHeader({ title, showBack = false }) {
+   const { lang, setLang, t } = useLanguage();
+ 
+   return (
+-    <header className="app-header">
+-      <div className="app-header-row">
+-        {showBack ? (
+-          <button className="back-btn" onClick={() => navigate(-1)} aria-label="Go back">
+-            <ChevronLeft size={22} />
+-          </button>
+-        ) : (
+-          <Link to="/admin" className="brand" aria-label="Admin dashboard">
+-            <img src="/icon-192.png" alt="" className="brand-logo" />
+-          </Link>
+-        )}
+-        <h1 className="title">{title}</h1>
+-        <div className="app-header-actions">
+-          <button
+-            className="lang-toggle"
+-            onClick={() => setLang(lang === 'en' ? 'te' : 'en')}
+-            aria-label={t('admin_switch_language')}
+-          >
+-            <span className={lang === 'en' ? 'active' : ''}>EN</span>
+-            <span className="sep">|</span>
+-            <span className={lang === 'te' ? 'active' : ''}>తె</span>
+-          </button>
+-          <button
+-            className="lang-toggle"
+-            onClick={async () => {
+-              await signOut();
+-              navigate('/admin/login');
+-            }}
+-            aria-label={t('admin_logout')}
+-          >
+-            <LogOut size={13} /> {t('admin_logout')}
+-          </button>
++    <>
++      <header className="app-header">
++        <div className="app-header-row">
++          {showBack ? (
++            <button className="back-btn" onClick={() => navigate(-1)} aria-label="Go back">
++              <ChevronLeft size={22} />
++            </button>
++          ) : (
++            <Link to="/admin" className="brand" aria-label="Admin dashboard">
++              <img src="/icon-192.png" alt="" className="brand-logo" />
++            </Link>
++          )}
++          <div className="app-header-actions">
++            <button
++              className="lang-toggle"
++              onClick={() => setLang(lang === 'en' ? 'te' : 'en')}
++              aria-label={t('admin_switch_language')}
++            >
++              <span className={lang === 'en' ? 'active' : ''}>EN</span>
++              <span className="sep">|</span>
++              <span className={lang === 'te' ? 'active' : ''}>తె</span>
++            </button>
++            <button
++              className="lang-toggle"
++              onClick={async () => {
++                await signOut();
++                navigate('/admin/login');
++              }}
++              aria-label={t('admin_logout')}
++            >
++              <LogOut size={13} /> {t('admin_logout')}
++            </button>
++          </div>
+         </div>
+-      </div>
+-      <Toranam />
+-    </header>
++        <Toranam />
++      </header>
++      {title && <h1 className="page-title-bar">{title}</h1>}
++    </>
+   );
+ }
+ 
+diff --git a/src/pages/admin/ManageDonations.jsx b/src/pages/admin/ManageDonations.jsx
+index c137414..a7dbe0d 100644
+--- a/src/pages/admin/ManageDonations.jsx
++++ b/src/pages/admin/ManageDonations.jsx
+@@ -77,6 +77,7 @@ export default function ManageDonations() {
+   const [search, setSearch] = useState('');
+   const [toDelete, setToDelete] = useState(null);
+   const [historyFor, setHistoryFor] = useState(null);
++  const [expandedId, setExpandedId] = useState(null);
+   const [history, setHistory] = useState([]);
+   const [online, setOnline] = useState(typeof navigator === 'undefined' ? true : navigator.onLine);
+   const [restoredDraft, setRestoredDraft] = useState(false);
+@@ -292,16 +293,14 @@ export default function ManageDonations() {
+       <AdminHeader title={t('admin_donations_title')} showBack />
+       <div className="page">
+         <FestivalBanner festival={festival} />
+-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8 }}>
+-          <div className="chip chip-danger">{t('admin_money_private_note')}</div>
+-          <div style={{ display: 'flex', gap: 8, flexShrink: 0 }}>
+-            <Link to="/admin/money/pending-sends" className="btn btn-outline btn-sm">
+-              <Send size={14} /> {t('admin_donations_pending_sends')}
+-            </Link>
+-            <Link to="/admin/money/deleted-donations" className="btn btn-outline btn-sm">
+-              <ListX size={14} /> {t('admin_money_deleted_donations')}
+-            </Link>
+-          </div>
++        <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 8 }}>
++          <div className="chip chip-danger" style={{ flex: '1 1 100%' }}>{t('admin_money_private_note')}</div>
++          <Link to="/admin/money/pending-sends" className="btn btn-outline btn-xs">
++            <Send size={13} /> {t('admin_donations_pending_sends')}
++          </Link>
++          <Link to="/admin/money/deleted-donations" className="btn btn-outline btn-xs">
++            <ListX size={13} /> {t('admin_money_deleted_donations')}
++          </Link>
+         </div>
+ 
+         <div className="card card-pad" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12 }}>
+@@ -438,27 +437,46 @@ export default function ManageDonations() {
+         {loading && <PageSkeleton />}
+         {!loading && error && <PageError onRetry={reload} />}
+         {!loading && !error && filtered.length === 0 && <div className="card empty-state">{t('admin_donations_empty')}</div>}
+-        {!loading && !error && filtered.map((d) => (
+-          <div key={d.id} className="card card-pad" style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+-            <div style={{ flex: 1, minWidth: 0 }}>
+-              <div className="title">{d.donor_name}</div>
+-              <div className="meta">
+-                <strong style={{ color: d.donation_date === todayIso() ? 'var(--color-leaf-dark, #2F6B3E)' : 'var(--color-ink)' }}>
+-                  {d.donation_date}{d.donation_date === todayIso() ? ` (${t('admin_donations_today')})` : ''}
+-                </strong>
+-                {' · '}{d.payment_method} · {t(`admin_donations_source_${(d.source || 'other').toLowerCase()}`)}{d.donor_village ? ` · ${d.donor_village}` : ''}{d.collector ? ` · ${d.collector}` : ''}{d.donor_phone ? ` · ${d.donor_phone}` : ''}
++        {!loading && !error && filtered.map((d) => {
++          const isToday = d.donation_date === todayIso();
++          const expanded = expandedId === d.id;
++          return (
++            <div
++              key={d.id}
++              className="card donation-row"
++              onClick={() => setExpandedId(expanded ? null : d.id)}
++              role="button"
++              tabIndex={0}
++            >
++              <div className="donation-row-main">
++                <div className="donation-row-name">{d.donor_name}</div>
++                <div className="donation-row-date" style={isToday ? { color: 'var(--color-leaf-dark, #2F6B3E)' } : undefined}>
++                  {isToday ? t('admin_donations_today') : d.donation_date}
++                </div>
++                <div className="donation-row-amount">{inr(d.amount)}</div>
+               </div>
++              {expanded && (
++                <div className="donation-row-details" onClick={(e) => e.stopPropagation()}>
++                  <div className="meta">
++                    <strong style={{ color: isToday ? 'var(--color-leaf-dark, #2F6B3E)' : 'var(--color-ink)' }}>
++                      {d.donation_date}{isToday ? ` (${t('admin_donations_today')})` : ''}
++                    </strong>
++                    {' · '}{d.payment_method} · {t(`admin_donations_source_${(d.source || 'other').toLowerCase()}`)}{d.donor_village ? ` · ${d.donor_village}` : ''}{d.collector ? ` · ${d.collector}` : ''}{d.donor_phone ? ` · ${d.donor_phone}` : ''}
++                  </div>
++                  <div className="donation-row-actions">
++                    {d.donor_phone && (
++                      d.receipt_sent
++                        ? <Send size={16} color="var(--color-leaf, #3F7D4F)" aria-label={t('admin_donations_receipt_sent')} />
++                        : <Send size={16} color="var(--color-ink-soft)" style={{ opacity: 0.4 }} aria-label={t('admin_donations_receipt_pending')} />
++                    )}
++                    <button className="icon-btn" onClick={() => openHistory(d.donor_name)} aria-label={t('admin_donations_history')}><History size={16} /></button>
++                    <button className="icon-btn" onClick={() => setToDelete(d)} aria-label={t('admin_donations_delete')}><Trash2 size={16} color="var(--color-danger)" /></button>
++                  </div>
++                </div>
++              )}
+             </div>
+-            <div className="amount">{inr(d.amount)}</div>
+-            {d.donor_phone && (
+-              d.receipt_sent
+-                ? <Send size={16} color="var(--color-leaf, #3F7D4F)" aria-label={t('admin_donations_receipt_sent')} />
+-                : <Send size={16} color="var(--color-ink-soft)" style={{ opacity: 0.4 }} aria-label={t('admin_donations_receipt_pending')} />
+-            )}
+-            <button className="icon-btn" onClick={() => openHistory(d.donor_name)} aria-label={t('admin_donations_history')}><History size={16} /></button>
+-            <button className="icon-btn" onClick={() => setToDelete(d)} aria-label={t('admin_donations_delete')}><Trash2 size={16} color="var(--color-danger)" /></button>
+-          </div>
+-        ))}
++          );
++        })}
+       </div>
+ 
+       {historyFor && (
+diff --git a/src/styles/app.css b/src/styles/app.css
+index caf23cc..4fdec10 100644
+--- a/src/styles/app.css
++++ b/src/styles/app.css
+@@ -78,6 +78,24 @@
+   padding: 0 var(--space-2);
+ }
+ 
++/* ---------- Page title, moved below the red header bar ---------- */
++.page-title-bar {
++  position: sticky;
++  top: 0;
++  z-index: 19;
++  margin: 0;
++  padding: var(--space-3) var(--space-4);
++  font-family: var(--font-display);
++  font-size: var(--fs-md);
++  color: var(--color-ink);
++  text-align: center;
++  background: var(--color-surface);
++  border-bottom: 1px solid var(--color-border);
++  white-space: nowrap;
++  overflow: hidden;
++  text-overflow: ellipsis;
++}
++
+ .lang-toggle {
+   display: inline-flex;
+   align-items: center;
+@@ -390,6 +408,7 @@ button > .card:active {
+ .btn-leaf { background: var(--color-leaf); color: #fff; }
+ .btn-block { width: 100%; }
+ .btn-sm { padding: 8px 14px; font-size: var(--fs-xs); }
++.btn-xs { padding: 5px 10px; font-size: 11px; gap: 4px; }
+ 
+ /* ---------- Chips / badges ---------- */
+ .chip {
+@@ -429,6 +448,60 @@ button > .card:active {
+ .list-card .meta { font-size: var(--fs-xs); color: var(--color-ink-soft); margin-top: 2px; }
+ .list-card .desc { font-size: var(--fs-sm); color: var(--color-ink-soft); margin-top: 4px; }
+ 
++/* ---------- Compact, expandable donation rows ---------- */
++.donation-row {
++  padding: 10px 14px;
++  cursor: pointer;
++}
++.donation-row-main {
++  display: flex;
++  align-items: center;
++  gap: 10px;
++}
++.donation-row-name {
++  flex: 1;
++  min-width: 0;
++  font-weight: 700;
++  font-size: var(--fs-sm);
++  color: var(--color-ink);
++  overflow: hidden;
++  text-overflow: ellipsis;
++  white-space: nowrap;
++}
++.donation-row-date {
++  flex-shrink: 0;
++  font-size: var(--fs-xs);
++  font-weight: 600;
++  color: var(--color-ink-soft);
++}
++.donation-row-amount {
++  flex-shrink: 0;
++  font-weight: 700;
++  font-size: var(--fs-sm);
++  color: var(--color-ink);
++}
++.donation-row-details {
++  display: flex;
++  align-items: center;
++  justify-content: space-between;
++  gap: 8px;
++  margin-top: 8px;
++  padding-top: 8px;
++  border-top: 1px dashed var(--color-border);
++}
++.donation-row-details .meta {
++  flex: 1;
++  min-width: 0;
++  font-size: var(--fs-xs);
++  color: var(--color-ink-soft);
++}
++.donation-row-actions {
++  display: flex;
++  align-items: center;
++  gap: 6px;
++  flex-shrink: 0;
++}
++
+ .wide-photo {
+   width: 220px;
+   height: 140px;
+-- 
+2.43.0
+

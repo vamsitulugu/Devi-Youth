@@ -77,6 +77,7 @@ export default function ManageDonations() {
   const [search, setSearch] = useState('');
   const [toDelete, setToDelete] = useState(null);
   const [historyFor, setHistoryFor] = useState(null);
+  const [expandedId, setExpandedId] = useState(null);
   const [history, setHistory] = useState([]);
   const [online, setOnline] = useState(typeof navigator === 'undefined' ? true : navigator.onLine);
   const [restoredDraft, setRestoredDraft] = useState(false);
@@ -292,16 +293,14 @@ export default function ManageDonations() {
       <AdminHeader title={t('admin_donations_title')} showBack />
       <div className="page">
         <FestivalBanner festival={festival} />
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8 }}>
-          <div className="chip chip-danger">{t('admin_money_private_note')}</div>
-          <div style={{ display: 'flex', gap: 8, flexShrink: 0 }}>
-            <Link to="/admin/money/pending-sends" className="btn btn-outline btn-sm">
-              <Send size={14} /> {t('admin_donations_pending_sends')}
-            </Link>
-            <Link to="/admin/money/deleted-donations" className="btn btn-outline btn-sm">
-              <ListX size={14} /> {t('admin_money_deleted_donations')}
-            </Link>
-          </div>
+        <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 8 }}>
+          <div className="chip chip-danger" style={{ flex: '1 1 100%' }}>{t('admin_money_private_note')}</div>
+          <Link to="/admin/money/pending-sends" className="btn btn-outline btn-xs">
+            <Send size={13} /> {t('admin_donations_pending_sends')}
+          </Link>
+          <Link to="/admin/money/deleted-donations" className="btn btn-outline btn-xs">
+            <ListX size={13} /> {t('admin_money_deleted_donations')}
+          </Link>
         </div>
 
         <div className="card card-pad" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12 }}>
@@ -438,27 +437,46 @@ export default function ManageDonations() {
         {loading && <PageSkeleton />}
         {!loading && error && <PageError onRetry={reload} />}
         {!loading && !error && filtered.length === 0 && <div className="card empty-state">{t('admin_donations_empty')}</div>}
-        {!loading && !error && filtered.map((d) => (
-          <div key={d.id} className="card card-pad" style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-            <div style={{ flex: 1, minWidth: 0 }}>
-              <div className="title">{d.donor_name}</div>
-              <div className="meta">
-                <strong style={{ color: d.donation_date === todayIso() ? 'var(--color-leaf-dark, #2F6B3E)' : 'var(--color-ink)' }}>
-                  {d.donation_date}{d.donation_date === todayIso() ? ` (${t('admin_donations_today')})` : ''}
-                </strong>
-                {' · '}{d.payment_method} · {t(`admin_donations_source_${(d.source || 'other').toLowerCase()}`)}{d.donor_village ? ` · ${d.donor_village}` : ''}{d.collector ? ` · ${d.collector}` : ''}{d.donor_phone ? ` · ${d.donor_phone}` : ''}
+        {!loading && !error && filtered.map((d) => {
+          const isToday = d.donation_date === todayIso();
+          const expanded = expandedId === d.id;
+          return (
+            <div
+              key={d.id}
+              className="card donation-row"
+              onClick={() => setExpandedId(expanded ? null : d.id)}
+              role="button"
+              tabIndex={0}
+            >
+              <div className="donation-row-main">
+                <div className="donation-row-name">{d.donor_name}</div>
+                <div className="donation-row-date" style={isToday ? { color: 'var(--color-leaf-dark, #2F6B3E)' } : undefined}>
+                  {isToday ? t('admin_donations_today') : d.donation_date}
+                </div>
+                <div className="donation-row-amount">{inr(d.amount)}</div>
               </div>
+              {expanded && (
+                <div className="donation-row-details" onClick={(e) => e.stopPropagation()}>
+                  <div className="meta">
+                    <strong style={{ color: isToday ? 'var(--color-leaf-dark, #2F6B3E)' : 'var(--color-ink)' }}>
+                      {d.donation_date}{isToday ? ` (${t('admin_donations_today')})` : ''}
+                    </strong>
+                    {' · '}{d.payment_method} · {t(`admin_donations_source_${(d.source || 'other').toLowerCase()}`)}{d.donor_village ? ` · ${d.donor_village}` : ''}{d.collector ? ` · ${d.collector}` : ''}{d.donor_phone ? ` · ${d.donor_phone}` : ''}
+                  </div>
+                  <div className="donation-row-actions">
+                    {d.donor_phone && (
+                      d.receipt_sent
+                        ? <Send size={16} color="var(--color-leaf, #3F7D4F)" aria-label={t('admin_donations_receipt_sent')} />
+                        : <Send size={16} color="var(--color-ink-soft)" style={{ opacity: 0.4 }} aria-label={t('admin_donations_receipt_pending')} />
+                    )}
+                    <button className="icon-btn" onClick={() => openHistory(d.donor_name)} aria-label={t('admin_donations_history')}><History size={16} /></button>
+                    <button className="icon-btn" onClick={() => setToDelete(d)} aria-label={t('admin_donations_delete')}><Trash2 size={16} color="var(--color-danger)" /></button>
+                  </div>
+                </div>
+              )}
             </div>
-            <div className="amount">{inr(d.amount)}</div>
-            {d.donor_phone && (
-              d.receipt_sent
-                ? <Send size={16} color="var(--color-leaf, #3F7D4F)" aria-label={t('admin_donations_receipt_sent')} />
-                : <Send size={16} color="var(--color-ink-soft)" style={{ opacity: 0.4 }} aria-label={t('admin_donations_receipt_pending')} />
-            )}
-            <button className="icon-btn" onClick={() => openHistory(d.donor_name)} aria-label={t('admin_donations_history')}><History size={16} /></button>
-            <button className="icon-btn" onClick={() => setToDelete(d)} aria-label={t('admin_donations_delete')}><Trash2 size={16} color="var(--color-danger)" /></button>
-          </div>
-        ))}
+          );
+        })}
       </div>
 
       {historyFor && (

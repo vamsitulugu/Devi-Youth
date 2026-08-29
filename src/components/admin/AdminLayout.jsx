@@ -23,42 +23,44 @@ export function AdminHeader({ title, showBack = false }) {
   const { lang, setLang, t } = useLanguage();
 
   return (
-    <header className="app-header">
-      <div className="app-header-row">
-        {showBack ? (
-          <button className="back-btn" onClick={() => navigate(-1)} aria-label="Go back">
-            <ChevronLeft size={22} />
-          </button>
-        ) : (
-          <Link to="/admin" className="brand" aria-label="Admin dashboard">
-            <img src="/icon-192.png" alt="" className="brand-logo" />
-          </Link>
-        )}
-        <h1 className="title">{title}</h1>
-        <div className="app-header-actions">
-          <button
-            className="lang-toggle"
-            onClick={() => setLang(lang === 'en' ? 'te' : 'en')}
-            aria-label={t('admin_switch_language')}
-          >
-            <span className={lang === 'en' ? 'active' : ''}>EN</span>
-            <span className="sep">|</span>
-            <span className={lang === 'te' ? 'active' : ''}>తె</span>
-          </button>
-          <button
-            className="lang-toggle"
-            onClick={async () => {
-              await signOut();
-              navigate('/admin/login');
-            }}
-            aria-label={t('admin_logout')}
-          >
-            <LogOut size={13} /> {t('admin_logout')}
-          </button>
+    <>
+      <header className="app-header">
+        <div className="app-header-row">
+          {showBack ? (
+            <button className="back-btn" onClick={() => navigate(-1)} aria-label="Go back">
+              <ChevronLeft size={22} />
+            </button>
+          ) : (
+            <Link to="/admin" className="brand" aria-label="Admin dashboard">
+              <img src="/icon-192.png" alt="" className="brand-logo" />
+            </Link>
+          )}
+          <div className="app-header-actions">
+            <button
+              className="lang-toggle"
+              onClick={() => setLang(lang === 'en' ? 'te' : 'en')}
+              aria-label={t('admin_switch_language')}
+            >
+              <span className={lang === 'en' ? 'active' : ''}>EN</span>
+              <span className="sep">|</span>
+              <span className={lang === 'te' ? 'active' : ''}>తె</span>
+            </button>
+            <button
+              className="lang-toggle"
+              onClick={async () => {
+                await signOut();
+                navigate('/admin/login');
+              }}
+              aria-label={t('admin_logout')}
+            >
+              <LogOut size={13} /> {t('admin_logout')}
+            </button>
+          </div>
         </div>
-      </div>
-      <Toranam />
-    </header>
+        <Toranam />
+      </header>
+      {title && <h1 className="page-title-bar">{title}</h1>}
+    </>
   );
 }
 

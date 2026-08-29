@@ -78,6 +78,24 @@
   padding: 0 var(--space-2);
 }
 
+/* ---------- Page title, moved below the red header bar ---------- */
+.page-title-bar {
+  position: sticky;
+  top: 0;
+  z-index: 19;
+  margin: 0;
+  padding: var(--space-3) var(--space-4);
+  font-family: var(--font-display);
+  font-size: var(--fs-md);
+  color: var(--color-ink);
+  text-align: center;
+  background: var(--color-surface);
+  border-bottom: 1px solid var(--color-border);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 .lang-toggle {
   display: inline-flex;
   align-items: center;
@@ -390,6 +408,7 @@ button > .card:active {
 .btn-leaf { background: var(--color-leaf); color: #fff; }
 .btn-block { width: 100%; }
 .btn-sm { padding: 8px 14px; font-size: var(--fs-xs); }
+.btn-xs { padding: 5px 10px; font-size: 11px; gap: 4px; }
 
 /* ---------- Chips / badges ---------- */
 .chip {
@@ -428,6 +447,60 @@ button > .card:active {
 .list-card .title { font-weight: 700; font-size: var(--fs-base); color: var(--color-ink); }
 .list-card .meta { font-size: var(--fs-xs); color: var(--color-ink-soft); margin-top: 2px; }
 .list-card .desc { font-size: var(--fs-sm); color: var(--color-ink-soft); margin-top: 4px; }
+
+/* ---------- Compact, expandable donation rows ---------- */
+.donation-row {
+  padding: 10px 14px;
+  cursor: pointer;
+}
+.donation-row-main {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.donation-row-name {
+  flex: 1;
+  min-width: 0;
+  font-weight: 700;
+  font-size: var(--fs-sm);
+  color: var(--color-ink);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.donation-row-date {
+  flex-shrink: 0;
+  font-size: var(--fs-xs);
+  font-weight: 600;
+  color: var(--color-ink-soft);
+}
+.donation-row-amount {
+  flex-shrink: 0;
+  font-weight: 700;
+  font-size: var(--fs-sm);
+  color: var(--color-ink);
+}
+.donation-row-details {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px dashed var(--color-border);
+}
+.donation-row-details .meta {
+  flex: 1;
+  min-width: 0;
+  font-size: var(--fs-xs);
+  color: var(--color-ink-soft);
+}
+.donation-row-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
 
 .wide-photo {
   width: 220px;
