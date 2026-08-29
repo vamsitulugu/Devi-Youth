@@ -7,6 +7,12 @@ export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
+  // True for the brief window between "Supabase confirmed the
+  // password" and "we've checked the selected role actually matches".
+  // Rendering must wait on this too, or the previously-logged-in
+  // admin's page flashes for a frame before the role mismatch signs
+  // them back out — see signIn() below.
+  const [verifyingRole, setVerifyingRole] = useState(false);
 
   const loadProfile = useCallback(async (userId) => {
     if (!isSupabaseConfigured || !userId) {
@@ -47,16 +53,27 @@ export function AuthProvider({ children }) {
     if (!isSupabaseConfigured) {
       return { error: { message: 'Supabase is not configured yet. Add your keys to .env first.' } };
     }
+    // Set before signInWithPassword: the moment Supabase accepts the
+    // password it fires onAuthStateChange and `user` flips to
+    // truthy — ProtectedRoute must see verifyingRole=true at that
+    // exact instant, so it keeps showing the loading state instead of
+    // the page underneath, in case we have to undo this below.
+    setVerifyingRole(true);
     const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-    if (error) return { error };
+    if (error) {
+      setVerifyingRole(false);
+      return { error };
+    }
 
     if (expectedRole) {
       const { data: prof } = await supabase.from('profiles').select('role').eq('id', data.user.id).maybeSingle();
       if ((prof?.role || 'villager') !== expectedRole) {
         await supabase.auth.signOut();
+        setVerifyingRole(false);
         return { error: { message: `That account isn't set up as ${expectedRole}. Pick the correct role and try again.` } };
       }
     }
+    setVerifyingRole(false);
     return { error: null };
   }, []);
 
@@ -76,6 +93,7 @@ export function AuthProvider({ children }) {
     isAdmin,
     isCommitteeOrAdmin,
     loading,
+    verifyingRole,
     signIn,
     signOut,
     refreshProfile: () => user && loadProfile(user.id),

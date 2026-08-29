@@ -5,7 +5,7 @@ import { isSupabaseConfigured } from '../lib/supabaseClient';
 // requireAdmin: true  -> admin only (Committee management, Users/settings, deletes)
 // requireAdmin: false -> committee or admin
 export default function ProtectedRoute({ children, requireAdmin = false }) {
-  const { user, loading, isAdmin, isCommitteeOrAdmin } = useAuth();
+  const { user, loading, verifyingRole, isAdmin, isCommitteeOrAdmin } = useAuth();
   const location = useLocation();
 
   if (!isSupabaseConfigured) {
@@ -18,7 +18,7 @@ export default function ProtectedRoute({ children, requireAdmin = false }) {
     );
   }
 
-  if (loading) {
+  if (loading || verifyingRole) {
     return (
       <div className="page">
         <div className="card card-pad" style={{ height: 76, background: 'var(--color-surface-alt)', opacity: 0.6 }} />

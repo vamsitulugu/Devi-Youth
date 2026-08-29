@@ -6,7 +6,7 @@ import { isSupabaseConfigured } from '../../lib/supabaseClient';
 import { Field, Input, Select } from '../../components/admin/FormField';
 
 export default function Login() {
-  const { user, signIn, loading } = useAuth();
+  const { user, signIn, loading, verifyingRole } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const [email, setEmail] = useState('');
@@ -15,7 +15,7 @@ export default function Login() {
   const [error, setError] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
-  if (!loading && user) {
+  if (!loading && !verifyingRole && user) {
     return <Navigate to={location.state?.from?.pathname || '/admin'} replace />;
   }
 
