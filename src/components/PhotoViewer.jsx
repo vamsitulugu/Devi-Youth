@@ -10,6 +10,9 @@ export default function PhotoViewer({ photos, index, onClose, onIndexChange }) {
   const [pos, setPos] = useState({ x: 0, y: 0 });
   const dragRef = useRef(null);
   const pinchRef = useRef(null); // { startDist, startZoom }
+  const swipeRef = useRef(null); // { startX, startY } for single-finger swipe-to-navigate at zoom=1
+  const closeBtnRef = useRef(null);
+  const lastFocusedRef = useRef(null);
   const photo = photos[index];
 
   const resetZoom = useCallback(() => {
@@ -37,17 +40,38 @@ export default function PhotoViewer({ photos, index, onClose, onIndexChange }) {
       else if (e.key === '+' || e.key === '=') setZoom((z) => Math.min(MAX_ZOOM, z + 0.5));
       else if (e.key === '-') setZoom((z) => Math.max(MIN_ZOOM, z - 0.5));
       else if (e.key === '0') resetZoom();
+      else if (e.key === 'Tab') {
+        // Simple focus trap: keep Tab cycling within the toolbar/nav buttons.
+        const root = document.querySelector('.photo-viewer');
+        if (!root) return;
+        const focusable = Array.from(root.querySelectorAll('button:not([disabled])'));
+        if (focusable.length === 0) return;
+        const first = focusable[0];
+        const last = focusable[focusable.length - 1];
+        if (e.shiftKey && document.activeElement === first) {
+          e.preventDefault();
+          last.focus();
+        } else if (!e.shiftKey && document.activeElement === last) {
+          e.preventDefault();
+          first.focus();
+        }
+      }
     }
     window.addEventListener('keydown', onKeyDown);
     return () => window.removeEventListener('keydown', onKeyDown);
   }, [onClose, goPrev, goNext, resetZoom]);
 
-  // Prevent the page behind the viewer from scrolling while it's open.
+  // Prevent the page behind the viewer from scrolling while it's open,
+  // and manage focus so screen-reader/keyboard users land inside the
+  // dialog and get their focus restored to the trigger on close.
   useEffect(() => {
     const prev = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
+    lastFocusedRef.current = document.activeElement;
+    closeBtnRef.current?.focus();
     return () => {
       document.body.style.overflow = prev;
+      lastFocusedRef.current?.focus?.();
     };
   }, []);
 
@@ -68,13 +92,19 @@ export default function PhotoViewer({ photos, index, onClose, onIndexChange }) {
     if (e.touches && e.touches.length === 2) {
       // Two fingers landed — start of a pinch gesture, not a drag.
       dragRef.current = null;
+      swipeRef.current = null;
       const [t1, t2] = e.touches;
       const dist = Math.hypot(t2.clientX - t1.clientX, t2.clientY - t1.clientY);
       pinchRef.current = { startDist: dist, startZoom: zoom };
       return;
     }
-    if (zoom <= MIN_ZOOM) return;
     const point = e.touches ? e.touches[0] : e;
+    if (zoom <= MIN_ZOOM) {
+      // Not zoomed in — a single-finger touch here is a swipe-to-navigate
+      // gesture rather than a pan, so just track its start.
+      if (e.touches) swipeRef.current = { startX: point.clientX, startY: point.clientY };
+      return;
+    }
     dragRef.current = { startX: point.clientX, startY: point.clientY, origin: pos };
   }
   function onPointerMove(e) {
@@ -98,6 +128,18 @@ export default function PhotoViewer({ photos, index, onClose, onIndexChange }) {
   }
   function onPointerUp(e) {
     if (e?.touches && e.touches.length > 0) return; // still have a finger down
+    if (swipeRef.current && e?.changedTouches?.length) {
+      const end = e.changedTouches[0];
+      const dx = end.clientX - swipeRef.current.startX;
+      const dy = end.clientY - swipeRef.current.startY;
+      // Horizontal swipe of at least 50px, and not primarily vertical
+      // (so it doesn't fight with the caption/scroll area).
+      if (Math.abs(dx) > 50 && Math.abs(dx) > Math.abs(dy) * 1.5) {
+        if (dx < 0) goNext();
+        else goPrev();
+      }
+    }
+    swipeRef.current = null;
     dragRef.current = null;
     pinchRef.current = null;
   }
@@ -123,6 +165,9 @@ export default function PhotoViewer({ photos, index, onClose, onIndexChange }) {
   return (
     <div
       className="photo-viewer"
+      role="dialog"
+      aria-modal="true"
+      aria-label="Photo viewer"
       onClick={(e) => {
         if (e.target === e.currentTarget) onClose();
       }}
@@ -133,7 +178,7 @@ export default function PhotoViewer({ photos, index, onClose, onIndexChange }) {
           <button onClick={zoomOut} aria-label="Zoom out" disabled={zoom <= MIN_ZOOM}><ZoomOut size={18} /></button>
           <button onClick={zoomIn} aria-label="Zoom in" disabled={zoom >= MAX_ZOOM}><ZoomIn size={18} /></button>
           <button onClick={resetZoom} aria-label="Reset zoom" disabled={zoom === 1 && pos.x === 0 && pos.y === 0}><RotateCcw size={17} /></button>
-          <button onClick={onClose} aria-label="Close"><X size={20} /></button>
+          <button ref={closeBtnRef} onClick={onClose} aria-label="Close"><X size={20} /></button>
         </div>
       </div>
 

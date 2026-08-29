@@ -5,7 +5,7 @@ export default function FestivalBanner({ festival }) {
   if (!festival) {
     return (
       <div className="card card-pad empty-state">
-        No festival year selected. <Link to="/admin/settings" style={{ color: 'var(--color-marigold)', fontWeight: 700 }}>Set one up in Settings</Link>.
+        No festival year selected. <Link to="/admin/settings" style={{ color: 'var(--color-marigold-text)', fontWeight: 700 }}>Set one up in Settings</Link>.
       </div>
     );
   }

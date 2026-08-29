@@ -8,7 +8,8 @@
   /* Color */
   --color-vermillion: #C22B1F;      /* kumkum — primary brand */
   --color-vermillion-dark: #971F17;
-  --color-marigold: #F0940F;        /* garlands, CTAs */
+  --color-marigold: #F0940F;        /* garlands, CTAs — decorative use only, fails text contrast */
+  --color-marigold-text: #A85F09;   /* accessible marigold — use for text/icons on light backgrounds and for white-on-marigold buttons */
   --color-turmeric: #F6B93B;        /* highlight / warning */
   --color-brass: #A8791F;           /* temple brass — decorative */
   --color-leaf: #3E6B4F;            /* banana leaf — secondary/success */

@@ -110,7 +110,7 @@ export default function ManageContacts() {
         )}
 
         {loading && <PageSkeleton />}
-        {!loading && error && <PageError />}
+        {!loading && error && <PageError onRetry={reload} />}
         {!loading && !error && items.length === 0 && <div className="card empty-state">No contacts yet.</div>}
         {!loading && !error && items.map((c) => (
           <div key={c.id} className="card card-pad" style={{ display: 'flex', alignItems: 'center', gap: 12 }}>

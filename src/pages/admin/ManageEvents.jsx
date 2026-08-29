@@ -135,7 +135,7 @@ export default function ManageEvents() {
         )}
 
         {loading && <PageSkeleton />}
-        {!loading && error && <PageError />}
+        {!loading && error && <PageError onRetry={reload} />}
         {!loading && !error && items.length === 0 && <div className="card empty-state">No events yet.</div>}
         {!loading && !error && items.map((ev) => (
           <div key={ev.id} className="card card-pad" style={{ display: 'flex', gap: 12 }}>

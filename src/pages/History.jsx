@@ -9,14 +9,14 @@ import { PageSkeleton, PageError } from '../components/LoadingStates';
 
 export default function History() {
   const { t, lang } = useLanguage();
-  const { data: history, loading, error } = useAsyncData(getHistory, []);
+  const { data: history, loading, error, reload } = useAsyncData(getHistory, []);
 
   return (
     <>
       <Header title={t('history_title')} />
       <div className="page">
         {loading && <PageSkeleton rows={3} />}
-        {!loading && error && <PageError />}
+        {!loading && error && <PageError onRetry={reload} />}
         {!loading && !error && (!history || history.length === 0) && (
           <EmptyState icon={Clock3} title={t('history_empty')} subtitle={t('history_empty_sub')} />
         )}

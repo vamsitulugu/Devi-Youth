@@ -134,7 +134,7 @@ export default function ManageCommittee() {
         )}
 
         {loading && <PageSkeleton />}
-        {!loading && error && <PageError />}
+        {!loading && error && <PageError onRetry={reload} />}
         {!loading && !error && items.length === 0 && <div className="card empty-state">No committee members yet.</div>}
         {!loading && !error && items.map((m) => (
           <div key={m.id} className="card card-pad" style={{ display: 'flex', alignItems: 'center', gap: 12 }}>

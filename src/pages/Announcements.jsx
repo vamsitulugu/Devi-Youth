@@ -12,7 +12,7 @@ import { PageSkeleton, PageError } from '../components/LoadingStates';
 
 export default function Announcements() {
   const { t, lang } = useLanguage();
-  const { data: announcements, loading, error } = useAsyncData(getAnnouncements, []);
+  const { data: announcements, loading, error, reload } = useAsyncData(getAnnouncements, []);
   const [viewerIndex, setViewerIndex] = useState(null);
 
   const photos = useMemo(
@@ -27,7 +27,7 @@ export default function Announcements() {
       <Header title={t('announcements_title')} />
       <div className="page">
         {loading && <PageSkeleton />}
-        {!loading && error && <PageError />}
+        {!loading && error && <PageError onRetry={reload} />}
         {!loading && !error && announcements?.length === 0 && (
           <EmptyState icon={Megaphone} title={t('announcements_empty')} subtitle={t('announcements_empty_sub')} />
         )}

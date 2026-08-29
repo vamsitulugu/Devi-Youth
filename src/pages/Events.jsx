@@ -8,14 +8,14 @@ import { PageSkeleton, PageError } from '../components/LoadingStates';
 
 export default function Events() {
   const { t, lang } = useLanguage();
-  const { data: events, loading, error } = useAsyncData(getEvents, []);
+  const { data: events, loading, error, reload } = useAsyncData(getEvents, []);
 
   return (
     <>
       <Header title={t('events_title')} />
       <div className="page">
         {loading && <PageSkeleton />}
-        {!loading && error && <PageError />}
+        {!loading && error && <PageError onRetry={reload} />}
         {!loading && !error && events?.length === 0 && (
           <EmptyState icon={CalendarDays} title={t('events_empty')} subtitle={t('events_empty_sub')} />
         )}

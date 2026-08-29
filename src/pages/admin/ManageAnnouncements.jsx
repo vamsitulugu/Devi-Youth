@@ -139,7 +139,7 @@ export default function ManageAnnouncements() {
         )}
 
         {loading && <PageSkeleton />}
-        {!loading && error && <PageError />}
+        {!loading && error && <PageError onRetry={reload} />}
         {!loading && !error && items.length === 0 && (
           <div className="card empty-state">No announcements yet.</div>
         )}

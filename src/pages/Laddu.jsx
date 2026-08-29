@@ -11,7 +11,7 @@ import { PageSkeleton, PageError } from '../components/LoadingStates';
 
 export default function Laddu() {
   const { t, lang } = useLanguage();
-  const { data: laddu, loading, error } = useAsyncData(getLaddu, []);
+  const { data: laddu, loading, error, reload } = useAsyncData(getLaddu, []);
   const [showPhoto, setShowPhoto] = useState(false);
 
   return (
@@ -19,7 +19,7 @@ export default function Laddu() {
       <Header title={t('laddu_title')} />
       <div className="page">
         {loading && <PageSkeleton rows={2} />}
-        {!loading && error && <PageError />}
+        {!loading && error && <PageError onRetry={reload} />}
         {!loading && !error && !laddu && (
           <EmptyState icon={Gift} title={t('laddu_empty')} subtitle={t('laddu_empty_sub')} />
         )}

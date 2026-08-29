@@ -11,7 +11,7 @@ import { PageSkeleton, PageError } from '../components/LoadingStates';
 
 export default function Committee() {
   const { t, lang } = useLanguage();
-  const { data: committee, loading, error } = useAsyncData(getCommittee, []);
+  const { data: committee, loading, error, reload } = useAsyncData(getCommittee, []);
   const [viewerIndex, setViewerIndex] = useState(null);
 
   // Only members with a real photo can be opened in the lightbox; keep a
@@ -28,7 +28,7 @@ export default function Committee() {
       <Header title={t('committee_title')} />
       <div className="page">
         {loading && <PageSkeleton rows={4} />}
-        {!loading && error && <PageError />}
+        {!loading && error && <PageError onRetry={reload} />}
         {!loading && !error && (!committee || committee.length === 0) && (
           <EmptyState icon={Users} title={t('committee_empty')} subtitle={t('committee_empty_sub')} />
         )}

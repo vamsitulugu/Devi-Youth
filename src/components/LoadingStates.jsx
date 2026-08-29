@@ -11,12 +11,17 @@ export function PageSkeleton({ rows = 3 }) {
   );
 }
 
-export function PageError({ message }) {
+export function PageError({ message, onRetry }) {
   const { t } = useLanguage();
   return (
     <div className="card empty-state">
       <AlertTriangle className="icon" size={28} />
       <div>{message || t('page_error')}</div>
+      {onRetry && (
+        <button type="button" className="btn btn-outline btn-sm" style={{ marginTop: 10 }} onClick={onRetry}>
+          {t('retry')}
+        </button>
+      )}
     </div>
   );
 }

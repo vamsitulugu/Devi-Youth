@@ -74,7 +74,7 @@ export default function ManageLaddu() {
         <FestivalBanner festival={festival} />
 
         {loading && <PageSkeleton />}
-        {!loading && error && <PageError />}
+        {!loading && error && <PageError onRetry={reload} />}
 
         {!loading && !error && festivalId && (
           <form className="card card-pad" onSubmit={handleSave}>

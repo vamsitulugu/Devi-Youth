@@ -23,7 +23,7 @@ function StatCard({ icon: Icon, label, value, tone }) {
       </div>
       <div style={{ minWidth: 0 }}>
         <div style={{ fontSize: 'var(--fs-xs)', color: 'var(--color-ink-soft)' }}>{label}</div>
-        <div style={{ fontWeight: 700, fontSize: 'var(--fs-md)' }}>{value}</div>
+        <div style={{ fontWeight: 700, fontSize: 'var(--fs-md)', overflowWrap: 'break-word' }}>{value}</div>
       </div>
     </div>
   );
@@ -45,6 +45,7 @@ export default function AdminDashboard() {
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [reloadKey, setReloadKey] = useState(0);
 
   useEffect(() => {
     if (festivalLoading) return;
@@ -63,7 +64,11 @@ export default function AdminDashboard() {
     return () => {
       alive = false;
     };
-  }, [festivalId, festivalLoading]);
+  }, [festivalId, festivalLoading, reloadKey]);
+
+  function reload() {
+    setReloadKey((k) => k + 1);
+  }
 
   return (
     <>
@@ -72,14 +77,14 @@ export default function AdminDashboard() {
         <div className="card card-pad" style={{ background: 'var(--color-surface-alt)' }}>
           <div style={{ fontSize: 'var(--fs-sm)', color: 'var(--color-ink-soft)' }}>Welcome back,</div>
           <div style={{ fontWeight: 700, fontSize: 'var(--fs-md)' }}>{profile?.full_name || 'Committee Member'}</div>
-          <div style={{ fontSize: 'var(--fs-xs)', color: 'var(--color-marigold)', fontWeight: 700, textTransform: 'capitalize' }}>
+          <div style={{ fontSize: 'var(--fs-xs)', color: 'var(--color-marigold-text)', fontWeight: 700, textTransform: 'capitalize' }}>
             {profile?.role}{festival ? ` · ${festival.year} festival` : ''}
           </div>
         </div>
 
         {(loading || festivalLoading) && <PageSkeleton rows={4} />}
         {!loading && !festivalLoading && (error || festivalError) && (
-          <PageError message="Couldn't load stats." />
+          <PageError message="Couldn't load stats." onRetry={reload} />
         )}
         {!loading && !festivalLoading && !error && !festivalError && !festival && (
           <div className="card card-pad empty-state">
@@ -93,7 +98,7 @@ export default function AdminDashboard() {
               <StatCard icon={IndianRupee} label="Total Donations" value={inr(stats.totalDonations)} tone="var(--color-leaf)" />
               <StatCard icon={Wallet} label="Total Expenses" value={inr(stats.totalExpenses)} tone="var(--color-vermillion)" />
               <StatCard icon={Scale} label="Current Balance" value={inr(stats.balance)} tone="var(--color-brass)" />
-              <StatCard icon={Users} label="Donors" value={stats.donorCount} tone="var(--color-marigold)" />
+              <StatCard icon={Users} label="Donors" value={stats.donorCount} tone="var(--color-marigold-text)" />
               <StatCard icon={CalendarClock} label="Upcoming Events" value={stats.upcomingEvents} tone="var(--color-leaf-dark)" />
               <StatCard icon={Megaphone} label="Announcements" value={stats.announcementCount} tone="var(--color-vermillion-dark)" />
             </div>

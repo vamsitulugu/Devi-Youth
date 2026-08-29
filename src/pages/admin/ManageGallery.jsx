@@ -256,7 +256,7 @@ export default function ManageGallery() {
         )}
 
         {loading && <PageSkeleton />}
-        {!loading && error && <PageError />}
+        {!loading && error && <PageError onRetry={reload} />}
         {!loading && !error && albums.length === 0 && !adding && (
           <div className="card empty-state">No albums yet.</div>
         )}
@@ -410,7 +410,7 @@ function AlbumDetail({ album, festivalYear, onBack, toast }) {
         )}
 
         {photosLoading && <PageSkeleton rows={2} />}
-        {!photosLoading && photosError && <PageError />}
+        {!photosLoading && photosError && <PageError onRetry={reloadPhotos} />}
         {!photosLoading && !photosError && photos.length === 0 && (
           <div className="card empty-state">No photos in this album yet.</div>
         )}

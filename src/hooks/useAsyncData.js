@@ -7,6 +7,7 @@ export function useAsyncData(fetcher, deps = []) {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [reloadKey, setReloadKey] = useState(0);
 
   useEffect(() => {
     let alive = true;
@@ -28,7 +29,9 @@ export function useAsyncData(fetcher, deps = []) {
       alive = false;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, deps);
+  }, [...deps, reloadKey]);
 
-  return { data, loading, error };
+  const reload = () => setReloadKey((k) => k + 1);
+
+  return { data, loading, error, reload };
 }

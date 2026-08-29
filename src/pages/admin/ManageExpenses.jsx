@@ -127,7 +127,7 @@ export default function ManageExpenses() {
         )}
 
         {loading && <PageSkeleton />}
-        {!loading && error && <PageError />}
+        {!loading && error && <PageError onRetry={reload} />}
         {!loading && !error && items.length === 0 && <div className="card empty-state">No expenses recorded.</div>}
         {!loading && !error && items.map((e) => (
           <div key={e.id} className="card card-pad" style={{ display: 'flex', alignItems: 'center', gap: 12 }}>

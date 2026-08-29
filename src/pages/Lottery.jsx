@@ -11,7 +11,7 @@ import { PageSkeleton, PageError } from '../components/LoadingStates';
 
 export default function Lottery() {
   const { t, lang } = useLanguage();
-  const { data: lottery, loading, error } = useAsyncData(getLottery, []);
+  const { data: lottery, loading, error, reload } = useAsyncData(getLottery, []);
   const [viewerIndex, setViewerIndex] = useState(null);
 
   const prizePhotos = useMemo(
@@ -26,7 +26,7 @@ export default function Lottery() {
       <Header title={t('lottery_title')} />
       <div className="page">
         {loading && <PageSkeleton rows={3} />}
-        {!loading && error && <PageError />}
+        {!loading && error && <PageError onRetry={reload} />}
         {!loading && !error && !lottery && (
           <EmptyState icon={Trophy} title={t('lottery_empty')} subtitle={t('lottery_empty_sub')} />
         )}

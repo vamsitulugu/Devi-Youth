@@ -156,7 +156,7 @@ export default function ManageLottery() {
         <FestivalBanner festival={festival} />
 
         {loading && <PageSkeleton rows={3} />}
-        {!loading && error && <PageError />}
+        {!loading && error && <PageError onRetry={reload} />}
 
         {!loading && !error && festivalId && (
           <>

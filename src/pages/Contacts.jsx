@@ -8,14 +8,14 @@ import { PageSkeleton, PageError } from '../components/LoadingStates';
 
 export default function Contacts() {
   const { t, lang } = useLanguage();
-  const { data: contacts, loading, error } = useAsyncData(getContacts, []);
+  const { data: contacts, loading, error, reload } = useAsyncData(getContacts, []);
 
   return (
     <>
       <Header title={t('contacts_title')} />
       <div className="page">
         {loading && <PageSkeleton rows={4} />}
-        {!loading && error && <PageError />}
+        {!loading && error && <PageError onRetry={reload} />}
         {!loading && !error && (!contacts || contacts.length === 0) && (
           <EmptyState icon={User} title={t('contacts_empty')} subtitle={t('contacts_empty_sub')} />
         )}

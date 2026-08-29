@@ -16,7 +16,7 @@ export default function Gallery() {
 
   const activeYear = year ?? years?.[0];
   const fetchAlbums = useCallback(() => getGalleryAlbums(activeYear), [activeYear]);
-  const { data: albums, loading: albumsLoading, error } = useAsyncData(fetchAlbums, [activeYear]);
+  const { data: albums, loading: albumsLoading, error, reload } = useAsyncData(fetchAlbums, [activeYear]);
 
   const loading = yearsLoading || (!!activeYear && albumsLoading);
 
@@ -50,7 +50,7 @@ export default function Gallery() {
         )}
 
         {loading && <PageSkeleton rows={2} />}
-        {!loading && error && <PageError />}
+        {!loading && error && <PageError onRetry={reload} />}
         {!loading && !error && albums?.length === 0 && (
           <EmptyState icon={ImageIcon} title={t('gallery_empty')} subtitle={t('gallery_empty_sub')} />
         )}
@@ -85,7 +85,7 @@ export default function Gallery() {
 
 function AlbumView({ album, lang, t, onBack }) {
   const fetchPhotos = useCallback(() => getAlbumPhotos(album.id), [album.id]);
-  const { data: photos, loading, error } = useAsyncData(fetchPhotos, [album.id]);
+  const { data: photos, loading, error, reload } = useAsyncData(fetchPhotos, [album.id]);
   const [viewerIndex, setViewerIndex] = useState(null);
 
   return (
@@ -100,7 +100,7 @@ function AlbumView({ album, lang, t, onBack }) {
         </button>
 
         {loading && <PageSkeleton rows={2} />}
-        {!loading && error && <PageError />}
+        {!loading && error && <PageError onRetry={reload} />}
         {!loading && !error && (!photos || photos.length === 0) && (
           <EmptyState icon={ImageIcon} title={t('gallery_album_empty')} subtitle={t('gallery_album_empty_sub')} />
         )}

@@ -26,14 +26,14 @@ export default function Home() {
     return { festival, announcements, events, laddu, lottery, committee, latestPhotos };
   }, []);
 
-  const { data, loading, error } = useAsyncData(fetcher, []);
+  const { data, loading, error, reload } = useAsyncData(fetcher, []);
 
   return (
     <>
       <Header title={t('app_name')} />
       <div className="page">
         {loading && <PageSkeleton rows={4} />}
-        {!loading && error && <PageError />}
+        {!loading && error && <PageError onRetry={reload} />}
         {!loading && !error && data && (
           <HomeContent data={data} t={t} lang={lang} />
         )}

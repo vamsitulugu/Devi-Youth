@@ -162,7 +162,7 @@ export default function ManageDonations() {
         </div>
 
         {loading && <PageSkeleton />}
-        {!loading && error && <PageError />}
+        {!loading && error && <PageError onRetry={reload} />}
         {!loading && !error && filtered.length === 0 && <div className="card empty-state">No donations recorded.</div>}
         {!loading && !error && filtered.map((d) => (
           <div key={d.id} className="card card-pad" style={{ display: 'flex', alignItems: 'center', gap: 12 }}>

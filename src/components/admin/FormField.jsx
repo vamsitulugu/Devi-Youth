@@ -1,10 +1,11 @@
 const fieldStyle = {
   width: '100%',
-  padding: '11px 13px',
+  minHeight: 44,
+  padding: '12px 14px',
   borderRadius: 'var(--radius-sm)',
   border: '1.5px solid var(--color-border)',
   background: '#fff',
-  fontSize: 'var(--fs-sm)',
+  fontSize: 'var(--fs-base)', /* 16px — prevents iOS Safari auto-zoom on focus */
   color: 'var(--color-ink)',
   fontFamily: 'var(--font-body)',
 };

@@ -80,4 +80,5 @@ export const en = {
   not_found_title: 'Page not found',
   not_found_body: "That page doesn't exist. Let's get you back home.",
   page_error: "Couldn't load this page. Please try again.",
+  retry: "Retry",
 };
