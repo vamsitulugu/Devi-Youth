@@ -1,0 +1,50 @@
+diff --git a/src/auth/AuthContext.jsx b/src/auth/AuthContext.jsx
+index 1bac7e9..99950c3 100644
+--- a/src/auth/AuthContext.jsx
++++ b/src/auth/AuthContext.jsx
+@@ -27,7 +27,19 @@ export function AuthProvider({ children }) {
+       return;
+     }
+     const { data } = await supabase.from('profiles').select('*').eq('id', userId).maybeSingle();
+-    setProfile(data || null);
++    if (!data) {
++      // A session exists (valid, unexpired JWT) but there's no matching
++      // profile row — the account behind it was deleted from Supabase
++      // after the token was issued. Don't silently fall back to
++      // "villager": that would strand the person on a permanent
++      // "no permission" screen with no way out. Sign the stale
++      // session out so they land back on the login page instead.
++      manualSignOutRef.current = true;
++      await supabase.auth.signOut();
++      setProfile(null);
++      return;
++    }
++    setProfile(data);
+   }, []);
+ 
+   useEffect(() => {
+diff --git a/src/auth/ProtectedRoute.jsx b/src/auth/ProtectedRoute.jsx
+index 2b36ed6..a087b73 100644
+--- a/src/auth/ProtectedRoute.jsx
++++ b/src/auth/ProtectedRoute.jsx
+@@ -5,7 +5,7 @@ import { isSupabaseConfigured } from '../lib/supabaseClient';
+ // requireAdmin: true  -> admin only (Committee management, Users/settings, deletes)
+ // requireAdmin: false -> committee or admin
+ export default function ProtectedRoute({ children, requireAdmin = false }) {
+-  const { user, loading, verifyingRole, isAdmin, isCommitteeOrAdmin, sessionExpired, clearSessionExpired } = useAuth();
++  const { user, loading, verifyingRole, isAdmin, isCommitteeOrAdmin, sessionExpired, clearSessionExpired, signOut } = useAuth();
+   const location = useLocation();
+ 
+   if (!isSupabaseConfigured) {
+@@ -44,8 +44,9 @@ export default function ProtectedRoute({ children, requireAdmin = false }) {
+   if (!allowed) {
+     return (
+       <div className="page">
+-        <div className="card card-pad empty-state">
+-          You don't have permission to view this page.
++        <div className="card card-pad empty-state" style={{ display: 'flex', flexDirection: 'column', gap: 12, alignItems: 'flex-start' }}>
++          <span>You don't have permission to view this page.</span>
++          <button className="btn btn-outline btn-sm" onClick={signOut}>Log out</button>
+         </div>
+       </div>
+     );

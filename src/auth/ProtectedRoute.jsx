@@ -5,7 +5,7 @@ import { isSupabaseConfigured } from '../lib/supabaseClient';
 // requireAdmin: true  -> admin only (Committee management, Users/settings, deletes)
 // requireAdmin: false -> committee or admin
 export default function ProtectedRoute({ children, requireAdmin = false }) {
-  const { user, loading, verifyingRole, isAdmin, isCommitteeOrAdmin, sessionExpired, clearSessionExpired } = useAuth();
+  const { user, loading, verifyingRole, isAdmin, isCommitteeOrAdmin, sessionExpired, clearSessionExpired, signOut } = useAuth();
   const location = useLocation();
 
   if (!isSupabaseConfigured) {
@@ -44,8 +44,9 @@ export default function ProtectedRoute({ children, requireAdmin = false }) {
   if (!allowed) {
     return (
       <div className="page">
-        <div className="card card-pad empty-state">
-          You don't have permission to view this page.
+        <div className="card card-pad empty-state" style={{ display: 'flex', flexDirection: 'column', gap: 12, alignItems: 'flex-start' }}>
+          <span>You don't have permission to view this page.</span>
+          <button className="btn btn-outline btn-sm" onClick={signOut}>Log out</button>
         </div>
       </div>
     );

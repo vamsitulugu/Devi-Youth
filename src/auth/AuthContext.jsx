@@ -27,7 +27,19 @@ export function AuthProvider({ children }) {
       return;
     }
     const { data } = await supabase.from('profiles').select('*').eq('id', userId).maybeSingle();
-    setProfile(data || null);
+    if (!data) {
+      // A session exists (valid, unexpired JWT) but there's no matching
+      // profile row — the account behind it was deleted from Supabase
+      // after the token was issued. Don't silently fall back to
+      // "villager": that would strand the person on a permanent
+      // "no permission" screen with no way out. Sign the stale
+      // session out so they land back on the login page instead.
+      manualSignOutRef.current = true;
+      await supabase.auth.signOut();
+      setProfile(null);
+      return;
+    }
+    setProfile(data);
   }, []);
 
   useEffect(() => {
