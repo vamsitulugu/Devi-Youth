@@ -210,7 +210,7 @@ export default function ManageExpenses() {
         <div className="card card-pad" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <div>
             <div style={{ fontSize: 'var(--fs-xs)', color: 'var(--color-ink-soft)' }}>Total this year</div>
-            <div style={{ fontWeight: 700, fontSize: 'var(--fs-lg)' }}>{inr(total)}</div>
+            <div className="amount-lg">{inr(total)}</div>
           </div>
           {!adding && (
             <button className="btn btn-primary" onClick={() => { setForm(blank); setClientId(makeClientId()); setAdding(true); }} disabled={!festivalId}>
@@ -278,7 +278,7 @@ export default function ManageExpenses() {
               <div className="title">{e.name}</div>
               <div className="meta"><span className="chip">{e.category}</span> {e.expense_date}</div>
             </div>
-            <div style={{ fontWeight: 700 }}>{inr(e.amount)}</div>
+            <div className="amount">{inr(e.amount)}</div>
             <button className="icon-btn" onClick={() => setToDelete(e)} aria-label="Delete"><Trash2 size={16} color="var(--color-danger)" /></button>
           </div>
         ))}

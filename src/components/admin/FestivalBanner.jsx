@@ -10,10 +10,7 @@ export default function FestivalBanner({ festival }) {
     );
   }
   return (
-    <div
-      className="chip"
-      style={{ alignSelf: 'flex-start', display: 'inline-flex', gap: 6 }}
-    >
+    <div className="eyebrow" style={{ alignSelf: 'flex-start' }}>
       <CalendarRange size={13} /> Editing {festival.year}
       {!festival.is_active && ' (not the active year)'}
     </div>

@@ -33,8 +33,18 @@
   --fs-base: 1rem;
   --fs-md: 1.125rem;
   --fs-lg: 1.375rem;
-  --fs-xl: 1.75rem;
-  --fs-xxl: 2.25rem;
+  --fs-xl: clamp(1.5rem, 1.35rem + 0.75vw, 1.875rem);
+  --fs-xxl: clamp(1.875rem, 1.6rem + 1.35vw, 2.5rem);
+
+  /* Line-height: tight for display/headings (big festival-name type
+     needs to sit close), relaxed for body copy (donor lists, notices,
+     announcements are read, not skimmed), roomier again for Telugu,
+     whose vowel signs and conjuncts need more vertical breathing room
+     than Latin at the same pixel size. */
+  --lh-tight: 1.15;
+  --lh-heading: 1.25;
+  --lh-body: 1.55;
+  --lh-body-te: 1.75;
 
   /* Radius & spacing */
   --radius-sm: 10px;
@@ -67,18 +77,66 @@ body {
   background: var(--color-bg);
   color: var(--color-ink);
   font-family: var(--font-body);
+  line-height: var(--lh-body);
   -webkit-font-smoothing: antialiased;
   overscroll-behavior-y: none;
 }
 
 h1, h2, h3, h4 {
   font-family: var(--font-display);
+  font-weight: 700;
+  line-height: var(--lh-heading);
   margin: 0;
   color: var(--color-vermillion-dark);
   letter-spacing: 0.2px;
 }
 
-p { margin: 0; }
+/* Big display type (festival name, hero numbers) reads better with
+   negative tracking and a tighter line-height — the opposite of body
+   copy, which needs the room. */
+h1, .display-xl {
+  font-size: var(--fs-xxl);
+  line-height: var(--lh-tight);
+  letter-spacing: -0.3px;
+}
+h2 { font-size: var(--fs-lg); }
+h3 { font-size: var(--fs-md); }
+h4 { font-size: var(--fs-base); letter-spacing: 0.1px; }
+
+p { margin: 0; line-height: var(--lh-body); }
+
+/* Small caps-style label for section overlines / structural markers —
+   dates, categories, statuses. Brass, not vermillion: it should read as
+   quiet metadata, never compete with an actual heading. */
+.eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--font-body);
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 1.1px;
+  text-transform: uppercase;
+  color: var(--color-brass);
+}
+
+/* Money amounts: tabular-nums keeps digits fixed-width so a column of
+   donation/expense amounts lines up vertically instead of ragging with
+   every different digit count — the same reason a receipt or ledger
+   uses a monospaced figure column. Use on any rendered ₹ figure. */
+.amount {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: 'tnum' 1;
+  font-weight: 700;
+  letter-spacing: -0.2px;
+}
+.amount-lg {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: 'tnum' 1;
+  font-weight: 700;
+  font-size: var(--fs-lg);
+  letter-spacing: -0.3px;
+}
 
 a { color: inherit; text-decoration: none; }
 
@@ -112,6 +170,18 @@ select:focus-visible {
 ::-webkit-scrollbar { width: 6px; height: 6px; }
 ::-webkit-scrollbar-thumb { background: var(--color-border); border-radius: 10px; }
 
+/* Telugu needs more vertical room than Latin at the same pixel size —
+   vowel signs and conjuncts sit above/below the baseline more than the
+   Poppins glyphs the rest of the scale was tuned against. Loosening
+   line-height and dropping the negative tracking keeps Telugu headings
+   from clipping and Telugu body copy from feeling cramped. */
 [lang="te"] {
   font-family: 'Noto Sans Telugu', var(--font-body);
+  line-height: var(--lh-body-te);
+  letter-spacing: 0;
+}
+[lang="te"] h1, [lang="te"] h2, [lang="te"] h3, [lang="te"] h4 {
+  font-family: 'Noto Sans Telugu', var(--font-display);
+  line-height: 1.4;
+  letter-spacing: 0;
 }

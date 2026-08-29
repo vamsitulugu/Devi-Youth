@@ -310,14 +310,14 @@ export default function ManageDonations() {
               <div style={{ fontSize: 'var(--fs-xs)', color: 'var(--color-ink-soft)' }}>
                 {search ? t('admin_donations_total_matching') : t('admin_donations_total_year')}
               </div>
-              <div style={{ fontWeight: 700, fontSize: 'var(--fs-lg)' }}>{inr(total)}</div>
+              <div className="amount-lg">{inr(total)}</div>
             </div>
             {!search && (
               <div>
                 <div style={{ fontSize: 'var(--fs-xs)', color: 'var(--color-ink-soft)' }}>
                   {t('admin_donations_total_today')}
                 </div>
-                <div style={{ fontWeight: 700, fontSize: 'var(--fs-lg)', color: 'var(--color-leaf-dark, #2F6B3E)' }}>{inr(todayTotal)}</div>
+                <div className="amount-lg" style={{ color: 'var(--color-leaf-dark, #2F6B3E)' }}>{inr(todayTotal)}</div>
               </div>
             )}
           </div>
@@ -449,7 +449,7 @@ export default function ManageDonations() {
                 {' · '}{d.payment_method} · {t(`admin_donations_source_${(d.source || 'other').toLowerCase()}`)}{d.donor_village ? ` · ${d.donor_village}` : ''}{d.collector ? ` · ${d.collector}` : ''}{d.donor_phone ? ` · ${d.donor_phone}` : ''}
               </div>
             </div>
-            <div style={{ fontWeight: 700 }}>{inr(d.amount)}</div>
+            <div className="amount">{inr(d.amount)}</div>
             {d.donor_phone && (
               d.receipt_sent
                 ? <Send size={16} color="var(--color-leaf, #3F7D4F)" aria-label={t('admin_donations_receipt_sent')} />
