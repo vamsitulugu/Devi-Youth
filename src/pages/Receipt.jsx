@@ -74,7 +74,7 @@ export default function Receipt() {
         <div className="receipt-seal">ॐ</div>
         <div className="receipt-om">।। ॐ श्री गणेशाय नमः ।।</div>
         <h1 className="receipt-title">{receipt.festival_name}</h1>
-        <div className="receipt-sub">Sarvajanik Ganeshotsav</div>
+        <div className="receipt-sub">Devi Youth — Sree Bala Ganesh</div>
         <div className="receipt-badge">Official Donation Receipt</div>
 
         <div className="receipt-row">

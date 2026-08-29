@@ -13,7 +13,7 @@ export function openWhatsAppReceipt({ phone, donorName, amount, festivalName, do
   const inr = `₹${Number(amount || 0).toLocaleString('en-IN')}`;
   const text =
     `🙏 Thank you, ${donorName}, for your generous contribution of ${inr} ` +
-    `to ${festivalName || 'our Ganesh festival'}!\n\n` +
+    `to Devi Youth — Sree Bala Ganesh (${festivalName || 'our village Ganesh festival'})!\n\n` +
     `Your official receipt:\n${link}`;
   const digits = String(phone || '').replace(/[^0-9]/g, '');
   const withCountryCode = digits.length === 10 ? `91${digits}` : digits;
