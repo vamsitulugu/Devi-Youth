@@ -64,7 +64,10 @@ export default function Gallery() {
                   ) : (
                     <div className="album-cover-empty">
                       <ImageIcon size={26} strokeWidth={1.5} />
-                      <span>{t('gallery_no_photos_yet')}</span>
+                      {/* Only claim "no photos" when that's actually true — if
+                          count > 0 but no cover is set yet, just show the icon
+                          so it doesn't contradict the count badge below. */}
+                      {a.count === 0 && <span>{t('gallery_no_photos_yet')}</span>}
                     </div>
                   )}
                   {a.count > 0 && (

@@ -1,0 +1,64 @@
+diff --git a/src/pages/Gallery.jsx b/src/pages/Gallery.jsx
+index a1c3a20..75d1144 100644
+--- a/src/pages/Gallery.jsx
++++ b/src/pages/Gallery.jsx
+@@ -64,7 +64,10 @@ export default function Gallery() {
+                   ) : (
+                     <div className="album-cover-empty">
+                       <ImageIcon size={26} strokeWidth={1.5} />
+-                      <span>{t('gallery_no_photos_yet')}</span>
++                      {/* Only claim "no photos" when that's actually true — if
++                          count > 0 but no cover is set yet, just show the icon
++                          so it doesn't contradict the count badge below. */}
++                      {a.count === 0 && <span>{t('gallery_no_photos_yet')}</span>}
+                     </div>
+                   )}
+                   {a.count > 0 && (
+diff --git a/src/services/api.js b/src/services/api.js
+index d9afd63..629b2fd 100644
+--- a/src/services/api.js
++++ b/src/services/api.js
+@@ -283,18 +283,36 @@ export async function getGalleryAlbums(year) {
+   const { data: festivalRow, error: festivalError } = await supabase.from('festivals').select('id').eq('year', year).maybeSingle();
+   throwIfError(festivalError);
+   if (!festivalRow) return [];
+-  const { data: albums, error } = await supabase
++  const { data: albumRows, error } = await supabase
+     .from('photo_albums')
+     .select('*, photos(count)')
+     .eq('festival_id', festivalRow.id)
+     .order('sort_order');
+   throwIfError(error);
+-  return Promise.all((albums || []).map(async (a) => ({
+-    id: a.id,
+-    album: await bilingual(a.name_en, a.name_te, a.name_source_lang),
+-    cover: publicImageUrl(a.cover_photo_url),
+-    count: a.photos?.[0]?.count ?? 0,
+-  })));
++  const albums = await Promise.all((albumRows || []).map(async (a) => {
++    const count = a.photos?.[0]?.count ?? 0;
++    let cover = publicImageUrl(a.cover_photo_url);
++    // No explicit cover set by admin yet, but the album isn't empty — fall
++    // back to the most recent photo instead of showing a "no photos" tile
++    // next to a count badge that says otherwise.
++    if (!cover && count > 0) {
++      const { data: firstPhoto } = await supabase
++        .from('photos')
++        .select('storage_path')
++        .eq('album_id', a.id)
++        .order('created_at', { ascending: false })
++        .limit(1)
++        .maybeSingle();
++      cover = firstPhoto ? publicImageUrl(firstPhoto.storage_path) : null;
++    }
++    return {
++      id: a.id,
++      album: await bilingual(a.name_en, a.name_te, a.name_source_lang),
++      cover,
++      count,
++    };
++  }));
++  return albums;
+ }
+ 
+ // All photos in one album, newest first — used by the album viewer.
