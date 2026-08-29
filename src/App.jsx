@@ -17,6 +17,7 @@ import Gallery from './pages/Gallery';
 import History from './pages/History';
 import Contacts from './pages/Contacts';
 import More from './pages/More';
+import Receipt from './pages/Receipt';
 import NotFound from './pages/NotFound';
 
 // Admin screens are lazy-loaded into a separate chunk. Villagers browsing
@@ -26,7 +27,7 @@ const AdminLayout = lazy(() => import('./components/admin/AdminLayout'));
 const Login = lazy(() => import('./pages/admin/Login'));
 const AdminDashboard = lazy(() => import('./pages/admin/AdminDashboard'));
 const ContentHub = lazy(() => import('./pages/admin/ContentHub'));
-const MoneyHub = lazy(() => import('./pages/admin/MoneyHub'));
+const MoneyDashboard = lazy(() => import('./pages/admin/MoneyDashboard'));
 const ManageAnnouncements = lazy(() => import('./pages/admin/ManageAnnouncements'));
 const ManageEvents = lazy(() => import('./pages/admin/ManageEvents'));
 const ManageCommittee = lazy(() => import('./pages/admin/ManageCommittee'));
@@ -35,6 +36,7 @@ const ManageLottery = lazy(() => import('./pages/admin/ManageLottery'));
 const ManageContacts = lazy(() => import('./pages/admin/ManageContacts'));
 const ManageDonations = lazy(() => import('./pages/admin/ManageDonations'));
 const ManageDeletedDonations = lazy(() => import('./pages/admin/ManageDeletedDonations'));
+const PendingSends = lazy(() => import('./pages/admin/PendingSends'));
 const ManageExpenses = lazy(() => import('./pages/admin/ManageExpenses'));
 const ManageGallery = lazy(() => import('./pages/admin/ManageGallery'));
 const Settings = lazy(() => import('./pages/admin/Settings'));
@@ -171,7 +173,7 @@ function AdminRoutes() {
         path="/admin/money"
         element={
           <ProtectedRoute>
-            <AdminLayout><MoneyHub /></AdminLayout>
+            <AdminLayout><MoneyDashboard /></AdminLayout>
           </ProtectedRoute>
         }
       />
@@ -180,6 +182,14 @@ function AdminRoutes() {
         element={
           <ProtectedRoute>
             <AdminLayout><ManageDeletedDonations /></AdminLayout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/admin/money/pending-sends"
+        element={
+          <ProtectedRoute>
+            <AdminLayout><PendingSends /></AdminLayout>
           </ProtectedRoute>
         }
       />
@@ -216,13 +226,22 @@ function AdminRoutes() {
   );
 }
 
+function ReceiptRoutes() {
+  return (
+    <Routes>
+      <Route path="/r/:id" element={<Receipt />} />
+    </Routes>
+  );
+}
+
 function Root() {
   const location = useLocation();
   const isAdmin = location.pathname.startsWith('/admin');
+  const isReceipt = location.pathname.startsWith('/r/');
   return (
     <>
       <ScrollToTop />
-      {isAdmin ? <AdminRoutes /> : <Shell />}
+      {isReceipt ? <ReceiptRoutes /> : isAdmin ? <AdminRoutes /> : <Shell />}
     </>
   );
 }
