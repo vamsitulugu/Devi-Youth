@@ -14,7 +14,7 @@ import { PageSkeleton, PageError } from '../../components/LoadingStates';
 import { useLanguage } from '../../i18n/LanguageContext';
 
 const inr = (n) => `₹${Number(n || 0).toLocaleString('en-IN')}`;
-const blank = { donor_name: '', donor_phone: '', amount: '', donation_date: new Date().toISOString().slice(0, 10), payment_method: 'Cash', source: 'Other', collector: '', notes: '' };
+const blank = { donor_name: '', donor_phone: '', donor_village: '', amount: '', donation_date: new Date().toISOString().slice(0, 10), payment_method: 'Cash', source: 'Other', collector: '', notes: '' };
 const SOURCES = ['Shop', 'Society', 'Other'];
 
 export default function ManageDonations() {
@@ -52,10 +52,33 @@ export default function ManageDonations() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [festivalId, festivalLoading]);
 
+  // Contacts-app-style search: type a few letters/digits and matching
+  // rows filter live. Matches across name, village, phone and amount.
+  // Each word in the query must match the *start* of some word in the
+  // donor name/village (so "va" finds "Vamsi" and "Vasavi", but not
+  // "Shivaji"), while phone/amount match anywhere in the digits (so "43"
+  // finds a phone ending in ...43 or an amount of 4300).
+  function wordStartMatch(text, token) {
+    if (!text) return false;
+    return text
+      .toLowerCase()
+      .split(/\s+/)
+      .some((word) => word.startsWith(token));
+  }
+
   const filtered = useMemo(() => {
-    if (!search.trim()) return items;
     const q = search.trim().toLowerCase();
-    return items.filter((d) => d.donor_name.toLowerCase().includes(q));
+    if (!q) return items;
+    const tokens = q.split(/\s+/).filter(Boolean);
+    return items.filter((d) => {
+      const amountStr = String(Math.round(Number(d.amount || 0)));
+      return tokens.every((tok) =>
+        wordStartMatch(d.donor_name, tok) ||
+        wordStartMatch(d.donor_village, tok) ||
+        (d.donor_phone || '').includes(tok) ||
+        amountStr.includes(tok)
+      );
+    });
   }, [items, search]);
 
   const total = useMemo(() => filtered.reduce((s, d) => s + Number(d.amount || 0), 0), [filtered]);
@@ -181,6 +204,9 @@ export default function ManageDonations() {
                   onChange={(e) => setForm({ ...form, donor_phone: e.target.value.replace(/[^0-9]/g, '').slice(0, 10) })}
                 />
               </Field>
+              <Field label={t('admin_donations_donor_village')}>
+                <Input value={form.donor_village} onChange={(e) => setForm({ ...form, donor_village: e.target.value })} />
+              </Field>
               <Field label={t('admin_donations_amount')} required>
                 <Input required type="number" min="1" step="1" value={form.amount} onChange={(e) => setForm({ ...form, amount: e.target.value })} />
               </Field>
@@ -231,7 +257,17 @@ export default function ManageDonations() {
             onChange={(e) => setSearch(e.target.value)}
             style={{ border: 'none', outline: 'none', flex: 1, fontSize: 'var(--fs-sm)', fontFamily: 'var(--font-body)' }}
           />
+          {search && (
+            <button type="button" className="icon-btn" onClick={() => setSearch('')} aria-label={t('admin_donations_search_clear')}>
+              <X size={16} color="var(--color-ink-soft)" />
+            </button>
+          )}
         </div>
+        {search && (
+          <div style={{ fontSize: 'var(--fs-xs)', color: 'var(--color-ink-soft)', marginTop: -8 }}>
+            {filtered.length} {t('admin_donations_search_results')}
+          </div>
+        )}
 
         {loading && <PageSkeleton />}
         {!loading && error && <PageError onRetry={reload} />}
@@ -240,7 +276,7 @@ export default function ManageDonations() {
           <div key={d.id} className="card card-pad" style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
             <div style={{ flex: 1, minWidth: 0 }}>
               <div className="title">{d.donor_name}</div>
-              <div className="meta">{d.donation_date} · {d.payment_method} · {t(`admin_donations_source_${(d.source || 'other').toLowerCase()}`)}{d.collector ? ` · ${d.collector}` : ''}{d.donor_phone ? ` · ${d.donor_phone}` : ''}</div>
+              <div className="meta">{d.donation_date} · {d.payment_method} · {t(`admin_donations_source_${(d.source || 'other').toLowerCase()}`)}{d.donor_village ? ` · ${d.donor_village}` : ''}{d.collector ? ` · ${d.collector}` : ''}{d.donor_phone ? ` · ${d.donor_phone}` : ''}</div>
             </div>
             <div style={{ fontWeight: 700 }}>{inr(d.amount)}</div>
             {d.donor_phone && (
