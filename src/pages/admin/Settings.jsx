@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Plus, Star, Trash2, X, LogOut } from 'lucide-react';
+import { Plus, Star, Trash2, X, LogOut, Pencil } from 'lucide-react';
 import { AdminHeader } from '../../components/admin/AdminLayout';
 import ConfirmDialog from '../../components/admin/ConfirmDialog';
 import { Field, Input, Select, FormGrid } from '../../components/admin/FormField';
@@ -22,6 +22,7 @@ export default function Settings() {
   const { isAdmin, signOut } = useAuth();
   const { festivals, reload: reloadFestivals, loading: festivalsLoading } = useActiveFestival();
   const [adding, setAdding] = useState(false);
+  const [editingId, setEditingId] = useState(null);
   const [form, setForm] = useState(blankFestival);
   const [saving, setSaving] = useState(false);
   const [toDelete, setToDelete] = useState(null);
@@ -39,18 +40,50 @@ export default function Settings() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isAdmin]);
 
+  function startAdd() {
+    setEditingId(null);
+    setForm(blankFestival);
+    setAdding(true);
+  }
+
+  function startEdit(f) {
+    setEditingId(f.id);
+    setForm({
+      year: f.year,
+      name_en: f.name_en || '', name_te: f.name_te || '', name_source_lang: f.name_source_lang || 'en',
+      village_en: f.village_en || '', village_te: f.village_te || '', village_source_lang: f.village_source_lang || null,
+      start_date: f.start_date || '', end_date: f.end_date || '',
+      public_donation_total: f.public_donation_total ?? '',
+    });
+    setAdding(true);
+  }
+
+  function closeForm() {
+    setAdding(false);
+    setEditingId(null);
+    setForm(blankFestival);
+  }
+
   async function handleSaveFestival(e) {
     e.preventDefault();
     if (form.start_date && form.end_date && form.start_date > form.end_date) {
       toast('Start date must be before end date', 'error');
       return;
     }
+    // Creating a new year that already exists would hit the database's
+    // unique constraint on `year` — catch it here with a clear message
+    // instead of surfacing the raw Postgres error.
+    const yearNum = Number(form.year);
+    const clashing = festivals.find((f) => f.year === yearNum && f.id !== editingId);
+    if (clashing) {
+      toast(`Festival year ${yearNum} already exists. Edit that one instead of creating a new one.`, 'error');
+      return;
+    }
     setSaving(true);
     try {
-      await upsertFestival({ ...form, year: Number(form.year) });
-      toast('Festival year saved');
-      setForm(blankFestival);
-      setAdding(false);
+      await upsertFestival({ ...form, year: yearNum, ...(editingId ? { id: editingId } : {}) });
+      toast(editingId ? 'Festival year updated' : 'Festival year saved');
+      closeForm();
       await reloadFestivals();
     } catch (err) {
       toast(err.message, 'error');
@@ -120,13 +153,16 @@ export default function Settings() {
                 )
               )}
               {isAdmin && (
+                <button className="icon-btn" onClick={() => startEdit(f)} aria-label="Edit year"><Pencil size={16} /></button>
+              )}
+              {isAdmin && (
                 <button className="icon-btn" onClick={() => setToDelete(f)} aria-label="Delete year"><Trash2 size={16} color="var(--color-danger)" /></button>
               )}
             </div>
           ))}
 
           {isAdmin && !adding && (
-            <button className="btn btn-primary btn-block" onClick={() => setAdding(true)}>
+            <button className="btn btn-primary btn-block" onClick={startAdd}>
               <Plus size={16} /> New Festival Year
             </button>
           )}
@@ -135,11 +171,11 @@ export default function Settings() {
             <form className="card card-pad" onSubmit={handleSaveFestival}>
               <FormGrid>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <strong>New Festival Year</strong>
-                  <button type="button" onClick={() => setAdding(false)} aria-label="Close"><X size={18} /></button>
+                  <strong>{editingId ? 'Edit Festival Year' : 'New Festival Year'}</strong>
+                  <button type="button" onClick={closeForm} aria-label="Close"><X size={18} /></button>
                 </div>
                 <Field label="Year">
-                  <Input required type="number" value={form.year} onChange={(e) => setForm({ ...form, year: e.target.value })} />
+                  <Input required type="number" value={form.year} onChange={(e) => setForm({ ...form, year: e.target.value })} disabled={!!editingId} />
                 </Field>
                 <BilingualField label="Festival Name" baseName="name" form={form} setForm={setForm} required />
                 <BilingualField label="Village" baseName="village" form={form} setForm={setForm} required />
@@ -155,7 +191,7 @@ export default function Settings() {
                   <Input placeholder="₹8,50,000" value={form.public_donation_total} onChange={(e) => setForm({ ...form, public_donation_total: e.target.value })} />
                 </Field>
                 <button className="btn btn-primary btn-block" disabled={saving}>
-                  {saving ? 'Saving…' : 'Create Festival Year'}
+                  {saving ? 'Saving…' : editingId ? 'Save Changes' : 'Create Festival Year'}
                 </button>
               </FormGrid>
             </form>
