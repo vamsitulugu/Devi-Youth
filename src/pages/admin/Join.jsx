@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams, Link } from 'react-router-dom';
 import { UserPlus, ShieldCheck, CheckCircle2 } from 'lucide-react';
 import { supabase, isSupabaseConfigured } from '../../lib/supabaseClient';
-import { validateInviteCode, redeemInviteCode } from '../../services/inviteApi';
+import { validateInviteCode } from '../../services/inviteApi';
 import { Field, Input } from '../../components/admin/FormField';
 
 const roleLabel = { admin: 'Admin', committee: 'Committee Member', villager: 'Villager' };
@@ -18,6 +18,7 @@ export default function Join() {
   const [error, setError] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [done, setDone] = useState(false);
+  const [needsConfirm, setNeedsConfirm] = useState(false);
 
   useEffect(() => {
     const trimmed = code.trim();
@@ -55,17 +56,14 @@ export default function Join() {
       const { data, error: signUpError } = await supabase.auth.signUp({
         email: email.trim(),
         password,
-        options: { data: { full_name: name.trim() } },
+        options: { data: { full_name: name.trim(), invite_code: code.trim().toUpperCase() } },
       });
       if (signUpError) throw signUpError;
-      if (!data.session) {
-        // Email confirmation is turned on in Supabase — the code can't
-        // be redeemed until they're actually signed in. Admin should
-        // turn "Confirm email" off for this simple invite flow.
-        throw new Error('Account created, but email confirmation is required. Ask the admin to disable "Confirm email" in Supabase, or confirm your email then log in.');
-      }
 
-      await redeemInviteCode(code.trim());
+      // Role is assigned server-side by a database trigger the instant
+      // the account is created — it doesn't need an active session, so
+      // this works whether or not "Confirm email" is on in Supabase.
+      setNeedsConfirm(!data.session);
       setDone(true);
     } catch (err) {
       setError(err.message);
@@ -82,7 +80,9 @@ export default function Join() {
             <CheckCircle2 size={40} color="var(--color-leaf)" />
             <h1 style={{ fontSize: 'var(--fs-lg)' }}>You're in!</h1>
             <p style={{ color: 'var(--color-ink-soft)', fontSize: 'var(--fs-sm)' }}>
-              Your account is set up. Log in whenever you're ready.
+              {needsConfirm
+                ? "Your account and role are already set up. Check your email to confirm it, then log in."
+                : "Your account is set up. Log in whenever you're ready."}
             </p>
             <button className="btn btn-primary btn-block" onClick={() => navigate('/admin/login')}>
               Go to Login
