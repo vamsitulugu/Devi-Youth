@@ -1,9 +1,9 @@
 import { useState } from 'react';
-import { useNavigate, useLocation, Navigate } from 'react-router-dom';
+import { useNavigate, useLocation, Navigate, Link } from 'react-router-dom';
 import { LogIn, ShieldCheck } from 'lucide-react';
 import { useAuth } from '../../auth/AuthContext';
 import { isSupabaseConfigured } from '../../lib/supabaseClient';
-import { Field, Input } from '../../components/admin/FormField';
+import { Field, Input, Select } from '../../components/admin/FormField';
 
 export default function Login() {
   const { user, signIn, loading } = useAuth();
@@ -11,6 +11,7 @@ export default function Login() {
   const location = useLocation();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [role, setRole] = useState('committee');
   const [error, setError] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
@@ -22,7 +23,7 @@ export default function Login() {
     e.preventDefault();
     setError('');
     setSubmitting(true);
-    const { error } = await signIn(email.trim(), password);
+    const { error } = await signIn(email.trim(), password, role);
     setSubmitting(false);
     if (error) {
       setError(error.message);
@@ -63,6 +64,13 @@ export default function Login() {
         )}
 
         <form className="card card-pad" onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+          <Field label="Role">
+            <Select value={role} onChange={(e) => setRole(e.target.value)}>
+              <option value="admin">Admin</option>
+              <option value="committee">Committee Member</option>
+              <option value="villager">Villager</option>
+            </Select>
+          </Field>
           <Field label="Email">
             <Input
               type="email"
@@ -90,7 +98,7 @@ export default function Login() {
         </form>
 
         <p style={{ textAlign: 'center', fontSize: 'var(--fs-xs)', color: 'var(--color-ink-soft)' }}>
-          Accounts are created by an existing admin. Contact your committee if you need access.
+          New here? <Link to="/admin/join">Join with an invite code</Link>
         </p>
       </div>
     </div>

@@ -25,6 +25,7 @@ import NotFound from './pages/NotFound';
 // code; it's only fetched once someone actually opens /admin.
 const AdminLayout = lazy(() => import('./components/admin/AdminLayout'));
 const Login = lazy(() => import('./pages/admin/Login'));
+const Join = lazy(() => import('./pages/admin/Join'));
 const AdminDashboard = lazy(() => import('./pages/admin/AdminDashboard'));
 const ContentHub = lazy(() => import('./pages/admin/ContentHub'));
 const MoneyDashboard = lazy(() => import('./pages/admin/MoneyDashboard'));
@@ -89,6 +90,7 @@ function AdminRoutes() {
     <Suspense fallback={<AdminFallback />}>
     <Routes>
       <Route path="/admin/login" element={<Login />} />
+      <Route path="/admin/join" element={<Join />} />
       <Route
         path="/admin"
         element={

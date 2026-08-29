@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Plus, Star, Trash2, X, LogOut, Pencil } from 'lucide-react';
+import { Plus, Star, Trash2, X, LogOut, Pencil, Send, Copy } from 'lucide-react';
 import { AdminHeader } from '../../components/admin/AdminLayout';
 import ConfirmDialog from '../../components/admin/ConfirmDialog';
 import { Field, Input, Select, FormGrid } from '../../components/admin/FormField';
@@ -8,6 +8,7 @@ import { useToast } from '../../components/admin/Toast';
 import { useAuth } from '../../auth/AuthContext';
 import { useActiveFestival } from '../../hooks/useActiveFestival';
 import { upsertFestival, setActiveFestival, deleteFestival, listProfiles, updateProfileRole, updateProfileDetails } from '../../services/adminApi';
+import { listInviteCodes, createInviteCode, revokeInviteCode, buildWhatsAppInviteLink } from '../../services/inviteApi';
 import { PageSkeleton } from '../../components/LoadingStates';
 
 const blankFestival = {
@@ -19,7 +20,7 @@ const blankFestival = {
 
 export default function Settings() {
   const toast = useToast();
-  const { isAdmin, signOut } = useAuth();
+  const { user, profile, isAdmin, signOut, refreshProfile } = useAuth();
   const { festivals, reload: reloadFestivals, loading: festivalsLoading } = useActiveFestival();
   const [adding, setAdding] = useState(false);
   const [editingId, setEditingId] = useState(null);
@@ -123,20 +124,74 @@ export default function Settings() {
     }
   }
 
-  const [nameDrafts, setNameDrafts] = useState({});
-  function nameDraftFor(profile) {
-    return nameDrafts[profile.id] ?? profile.full_name ?? '';
-  }
-  async function handleSaveName(profile) {
-    const full_name = (nameDrafts[profile.id] ?? profile.full_name ?? '').trim();
-    if (full_name === (profile.full_name || '')) return;
+  // Editing your own display name is always allowed (each person owns
+  // their own row). Editing anyone ELSE's name from this screen was
+  // removed — only the account holder should be able to change it.
+  const [myName, setMyName] = useState(profile?.full_name || '');
+  useEffect(() => setMyName(profile?.full_name || ''), [profile?.full_name]);
+  const [savingName, setSavingName] = useState(false);
+  async function handleSaveMyName() {
+    const full_name = myName.trim();
+    if (full_name === (profile?.full_name || '')) return;
+    setSavingName(true);
     try {
-      await updateProfileDetails(profile.id, { full_name, phone: profile.phone || null });
-      setProfiles((ps) => ps.map((p) => (p.id === profile.id ? { ...p, full_name } : p)));
+      await updateProfileDetails(user.id, { full_name, phone: profile?.phone || null });
+      await refreshProfile();
       toast('Name updated');
     } catch (err) {
       toast(err.message, 'error');
+    } finally {
+      setSavingName(false);
     }
+  }
+
+  // ---------- invite codes (admin only) ----------
+  const [invites, setInvites] = useState([]);
+  const [invitesLoading, setInvitesLoading] = useState(true);
+  const [invitePhone, setInvitePhone] = useState('');
+  const [inviteRole, setInviteRole] = useState('committee');
+  const [creatingInvite, setCreatingInvite] = useState(false);
+
+  useEffect(() => {
+    if (!isAdmin) return;
+    setInvitesLoading(true);
+    listInviteCodes()
+      .then(setInvites)
+      .catch((err) => toast(err.message, 'error'))
+      .finally(() => setInvitesLoading(false));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isAdmin]);
+
+  async function handleCreateInvite(e) {
+    e.preventDefault();
+    if (!invitePhone.trim()) return;
+    setCreatingInvite(true);
+    try {
+      const invite = await createInviteCode(invitePhone.trim(), inviteRole);
+      setInvites((list) => [invite, ...list]);
+      setInvitePhone('');
+      window.open(buildWhatsAppInviteLink(invite.phone, invite.code), '_blank', 'noopener');
+      toast(`Invite code ${invite.code} created`);
+    } catch (err) {
+      toast(err.message, 'error');
+    } finally {
+      setCreatingInvite(false);
+    }
+  }
+
+  async function handleRevokeInvite(id) {
+    try {
+      await revokeInviteCode(id);
+      setInvites((list) => list.filter((i) => i.id !== id));
+      toast('Invite code revoked');
+    } catch (err) {
+      toast(err.message, 'error');
+    }
+  }
+
+  function handleCopyInviteLink(invite) {
+    navigator.clipboard?.writeText(buildWhatsAppInviteLink(invite.phone, invite.code));
+    toast('WhatsApp link copied');
   }
 
   return (
@@ -214,24 +269,83 @@ export default function Settings() {
           )}
         </div>
 
+        <div>
+          <div className="section-title"><h2>My Profile</h2></div>
+          <div className="card card-pad" style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 10, flexWrap: 'wrap' }}>
+            <div style={{ flex: 1, minWidth: 160 }}>
+              <Input
+                value={myName}
+                placeholder="Add your name…"
+                onChange={(e) => setMyName(e.target.value)}
+                onBlur={handleSaveMyName}
+                disabled={savingName}
+                style={{ minHeight: 36, padding: '6px 10px', fontWeight: 600 }}
+              />
+            </div>
+            <span className="chip">{profile?.role || 'villager'}</span>
+          </div>
+        </div>
+
+        {isAdmin && (
+          <div>
+            <div className="section-title"><h2>Invite Committee Members</h2></div>
+            <p style={{ fontSize: 'var(--fs-xs)', color: 'var(--color-ink-soft)', marginTop: -4, marginBottom: 10 }}>
+              Pick a role, send the code over WhatsApp — no email, no server secrets. They set their own name, email &amp; password when they join.
+            </p>
+            <form className="card card-pad" onSubmit={handleCreateInvite} style={{ display: 'flex', gap: 10, marginBottom: 10, flexWrap: 'wrap', alignItems: 'flex-end' }}>
+              <Field label="Phone Number" hint="With country code, e.g. +91…" >
+                <Input required value={invitePhone} onChange={(e) => setInvitePhone(e.target.value)} placeholder="+91 98765 43210" style={{ minWidth: 180 }} />
+              </Field>
+              <Field label="Role">
+                <Select value={inviteRole} onChange={(e) => setInviteRole(e.target.value)} style={{ width: 150 }}>
+                  <option value="committee">Committee</option>
+                  <option value="admin">Admin</option>
+                  <option value="villager">Villager</option>
+                </Select>
+              </Field>
+              <button className="btn btn-primary" disabled={creatingInvite}>
+                <Send size={16} /> {creatingInvite ? 'Creating…' : 'Send Invite'}
+              </button>
+            </form>
+
+            {invitesLoading && <PageSkeleton rows={2} />}
+            {!invitesLoading && invites.length === 0 && <div className="card empty-state">No invite codes yet.</div>}
+            {!invitesLoading && invites.map((inv) => (
+              <div key={inv.id} className="card card-pad" style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 10, flexWrap: 'wrap' }}>
+                <div style={{ flex: 1, minWidth: 140 }}>
+                  <div className="title" style={{ letterSpacing: 1 }}>{inv.code}</div>
+                  <div className="meta">{inv.phone} · {inv.role}</div>
+                </div>
+                {inv.used ? (
+                  <span className="chip chip-leaf">Joined</span>
+                ) : new Date(inv.expires_at) < new Date() ? (
+                  <span className="chip">Expired</span>
+                ) : (
+                  <span className="chip">Pending</span>
+                )}
+                {!inv.used && (
+                  <>
+                    <button type="button" className="icon-btn" onClick={() => handleCopyInviteLink(inv)} aria-label="Copy WhatsApp link"><Copy size={16} /></button>
+                    <button type="button" className="icon-btn" onClick={() => handleRevokeInvite(inv.id)} aria-label="Revoke invite"><Trash2 size={16} color="var(--color-danger)" /></button>
+                  </>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
+
         {isAdmin && (
           <div>
             <div className="section-title"><h2>Users &amp; Roles</h2></div>
             <p style={{ fontSize: 'var(--fs-xs)', color: 'var(--color-ink-soft)', marginTop: -4, marginBottom: 10 }}>
-              Only admins can see this section or change anyone's role — enforced by the database, not just this screen.
+              Only admins can see this section or change anyone's role — enforced by the database, not just this screen. Names can only be changed by each person, on their own device, above.
             </p>
             {profilesLoading && <PageSkeleton rows={2} />}
             {!profilesLoading && profiles.length === 0 && <div className="card empty-state">No signed-up users yet.</div>}
             {!profilesLoading && profiles.map((p) => (
               <div key={p.id} className="card card-pad" style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 10, flexWrap: 'wrap' }}>
                 <div style={{ flex: 1, minWidth: 160 }}>
-                  <Input
-                    value={nameDraftFor(p)}
-                    placeholder="Add a name…"
-                    onChange={(e) => setNameDrafts((d) => ({ ...d, [p.id]: e.target.value }))}
-                    onBlur={() => handleSaveName(p)}
-                    style={{ minHeight: 36, padding: '6px 10px', fontWeight: 600, marginBottom: 4 }}
-                  />
+                  <div className="title">{p.full_name || 'Unnamed User'}</div>
                   <div className="meta">{p.phone || '—'}</div>
                 </div>
                 <Select value={p.role} onChange={(e) => handleRoleChange(p, e.target.value)} style={{ width: 130 }}>

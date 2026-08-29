@@ -43,12 +43,21 @@ export function AuthProvider({ children }) {
     return () => sub?.subscription?.unsubscribe();
   }, [loadProfile]);
 
-  const signIn = useCallback(async (email, password) => {
+  const signIn = useCallback(async (email, password, expectedRole) => {
     if (!isSupabaseConfigured) {
       return { error: { message: 'Supabase is not configured yet. Add your keys to .env first.' } };
     }
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
-    return { error };
+    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+    if (error) return { error };
+
+    if (expectedRole) {
+      const { data: prof } = await supabase.from('profiles').select('role').eq('id', data.user.id).maybeSingle();
+      if ((prof?.role || 'villager') !== expectedRole) {
+        await supabase.auth.signOut();
+        return { error: { message: `That account isn't set up as ${expectedRole}. Pick the correct role and try again.` } };
+      }
+    }
+    return { error: null };
   }, []);
 
   const signOut = useCallback(async () => {
