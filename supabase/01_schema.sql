@@ -1,5 +1,5 @@
 -- ============================================================
--- Devi Youth Sree Bala Ganesh Puja — Phase 2 schema
+-- Devi Youth — Bala Ganesh Puja — Phase 2 schema
 -- Run this in the Supabase SQL editor (or via `supabase db push`)
 -- BEFORE 02_policies.sql and 03_storage.sql.
 -- ============================================================

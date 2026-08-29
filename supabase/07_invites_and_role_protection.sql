@@ -1,5 +1,5 @@
 -- ============================================================
--- Devi Youth Sree Bala Ganesh Puja — Invite codes + role lock-down
+-- Devi Youth — Bala Ganesh Puja — Invite codes + role lock-down
 -- Run this in the Supabase SQL editor AFTER 01–06.
 --
 -- What this adds:

@@ -1,6 +1,6 @@
 export const en = {
-  app_name: 'Devi Youth Sree Bala Ganesh Puja',
-  app_tag: 'Our Village Festival, Together',
+  app_name: 'Devi Youth',
+  app_tag: 'Bala Ganesh Puja',
   splash_loading: 'Preparing the mandapam…',
 
   nav_home: 'Home',

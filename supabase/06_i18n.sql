@@ -1,5 +1,5 @@
 -- ============================================================
--- Devi Youth Sree Bala Ganesh Puja — bilingual (EN/TE) content system
+-- Devi Youth — Bala Ganesh Puja — bilingual (EN/TE) content system
 -- Run AFTER 01_schema.sql / 02_policies.sql / 03_storage.sql / 04_seed.sql
 -- / 05_gallery_update.sql.
 --

@@ -1,5 +1,5 @@
 -- ============================================================
--- Devi Youth Sree Bala Ganesh Puja — auto-apply invite code at signup
+-- Devi Youth — Bala Ganesh Puja — auto-apply invite code at signup
 -- Run this AFTER 07_invites_and_role_protection.sql.
 --
 -- Why: previously the invite code was redeemed by a second call made

@@ -1,4 +1,4 @@
-# Devi Youth Sree Bala Ganesh Puja — Village Ganesh Chaturthi App
+# Devi Youth — Bala Ganesh Puja
 
 Phase 1 (App Foundation + Public UI) of the four-phase build. React + Vite,
 mobile-first, bilingual (English / Telugu), running entirely on sample data

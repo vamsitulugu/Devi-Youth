@@ -62,7 +62,7 @@ export async function revokeInviteCode(id) {
 export function buildWhatsAppInviteLink(phone, code) {
   const joinUrl = `${window.location.origin}${window.location.pathname}#/admin/join?code=${code}`;
   const text =
-    `You're invited to join the Devi Youth Sree Bala Ganesh Puja committee app.\n\n` +
+    `You're invited to join the Devi Youth (Bala Ganesh Puja) committee app.\n\n` +
     `1) Open this link: ${joinUrl}\n` +
     `2) Enter your name, email, a password you choose, and this code: ${code}`;
   const digits = (phone || '').replace(/[^\d+]/g, '');
