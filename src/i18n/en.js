@@ -63,6 +63,7 @@ export const en = {
   gallery_empty_sub: 'Photo albums will appear here once the committee uploads them.',
   gallery_album_empty: 'No photos in this album yet.',
   gallery_album_empty_sub: 'Photos will appear here once they are uploaded.',
+  gallery_no_photos_yet: 'No photos yet',
   gallery_all_albums: 'All Albums',
   gallery_photos_word: 'photos',
   home_latest_photos_empty: 'Photos will appear here once the committee starts uploading.',

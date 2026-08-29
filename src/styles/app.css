@@ -639,9 +639,19 @@ button > .card:active {
   width: 100%;
   height: 100%;
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
-  color: var(--color-border);
+  gap: 6px;
+  color: var(--color-vermillion);
+  background:
+    radial-gradient(circle, rgba(168,121,31,0.10) 1.5px, transparent 1.6px) 0 0 / 18px 18px,
+    var(--color-surface-alt);
+}
+.album-card .album-cover-empty span {
+  font-size: var(--fs-xs);
+  font-weight: 600;
+  color: var(--color-text-muted, #8a7a6a);
 }
 .album-card .album-cover-badge {
   position: absolute;

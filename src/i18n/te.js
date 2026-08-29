@@ -63,6 +63,7 @@ export const te = {
   gallery_empty_sub: 'కమిటీ అప్‌లోడ్ చేసిన తర్వాత ఫోటో ఆల్బమ్‌లు ఇక్కడ కనిపిస్తాయి.',
   gallery_album_empty: 'ఈ ఆల్బమ్‌లో ఇంకా ఫోటోలు లేవు.',
   gallery_album_empty_sub: 'అప్‌లోడ్ చేసిన తర్వాత ఫోటోలు ఇక్కడ కనిపిస్తాయి.',
+  gallery_no_photos_yet: 'ఫోటోలు లేవు',
   gallery_all_albums: 'అన్ని ఆల్బమ్‌లు',
   gallery_photos_word: 'ఫోటోలు',
   home_latest_photos_empty: 'కమిటీ అప్‌లోడ్ చేయడం మొదలుపెట్టిన తర్వాత ఫోటోలు ఇక్కడ కనిపిస్తాయి.',

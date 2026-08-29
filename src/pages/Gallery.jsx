@@ -63,7 +63,8 @@ export default function Gallery() {
                     <img src={a.cover} alt="" loading="lazy" decoding="async" />
                   ) : (
                     <div className="album-cover-empty">
-                      <ImageIcon size={28} strokeWidth={1.5} />
+                      <ImageIcon size={26} strokeWidth={1.5} />
+                      <span>{t('gallery_no_photos_yet')}</span>
                     </div>
                   )}
                   {a.count > 0 && (
