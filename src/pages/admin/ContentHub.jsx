@@ -8,7 +8,7 @@ import { useAuth } from '../../auth/AuthContext';
 const items = [
   { to: '/admin/content/announcements', icon: Megaphone, label: 'Announcements' },
   { to: '/admin/content/events', icon: CalendarClock, label: 'Events' },
-  { to: '/admin/content/committee', icon: Users, label: 'Committee', adminOnly: true },
+  { to: '/admin/content/committee', icon: Users, label: 'Committee' },
   { to: '/admin/content/laddu', icon: Gift, label: 'Laddu Velam' },
   { to: '/admin/content/lottery', icon: Ticket, label: 'Lottery' },
   { to: '/admin/content/contacts', icon: Phone, label: 'Contacts', adminOnly: true },

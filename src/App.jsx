@@ -126,7 +126,7 @@ function AdminRoutes() {
       <Route
         path="/admin/content/committee"
         element={
-          <ProtectedRoute requireAdmin>
+          <ProtectedRoute>
             <AdminLayout><ManageCommittee /></AdminLayout>
           </ProtectedRoute>
         }
