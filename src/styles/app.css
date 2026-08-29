@@ -83,17 +83,33 @@
   position: sticky;
   top: 0;
   z-index: 19;
-  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
   padding: var(--space-3) var(--space-4);
+  background: var(--color-surface);
+  border-bottom: 1px solid var(--color-border);
+}
+.page-title-back {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+  color: var(--color-ink);
+}
+.page-title-bar-text {
+  flex: 1;
+  min-width: 0;
+  margin: 0;
   font-family: var(--font-display);
   font-size: var(--fs-md);
   color: var(--color-ink);
   text-align: center;
-  background: var(--color-surface);
-  border-bottom: 1px solid var(--color-border);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+.page-title-bar.with-back .page-title-bar-text {
+  text-align: left;
 }
 
 .lang-toggle {

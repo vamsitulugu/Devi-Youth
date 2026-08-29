@@ -26,11 +26,6 @@ export function AdminHeader({ title, showBack = false }) {
     <>
       <header className="app-header">
         <div className="app-header-row">
-          {showBack && (
-            <button className="back-btn" onClick={() => navigate(-1)} aria-label="Go back">
-              <ChevronLeft size={22} />
-            </button>
-          )}
           <Link to="/admin" className="brand" aria-label="Admin dashboard">
             <img src="/icon-192.png" alt="" className="brand-logo" />
             <span className="brand-name">{t('app_name')}</span>
@@ -59,7 +54,16 @@ export function AdminHeader({ title, showBack = false }) {
         </div>
         <Toranam />
       </header>
-      {title && <h1 className="page-title-bar">{title}</h1>}
+      {title && (
+        <div className={`page-title-bar${showBack ? ' with-back' : ''}`}>
+          {showBack && (
+            <button className="page-title-back" onClick={() => navigate(-1)} aria-label="Go back">
+              <ChevronLeft size={20} />
+            </button>
+          )}
+          <h1 className="page-title-bar-text">{title}</h1>
+        </div>
+      )}
     </>
   );
 }
