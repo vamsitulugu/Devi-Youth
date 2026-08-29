@@ -393,6 +393,13 @@ export async function updateProfileRole(id, role) {
   return data;
 }
 
+export async function updateProfileDetails(id, { full_name, phone }) {
+  assertReady();
+  const { data, error } = await supabase.from('profiles').update({ full_name, phone }).eq('id', id).select().single();
+  up(error);
+  return data;
+}
+
 // ---------- dashboard ----------
 export async function getDashboardStats(festivalId) {
   assertReady();

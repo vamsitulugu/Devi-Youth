@@ -7,7 +7,7 @@ import BilingualField from '../../components/admin/BilingualField';
 import { useToast } from '../../components/admin/Toast';
 import { useAuth } from '../../auth/AuthContext';
 import { useActiveFestival } from '../../hooks/useActiveFestival';
-import { upsertFestival, setActiveFestival, deleteFestival, listProfiles, updateProfileRole } from '../../services/adminApi';
+import { upsertFestival, setActiveFestival, deleteFestival, listProfiles, updateProfileRole, updateProfileDetails } from '../../services/adminApi';
 import { PageSkeleton } from '../../components/LoadingStates';
 
 const blankFestival = {
@@ -123,6 +123,22 @@ export default function Settings() {
     }
   }
 
+  const [nameDrafts, setNameDrafts] = useState({});
+  function nameDraftFor(profile) {
+    return nameDrafts[profile.id] ?? profile.full_name ?? '';
+  }
+  async function handleSaveName(profile) {
+    const full_name = (nameDrafts[profile.id] ?? profile.full_name ?? '').trim();
+    if (full_name === (profile.full_name || '')) return;
+    try {
+      await updateProfileDetails(profile.id, { full_name, phone: profile.phone || null });
+      setProfiles((ps) => ps.map((p) => (p.id === profile.id ? { ...p, full_name } : p)));
+      toast('Name updated');
+    } catch (err) {
+      toast(err.message, 'error');
+    }
+  }
+
   return (
     <>
       <AdminHeader title="Settings" />
@@ -201,12 +217,21 @@ export default function Settings() {
         {isAdmin && (
           <div>
             <div className="section-title"><h2>Users &amp; Roles</h2></div>
+            <p style={{ fontSize: 'var(--fs-xs)', color: 'var(--color-ink-soft)', marginTop: -4, marginBottom: 10 }}>
+              Only admins can see this section or change anyone's role — enforced by the database, not just this screen.
+            </p>
             {profilesLoading && <PageSkeleton rows={2} />}
             {!profilesLoading && profiles.length === 0 && <div className="card empty-state">No signed-up users yet.</div>}
             {!profilesLoading && profiles.map((p) => (
-              <div key={p.id} className="card card-pad" style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 10 }}>
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div className="title">{p.full_name || 'Unnamed User'}</div>
+              <div key={p.id} className="card card-pad" style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 10, flexWrap: 'wrap' }}>
+                <div style={{ flex: 1, minWidth: 160 }}>
+                  <Input
+                    value={nameDraftFor(p)}
+                    placeholder="Add a name…"
+                    onChange={(e) => setNameDrafts((d) => ({ ...d, [p.id]: e.target.value }))}
+                    onBlur={() => handleSaveName(p)}
+                    style={{ minHeight: 36, padding: '6px 10px', fontWeight: 600, marginBottom: 4 }}
+                  />
                   <div className="meta">{p.phone || '—'}</div>
                 </div>
                 <Select value={p.role} onChange={(e) => handleRoleChange(p, e.target.value)} style={{ width: 130 }}>
