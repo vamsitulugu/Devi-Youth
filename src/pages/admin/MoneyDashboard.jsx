@@ -115,6 +115,9 @@ export default function MoneyDashboard() {
     [expenses, selectedDay]
   );
 
+  const yearTotal = useMemo(() => donations.reduce((s, d) => s + Number(d.amount || 0), 0), [donations]);
+  const isToday = selectedDay === isoDay(new Date());
+
   const menuItems = [
     { to: '/admin/content/donations', icon: IndianRupee, label: t('admin_money_donations') },
     { to: '/admin/content/expenses', icon: Wallet, label: t('admin_money_expenses') },
@@ -159,10 +162,13 @@ export default function MoneyDashboard() {
           {dayDonations.length === 0 ? (
             <div style={{ textAlign: 'center', padding: '16px 0', color: 'var(--color-ink-soft)' }}>
               <div style={{ fontSize: '1.6rem', fontWeight: 700, opacity: 0.4 }}>{inr(0)}</div>
-              <div>{t('admin_dashboard_no_collections')}</div>
+              <div>{isToday ? t('admin_dashboard_no_collections') : t('admin_dashboard_no_collections_on_day')}</div>
             </div>
           ) : (
             <>
+              <div style={{ fontSize: 'var(--fs-xs)', fontWeight: 700, color: 'var(--color-ink-soft)', textTransform: 'uppercase' }}>
+                {isToday ? t('admin_dashboard_collected_today') : t('admin_dashboard_collected_on_day')}
+              </div>
               <div style={{ fontSize: '1.8rem', fontWeight: 700, color: 'var(--color-leaf-dark, #2F6B3E)' }}>
                 {inr(dayTotal)}
               </div>
@@ -198,6 +204,11 @@ export default function MoneyDashboard() {
         <div className="card card-pad" style={{ display: 'flex', justifyContent: 'space-between' }}>
           <span>{t('admin_dashboard_expenses_this_day')}</span>
           <strong>{inr(dayExpenseTotal)}</strong>
+        </div>
+
+        <div className="card card-pad" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <span style={{ color: 'var(--color-ink-soft)' }}>{t('admin_dashboard_year_total_hint')}</span>
+          <strong>{inr(yearTotal)}</strong>
         </div>
 
         <div className="card" style={{ overflow: 'hidden' }}>

@@ -14,7 +14,8 @@ import { PageSkeleton, PageError } from '../../components/LoadingStates';
 import { useLanguage } from '../../i18n/LanguageContext';
 
 const inr = (n) => `₹${Number(n || 0).toLocaleString('en-IN')}`;
-const blank = { donor_name: '', donor_phone: '', donor_village: '', amount: '', donation_date: new Date().toISOString().slice(0, 10), payment_method: 'Cash', source: 'Other', collector: '', notes: '' };
+const todayIso = () => new Date().toISOString().slice(0, 10);
+const blank = { donor_name: '', donor_phone: '', donor_village: '', amount: '', donation_date: todayIso(), payment_method: 'Cash', source: 'Other', collector: '', notes: '' };
 const SOURCES = ['Shop', 'Society', 'Other'];
 
 export default function ManageDonations() {
@@ -82,6 +83,10 @@ export default function ManageDonations() {
   }, [items, search]);
 
   const total = useMemo(() => filtered.reduce((s, d) => s + Number(d.amount || 0), 0), [filtered]);
+  const todayTotal = useMemo(
+    () => items.filter((d) => d.donation_date === todayIso()).reduce((s, d) => s + Number(d.amount || 0), 0),
+    [items]
+  );
 
   async function handleSave(e) {
     e.preventDefault();
@@ -167,12 +172,22 @@ export default function ManageDonations() {
           </div>
         </div>
 
-        <div className="card card-pad" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <div>
-            <div style={{ fontSize: 'var(--fs-xs)', color: 'var(--color-ink-soft)' }}>
-              {search ? t('admin_donations_total_matching') : t('admin_donations_total_year')}
+        <div className="card card-pad" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12 }}>
+          <div style={{ display: 'flex', gap: 20, flexWrap: 'wrap' }}>
+            <div>
+              <div style={{ fontSize: 'var(--fs-xs)', color: 'var(--color-ink-soft)' }}>
+                {search ? t('admin_donations_total_matching') : t('admin_donations_total_year')}
+              </div>
+              <div style={{ fontWeight: 700, fontSize: 'var(--fs-lg)' }}>{inr(total)}</div>
             </div>
-            <div style={{ fontWeight: 700, fontSize: 'var(--fs-lg)' }}>{inr(total)}</div>
+            {!search && (
+              <div>
+                <div style={{ fontSize: 'var(--fs-xs)', color: 'var(--color-ink-soft)' }}>
+                  {t('admin_donations_total_today')}
+                </div>
+                <div style={{ fontWeight: 700, fontSize: 'var(--fs-lg)', color: 'var(--color-leaf-dark, #2F6B3E)' }}>{inr(todayTotal)}</div>
+              </div>
+            )}
           </div>
           {!adding && (
             <button
@@ -276,7 +291,12 @@ export default function ManageDonations() {
           <div key={d.id} className="card card-pad" style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
             <div style={{ flex: 1, minWidth: 0 }}>
               <div className="title">{d.donor_name}</div>
-              <div className="meta">{d.donation_date} · {d.payment_method} · {t(`admin_donations_source_${(d.source || 'other').toLowerCase()}`)}{d.donor_village ? ` · ${d.donor_village}` : ''}{d.collector ? ` · ${d.collector}` : ''}{d.donor_phone ? ` · ${d.donor_phone}` : ''}</div>
+              <div className="meta">
+                <strong style={{ color: d.donation_date === todayIso() ? 'var(--color-leaf-dark, #2F6B3E)' : 'var(--color-ink)' }}>
+                  {d.donation_date}{d.donation_date === todayIso() ? ` (${t('admin_donations_today')})` : ''}
+                </strong>
+                {' · '}{d.payment_method} · {t(`admin_donations_source_${(d.source || 'other').toLowerCase()}`)}{d.donor_village ? ` · ${d.donor_village}` : ''}{d.collector ? ` · ${d.collector}` : ''}{d.donor_phone ? ` · ${d.donor_phone}` : ''}
+              </div>
             </div>
             <div style={{ fontWeight: 700 }}>{inr(d.amount)}</div>
             {d.donor_phone && (
