@@ -80,14 +80,16 @@ index a822ed9..b9f3ae2 100644
                );
              })}
 diff --git a/src/pages/Home.jsx b/src/pages/Home.jsx
-index d94f8ed..48d47d0 100644
+index d94f8ed..4b9356e 100644
 --- a/src/pages/Home.jsx
 +++ b/src/pages/Home.jsx
-@@ -230,14 +230,18 @@ function HomeContent({ data, t, lang }) {
+@@ -229,15 +229,19 @@ function HomeContent({ data, t, lang }) {
+             <Link to="/committee" className="see-all">{t('see_all')}</Link>
            </div>
            <div className="hscroll">
-             {committee.slice(0, 4).map((m) => (
+-            {committee.slice(0, 4).map((m) => (
 -              <div className="card member-card" key={m.id} style={{ width: 130 }}>
++            {committee.map((m) => (
 +              <div className="member-card" key={m.id} style={{ width: 90 }}>
                  <PhotoTile
                    src={m.photo}

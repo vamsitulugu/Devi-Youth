@@ -229,7 +229,7 @@ function HomeContent({ data, t, lang }) {
             <Link to="/committee" className="see-all">{t('see_all')}</Link>
           </div>
           <div className="hscroll">
-            {committee.slice(0, 4).map((m) => (
+            {committee.map((m) => (
               <div className="member-card" key={m.id} style={{ width: 90 }}>
                 <PhotoTile
                   src={m.photo}
