@@ -1,6 +1,6 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Plus, Search, Trash2, X, History, ListX, Send } from 'lucide-react';
+import { Plus, Search, Trash2, X, History, ListX, Send, WifiOff, AlertTriangle } from 'lucide-react';
 import { AdminHeader } from '../../components/admin/AdminLayout';
 import FestivalBanner from '../../components/admin/FestivalBanner';
 import DeleteDonationDialog from '../../components/admin/DeleteDonationDialog';
@@ -18,6 +18,49 @@ const todayIso = () => new Date().toISOString().slice(0, 10);
 const blank = { donor_name: '', donor_phone: '', donor_village: '', amount: '', donation_date: todayIso(), payment_method: 'Cash', source: 'Other', collector: '', notes: '' };
 const SOURCES = ['Shop', 'Society', 'Other'];
 
+// ---------- crash / refresh / lost-connection safety net ----------
+// Every keystroke in the "add donation" form is mirrored to localStorage.
+// If the tab is refreshed, the app is closed, the phone locks, or the
+// browser crashes mid-entry, the half-typed donation is recovered on
+// next visit instead of silently vanishing — this is money, so nothing
+// typed should ever be lost to an accidental refresh.
+const DRAFT_KEY = 'donation_draft_v1';
+
+function loadDraft() {
+  try {
+    const raw = localStorage.getItem(DRAFT_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    if (!parsed || typeof parsed !== 'object' || !parsed.form) return null;
+    return parsed;
+  } catch {
+    return null; // corrupted draft should never crash the page
+  }
+}
+
+function saveDraft(festivalId, form, clientId) {
+  try {
+    localStorage.setItem(DRAFT_KEY, JSON.stringify({ festivalId, form, clientId, savedAt: Date.now() }));
+  } catch {
+    // Storage full/unavailable (private browsing etc.) — non-fatal, the
+    // form still works in-memory for this session.
+  }
+}
+
+function clearDraft() {
+  try { localStorage.removeItem(DRAFT_KEY); } catch { /* ignore */ }
+}
+
+function hasMeaningfulInput(form) {
+  if (!form) return false;
+  return !!(form.donor_name?.trim() || form.donor_phone?.trim() || form.amount);
+}
+
+function makeClientId() {
+  if (typeof crypto !== 'undefined' && crypto.randomUUID) return crypto.randomUUID();
+  return `c_${Date.now()}_${Math.random().toString(36).slice(2)}`;
+}
+
 export default function ManageDonations() {
   const { t } = useLanguage();
   const toast = useToast();
@@ -28,11 +71,62 @@ export default function ManageDonations() {
   const [error, setError] = useState(null);
   const [adding, setAdding] = useState(false);
   const [form, setForm] = useState(blank);
+  const [clientId, setClientId] = useState(null);
   const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState(null);
   const [search, setSearch] = useState('');
   const [toDelete, setToDelete] = useState(null);
   const [historyFor, setHistoryFor] = useState(null);
   const [history, setHistory] = useState([]);
+  const [online, setOnline] = useState(typeof navigator === 'undefined' ? true : navigator.onLine);
+  const [restoredDraft, setRestoredDraft] = useState(false);
+  const savingRef = useRef(false); // guards against double-submit from a double-tap
+
+  // ---------- draft recovery: on first mount, offer to restore any
+  // half-typed donation left over from a refresh/crash/closed tab ----------
+  useEffect(() => {
+    const draft = loadDraft();
+    if (draft && hasMeaningfulInput(draft.form)) {
+      setForm({ ...blank, ...draft.form });
+      setClientId(draft.clientId || makeClientId());
+      setAdding(true);
+      setRestoredDraft(true);
+    }
+  }, []);
+
+  // Keep the draft mirrored to localStorage while the form is open, so a
+  // refresh mid-entry never loses what was typed.
+  useEffect(() => {
+    if (!adding) return;
+    saveDraft(festivalId, form, clientId);
+  }, [adding, form, clientId, festivalId]);
+
+  // Warn before an accidental tab close/refresh while there's unsaved
+  // donation data sitting in the form.
+  useEffect(() => {
+    function beforeUnload(e) {
+      if (adding && hasMeaningfulInput(form) && !saving) {
+        e.preventDefault();
+        e.returnValue = '';
+      }
+    }
+    window.addEventListener('beforeunload', beforeUnload);
+    return () => window.removeEventListener('beforeunload', beforeUnload);
+  }, [adding, form, saving]);
+
+  // Track online/offline so the Save button can refuse to fire a request
+  // that's guaranteed to fail, and instead tell the person plainly that
+  // their entry is safe on-device but hasn't reached the server yet.
+  useEffect(() => {
+    function goOnline() { setOnline(true); }
+    function goOffline() { setOnline(false); }
+    window.addEventListener('online', goOnline);
+    window.addEventListener('offline', goOffline);
+    return () => {
+      window.removeEventListener('online', goOnline);
+      window.removeEventListener('offline', goOffline);
+    };
+  }, []);
 
   async function reload() {
     if (festivalLoading) return;
@@ -90,17 +184,35 @@ export default function ManageDonations() {
 
   async function handleSave(e) {
     e.preventDefault();
+    if (savingRef.current) return; // double-tap / double form-submit guard
+    setSaveError(null);
+
     const amount = Number(form.amount);
     if (!amount || amount <= 0) {
       toast(t('admin_donations_amount_error'), 'error');
       return;
     }
+    if (!online) {
+      setSaveError(t('admin_donations_offline_error') || "You're offline — this entry is saved on your device and will submit once you're back online.");
+      return;
+    }
+
+    // Every attempt (including retries) reuses the same client_id, so a
+    // dropped response followed by a retry can never create a duplicate
+    // donation row — see donationsApi.add / 10_donation_reliability.sql.
+    const id = clientId || makeClientId();
+    if (!clientId) setClientId(id);
+
+    savingRef.current = true;
     setSaving(true);
     try {
-      const saved = await donationsApi.add({ ...form, amount, festival_id: festivalId });
+      const saved = await donationsApi.add({ ...form, amount, festival_id: festivalId, client_id: id });
       toast(t('admin_donations_saved'));
+      clearDraft();
       setForm(blank);
+      setClientId(null);
       setAdding(false);
+      setRestoredDraft(false);
       await reload();
 
       // Instant WhatsApp receipt: only when a phone number was given.
@@ -124,10 +236,30 @@ export default function ManageDonations() {
         }
       }
     } catch (err) {
-      toast(err.message, 'error');
+      // Deliberately do NOT clear the form or the draft here. The typed
+      // donation stays exactly as entered (and stays mirrored in
+      // localStorage) so the person can just hit Save again — reusing
+      // the same client_id makes that retry safe even if the first
+      // attempt actually reached the server.
+      const msg = err?.message || 'Something went wrong.';
+      setSaveError(msg);
+      toast(msg, 'error');
     } finally {
       setSaving(false);
+      savingRef.current = false;
     }
+  }
+
+  function closeAddForm() {
+    if (hasMeaningfulInput(form) && !window.confirm(t('admin_donations_discard_confirm') || 'Discard this unsaved donation entry?')) {
+      return;
+    }
+    clearDraft();
+    setForm(blank);
+    setClientId(null);
+    setAdding(false);
+    setSaveError(null);
+    setRestoredDraft(false);
   }
 
   // Deleting always requires a reason and the deleter's name (enforced
@@ -192,7 +324,7 @@ export default function ManageDonations() {
           {!adding && (
             <button
               className="btn btn-primary"
-              onClick={() => { setForm({ ...blank, collector: profile?.full_name || '' }); setAdding(true); }}
+              onClick={() => { setForm({ ...blank, collector: profile?.full_name || '' }); setClientId(makeClientId()); setAdding(true); }}
               disabled={!festivalId}
             >
               <Plus size={16} /> {t('admin_donations_add')}
@@ -200,13 +332,32 @@ export default function ManageDonations() {
           )}
         </div>
 
+        {!online && (
+          <div className="card card-pad" style={{ display: 'flex', alignItems: 'center', gap: 8, background: 'var(--color-warning-bg, #FFF6E5)', color: 'var(--color-warning-ink, #8A5A00)' }}>
+            <WifiOff size={16} />
+            <span style={{ fontSize: 'var(--fs-sm)' }}>
+              {t('admin_donations_offline_banner') || "You're offline. Anything you type stays safely on this device and nothing will be sent until your connection is back."}
+            </span>
+          </div>
+        )}
+
         {adding && (
           <form className="card card-pad" onSubmit={handleSave}>
             <FormGrid>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <strong>{t('admin_donations_new')}</strong>
-                <button type="button" onClick={() => setAdding(false)} aria-label="Close"><X size={18} /></button>
+                <button type="button" onClick={closeAddForm} aria-label="Close"><X size={18} /></button>
               </div>
+              {restoredDraft && (
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 'var(--fs-xs)', color: 'var(--color-leaf-dark, #2F6B3E)' }}>
+                  <History size={14} /> {t('admin_donations_draft_restored') || 'Recovered an unsaved entry from before — review and save, or discard it.'}
+                </div>
+              )}
+              {saveError && (
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 'var(--fs-xs)', color: 'var(--color-danger)' }}>
+                  <AlertTriangle size={14} /> {saveError}
+                </div>
+              )}
               <Field label={t('admin_donations_donor_name')} required>
                 <Input required value={form.donor_name} onChange={(e) => setForm({ ...form, donor_name: e.target.value })} />
               </Field>
@@ -257,8 +408,8 @@ export default function ManageDonations() {
               <Field label={t('admin_donations_notes')}>
                 <Textarea value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} />
               </Field>
-              <button className="btn btn-primary btn-block" disabled={saving}>
-                {saving ? t('admin_donations_saving') : t('admin_donations_save')}
+              <button className="btn btn-primary btn-block" disabled={saving || !online}>
+                {saving ? t('admin_donations_saving') : (!online ? (t('admin_donations_offline_short') || "Offline — can't save yet") : t('admin_donations_save'))}
               </button>
             </FormGrid>
           </form>

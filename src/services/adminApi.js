@@ -125,6 +125,24 @@ donationsApi.list = async (festivalId) => {
   up(error);
   return data || [];
 };
+
+// Idempotent add: payload must carry a `client_id` (a UUID generated in
+// the browser, see ManageDonations.jsx). If the same client_id is sent
+// twice — because the first request's response was lost and the app
+// retried, or the user tapped Save twice on a slow connection — this
+// upserts onto the existing row instead of creating a duplicate. See
+// supabase/10_donation_reliability.sql for the matching unique index.
+donationsApi.add = async (payload) => {
+  assertReady();
+  if (!payload.client_id) throw new Error('Missing client_id for donation add.');
+  const { data, error } = await supabase
+    .from('donations')
+    .upsert(payload, { onConflict: 'client_id' })
+    .select()
+    .single();
+  up(error);
+  return data;
+};
 expensesApi.list = async (festivalId) => {
   assertReady();
   const { data, error } = await supabase
