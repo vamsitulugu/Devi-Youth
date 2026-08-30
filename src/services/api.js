@@ -32,6 +32,7 @@ function bilingual(en, te, sourceLang) {
 // ---------- storage helpers ----------
 export function publicImageUrl(path) {
   if (!path) return null;
+  if (/^https?:\/\//i.test(path)) return path; // already a full URL (e.g. test/placeholder image)
   if (!isSupabaseConfigured) return null;
   const { data } = supabase.storage.from('gallery').getPublicUrl(path);
   return data?.publicUrl ?? null;
