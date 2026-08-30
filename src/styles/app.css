@@ -1,4 +1,27 @@
 /* ============================================================
+   GLOBAL RESET & TAP BEHAVIOUR
+   Kills the default blue/grey tap-highlight box every mobile
+   browser draws on click, and the double-tap-to-zoom delay —
+   our own :active scale/opacity feedback (below) replaces it.
+   ============================================================ */
+* {
+  -webkit-tap-highlight-color: transparent;
+  tap-highlight-color: transparent;
+}
+html, body {
+  -webkit-tap-highlight-color: transparent;
+}
+a, button, [role="button"], .card, .nav-item, .icon-btn {
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+  outline: none;
+}
+a:focus-visible, button:focus-visible, [role="button"]:focus-visible {
+  outline: 2px solid var(--color-marigold);
+  outline-offset: 2px;
+}
+
+/* ============================================================
    LAYOUT SHELL
    ============================================================ */
 
@@ -43,7 +66,11 @@
   gap: 4px;
   color: #fff;
   flex-shrink: 0;
+  transition: transform 0.12s ease;
 }
+.app-header .back-btn:active { transform: scale(0.88) translateX(-2px); }
+.brand:active .brand-logo { transform: scale(0.94); }
+.brand-logo { transition: transform 0.15s ease; }
 
 .app-header-actions {
   display: flex;
@@ -128,28 +155,29 @@
   background: rgba(255,255,255,0.18);
   padding: 6px 10px;
   border-radius: var(--radius-pill);
+  transition: transform 0.12s ease, background 0.15s ease;
 }
-.lang-toggle .active { color: var(--color-turmeric); }
+.lang-toggle:active { transform: scale(0.94); background: rgba(255,255,255,0.28); }
+.lang-toggle .active { color: var(--color-turmeric); transition: color 0.2s ease; }
 .lang-toggle .sep { opacity: 0.5; margin: 0 3px; }
 
 /* ---------- Toranam garland — woven into the header itself, no seam ---------- */
 .toranam {
   display: block;
   width: 100%;
-  height: 30px;
+  height: 34px;
   margin-top: -1px;
   margin-bottom: -8px;
   line-height: 0;
+  overflow: visible;
 }
-.toranam svg { display: block; width: 100%; height: 100%; }
-.toranam svg path:not(:first-child) {
+.toranam svg { display: block; width: 100%; height: 100%; overflow: visible; }
+.toranam-leaf {
   animation: toranamTwinkle 2.6s ease-in-out infinite;
-  transform-origin: center;
 }
-.toranam svg path:nth-child(odd) { animation-delay: 0.4s; }
 @keyframes toranamTwinkle {
   0%, 100% { opacity: 1; }
-  50% { opacity: 0.55; }
+  50% { opacity: 0.6; }
 }
 
 /* ---------- Auth shell (login) — always centered, never the sidebar grid ---------- */
@@ -412,12 +440,12 @@ button > .card:active {
   margin-top: var(--space-3);
   padding: 7px 14px;
   border-radius: var(--radius-pill);
-  background: rgba(255,255,255,0.16);
+  background: rgba(255,255,255,0.85);
   border: 1px solid rgba(255,255,255,0.3);
   backdrop-filter: blur(2px);
   font-size: var(--fs-sm);
   font-weight: 700;
-  color: var(--color-turmeric);
+  color: #E22B1B;
   position: relative;
   animation: pulseGlow 2.4s ease-in-out infinite;
 }
