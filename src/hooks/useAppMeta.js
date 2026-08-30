@@ -1,11 +1,12 @@
 import { useEffect, useState } from 'react';
 
-// scripts/publish-apk.js writes both of these into public/downloads/ on
-// every release, so this always reflects whatever was most recently
-// published — nothing here needs to change by hand when the app
-// version bumps. Returns null until the app knows one way or the
-// other (loading), and stays null forever if no APK has been
-// published yet (so the download UI just doesn't render rather than
+// scripts/publish-apk.js uploads the APK to Vercel Blob Storage and
+// writes public/downloads/app-meta.json on every release — the APK
+// itself is never committed to git, only this small pointer file. This
+// always reflects whatever was most recently published, so nothing
+// here needs to change by hand when the app version bumps. Returns
+// undefined while loading, and null forever if no APK has been
+// published yet (so download UI just doesn't render rather than
 // pointing at a broken link).
 export function useAppMeta() {
   const [meta, setMeta] = useState(undefined); // undefined = still loading
@@ -21,5 +22,3 @@ export function useAppMeta() {
 
   return meta;
 }
-
-export const APK_DOWNLOAD_URL = '/downloads/devi-youth.apk';

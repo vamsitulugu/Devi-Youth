@@ -3,14 +3,14 @@ import { ChevronLeft, Download } from 'lucide-react';
 import { useNavigate, Link } from 'react-router-dom';
 import { Capacitor } from '@capacitor/core';
 import { useLanguage } from '../i18n/LanguageContext';
-import { useAppMeta, APK_DOWNLOAD_URL } from '../hooks/useAppMeta';
+import { useAppMeta } from '../hooks/useAppMeta';
 import Toranam from './Toranam';
 
 export default function Header({ title, showBack = false, onBack }) {
   const navigate = useNavigate();
   const { t, lang, setLang } = useLanguage();
   const meta = useAppMeta();
-  const showDownload = !Capacitor.isNativePlatform() && Boolean(meta);
+  const showDownload = !Capacitor.isNativePlatform() && Boolean(meta?.downloadUrl);
 
   useEffect(() => {
     document.title = title ? `${title} — ${t('app_name')}` : `${t('app_name')} — ${t('app_tag')}`;
@@ -32,8 +32,8 @@ export default function Header({ title, showBack = false, onBack }) {
           </Link>
           {showDownload && (
             <a
-              href={APK_DOWNLOAD_URL}
-              download
+              href={meta?.downloadUrl}
+              download="devi-youth.apk"
               className="lang-toggle header-download-btn"
               aria-label={t('app_download_button')}
               title={t('app_download_button')}

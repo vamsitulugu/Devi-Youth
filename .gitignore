@@ -32,3 +32,8 @@ android/keystore.properties
 android/*.keystore
 android/*.jks
 releases/
+
+# APK binary is uploaded to Vercel Blob Storage by scripts/publish-apk.js,
+# never committed to git — only public/downloads/app-meta.json (the small
+# pointer file with the current version + Blob URL) gets committed.
+public/downloads/*.apk
