@@ -1,0 +1,577 @@
+diff --git a/src/App.jsx b/src/App.jsx
+index d3ce059..01c6dd3 100644
+--- a/src/App.jsx
++++ b/src/App.jsx
+@@ -126,7 +126,7 @@ function AdminRoutes() {
+       <Route
+         path="/admin/content/committee"
+         element={
+-          <ProtectedRoute requireAdmin>
++          <ProtectedRoute>
+             <AdminLayout><ManageCommittee /></AdminLayout>
+           </ProtectedRoute>
+         }
+diff --git a/src/components/PhotoViewer.jsx b/src/components/PhotoViewer.jsx
+index 94b4f06..2c0e9ed 100644
+--- a/src/components/PhotoViewer.jsx
++++ b/src/components/PhotoViewer.jsx
+@@ -216,7 +216,12 @@ export default function PhotoViewer({ photos, index, onClose, onIndexChange }) {
+         )}
+       </div>
+ 
+-      {photo.caption && <div className="photo-viewer-caption">{photo.caption}</div>}
++      {(photo.caption || photo.subtitle) && (
++        <div className="photo-viewer-caption">
++          {photo.caption && <div className="photo-viewer-caption-title">{photo.caption}</div>}
++          {photo.subtitle && <div className="photo-viewer-caption-subtitle">{photo.subtitle}</div>}
++        </div>
++      )}
+     </div>
+   );
+ }
+\ No newline at end of file
+diff --git a/src/pages/Committee.jsx b/src/pages/Committee.jsx
+index a822ed9..b9f3ae2 100644
+--- a/src/pages/Committee.jsx
++++ b/src/pages/Committee.jsx
+@@ -1,5 +1,5 @@
+ import { useMemo, useState } from 'react';
+-import { Phone, Users } from 'lucide-react';
++import { Users } from 'lucide-react';
+ import { useLanguage } from '../i18n/LanguageContext';
+ import { useAsyncData } from '../hooks/useAsyncData';
+ import { getCommittee } from '../services/api';
+@@ -19,8 +19,13 @@ export default function Committee() {
+   const photos = useMemo(
+     () => (committee || [])
+       .filter((m) => m.photo)
+-      .map((m) => ({ id: m.id, src: m.photo, caption: m.name })),
+-    [committee]
++      .map((m) => ({
++        id: m.id,
++        src: m.photo,
++        caption: m.name,
++        subtitle: [m.position[lang], m.phone].filter(Boolean).join(' · '),
++      })),
++    [committee, lang]
+   );
+ 
+   return (
+@@ -37,7 +42,7 @@ export default function Committee() {
+             {committee.map((m) => {
+               const photoIndex = m.photo ? photos.findIndex((p) => p.id === m.id) : -1;
+               return (
+-                <div className="card member-card" key={m.id}>
++                <div className="member-card" key={m.id}>
+                   <PhotoTile
+                     src={m.photo}
+                     className="avatar"
+@@ -45,12 +50,6 @@ export default function Committee() {
+                     onClick={photoIndex >= 0 ? () => setViewerIndex(photoIndex) : undefined}
+                   />
+                   <div className="name">{m.name}</div>
+-                  <div className="position">{m.position[lang]}</div>
+-                  {m.phone && (
+-                    <a className="btn btn-outline btn-sm" href={`tel:${m.phone}`}>
+-                      <Phone size={13} /> {t('contact')}
+-                    </a>
+-                  )}
+                 </div>
+               );
+             })}
+diff --git a/src/pages/Gallery.jsx b/src/pages/Gallery.jsx
+index 75d1144..12c7517 100644
+--- a/src/pages/Gallery.jsx
++++ b/src/pages/Gallery.jsx
+@@ -10,15 +10,16 @@ import { PageSkeleton, PageError } from '../components/LoadingStates';
+ 
+ export default function Gallery() {
+   const { t, lang } = useLanguage();
+-  const { data: years, loading: yearsLoading } = useAsyncData(getGalleryYears, []);
+-  const [year, setYear] = useState(null);
+   const [openAlbum, setOpenAlbum] = useState(null);
+ 
+-  const activeYear = year ?? years?.[0];
+-  const fetchAlbums = useCallback(() => getGalleryAlbums(activeYear), [activeYear]);
+-  const { data: albums, loading: albumsLoading, error, reload } = useAsyncData(fetchAlbums, [activeYear]);
+-
+-  const loading = yearsLoading || (!!activeYear && albumsLoading);
++  const fetchTimeline = useCallback(async () => {
++    const years = await getGalleryYears();
++    const albumsByYear = await Promise.all(years.map((y) => getGalleryAlbums(y)));
++    return years
++      .map((year, i) => ({ year, albums: albumsByYear[i] }))
++      .filter((yr) => yr.albums.length > 0);
++  }, []);
++  const { data: timeline, loading, error, reload } = useAsyncData(fetchTimeline, []);
+ 
+   if (openAlbum) {
+     return (
+@@ -35,50 +36,49 @@ export default function Gallery() {
+     <>
+       <Header title={t('gallery_title')} />
+       <div className="page">
+-        {years?.length > 0 && (
+-          <div className="year-pills">
+-            {years.map((y) => (
+-              <button
+-                key={y}
+-                className={`year-pill${y === activeYear ? ' active' : ''}`}
+-                onClick={() => setYear(y)}
+-              >
+-                {y}
+-              </button>
+-            ))}
+-          </div>
+-        )}
+-
+         {loading && <PageSkeleton rows={2} />}
+         {!loading && error && <PageError onRetry={reload} />}
+-        {!loading && !error && albums?.length === 0 && (
++        {!loading && !error && timeline?.length === 0 && (
+           <EmptyState icon={ImageIcon} title={t('gallery_empty')} subtitle={t('gallery_empty_sub')} />
+         )}
+-        {!loading && !error && albums?.length > 0 && (
+-          <div className="album-grid">
+-            {albums.map((a) => (
+-              <button key={a.id} className="card album-card" onClick={() => setOpenAlbum(a)}>
+-                <div className="album-cover">
+-                  {a.cover ? (
+-                    <img src={a.cover} alt="" loading="lazy" decoding="async" />
+-                  ) : (
+-                    <div className="album-cover-empty">
+-                      <ImageIcon size={26} strokeWidth={1.5} />
+-                      {/* Only claim "no photos" when that's actually true — if
+-                          count > 0 but no cover is set yet, just show the icon
+-                          so it doesn't contradict the count badge below. */}
+-                      {a.count === 0 && <span>{t('gallery_no_photos_yet')}</span>}
+-                    </div>
+-                  )}
+-                  {a.count > 0 && (
+-                    <span className="album-cover-badge">{a.count} {t('gallery_photos_word')}</span>
+-                  )}
++        {!loading && !error && timeline?.length > 0 && (
++          <div className="gallery-timeline">
++            {timeline.map(({ year, albums }, i) => (
++              <div className="timeline-row" key={year}>
++                <div className="timeline-rail">
++                  <span className="timeline-dot" />
++                  {i < timeline.length - 1 && <span className="timeline-line" />}
+                 </div>
+-                <div className="album-info">
+-                  <span className="album-name">{a.album[lang]}</span>
+-                  <ChevronRight size={18} className="album-chevron" />
++                <div className="timeline-body">
++                  <h3 className="timeline-year">{year}</h3>
++                  <div className="album-grid">
++                    {albums.map((a) => (
++                      <button key={a.id} className="card album-card" onClick={() => setOpenAlbum(a)}>
++                        <div className="album-cover">
++                          {a.cover ? (
++                            <img src={a.cover} alt="" loading="lazy" decoding="async" />
++                          ) : (
++                            <div className="album-cover-empty">
++                              <ImageIcon size={26} strokeWidth={1.5} />
++                              {/* Only claim "no photos" when that's actually true — if
++                                  count > 0 but no cover is set yet, just show the icon
++                                  so it doesn't contradict the count badge below. */}
++                              {a.count === 0 && <span>{t('gallery_no_photos_yet')}</span>}
++                            </div>
++                          )}
++                          {a.count > 0 && (
++                            <span className="album-cover-badge">{a.count} {t('gallery_photos_word')}</span>
++                          )}
++                        </div>
++                        <div className="album-info">
++                          <span className="album-name">{a.album[lang]}</span>
++                          <ChevronRight size={18} className="album-chevron" />
++                        </div>
++                      </button>
++                    ))}
++                  </div>
+                 </div>
+-              </button>
++              </div>
+             ))}
+           </div>
+         )}
+diff --git a/src/pages/Home.jsx b/src/pages/Home.jsx
+index d94f8ed..0f33b0c 100644
+--- a/src/pages/Home.jsx
++++ b/src/pages/Home.jsx
+@@ -86,7 +86,22 @@ function HomeContent({ data, t, lang }) {
+ 
+   return (
+     <>
+-      <section className="hero">
++      <section
++        className={`hero${festival.photo ? ' hero-has-photo' : ''}`}
++        onClick={festival.photo ? () => openViewer([{
++          id: 'festival-photo',
++          src: festival.photo,
++          caption: festival.name[lang],
++          subtitle: [festival.village[lang], festival.dates[lang]].filter(Boolean).join(' · '),
++        }]) : undefined}
++        style={festival.photo ? { cursor: 'zoom-in' } : undefined}
++      >
++        {festival.photo && (
++          <>
++            <div className="hero-photo-bg" style={{ backgroundImage: `url(${festival.photo})` }} />
++            <div className="hero-photo-overlay" />
++          </>
++        )}
+         {hasFestival ? (
+           <>
+             <div className="eyebrow">{festival.village[lang]} · {festival.year}</div>
+@@ -229,15 +244,19 @@ function HomeContent({ data, t, lang }) {
+             <Link to="/committee" className="see-all">{t('see_all')}</Link>
+           </div>
+           <div className="hscroll">
+-            {committee.slice(0, 4).map((m) => (
+-              <div className="card member-card" key={m.id} style={{ width: 130 }}>
++            {committee.map((m) => (
++              <div className="member-card" key={m.id} style={{ width: 90 }}>
+                 <PhotoTile
+                   src={m.photo}
+                   className="avatar"
+-                  onClick={m.photo ? () => openViewer([{ id: m.id, src: m.photo, caption: m.name }]) : undefined}
++                  onClick={m.photo ? () => openViewer([{
++                    id: m.id,
++                    src: m.photo,
++                    caption: m.name,
++                    subtitle: [m.position[lang], m.phone].filter(Boolean).join(' · '),
++                  }]) : undefined}
+                 />
+                 <div className="name">{m.name}</div>
+-                <div className="position">{m.position[lang]}</div>
+               </div>
+             ))}
+           </div>
+diff --git a/src/pages/admin/ContentHub.jsx b/src/pages/admin/ContentHub.jsx
+index b3a27da..3f7fd39 100644
+--- a/src/pages/admin/ContentHub.jsx
++++ b/src/pages/admin/ContentHub.jsx
+@@ -8,7 +8,7 @@ import { useAuth } from '../../auth/AuthContext';
+ const items = [
+   { to: '/admin/content/announcements', icon: Megaphone, label: 'Announcements' },
+   { to: '/admin/content/events', icon: CalendarClock, label: 'Events' },
+-  { to: '/admin/content/committee', icon: Users, label: 'Committee', adminOnly: true },
++  { to: '/admin/content/committee', icon: Users, label: 'Committee' },
+   { to: '/admin/content/laddu', icon: Gift, label: 'Laddu Velam' },
+   { to: '/admin/content/lottery', icon: Ticket, label: 'Lottery' },
+   { to: '/admin/content/contacts', icon: Phone, label: 'Contacts', adminOnly: true },
+diff --git a/src/pages/admin/ManageCommittee.jsx b/src/pages/admin/ManageCommittee.jsx
+index 4ee74a6..1bf8378 100644
+--- a/src/pages/admin/ManageCommittee.jsx
++++ b/src/pages/admin/ManageCommittee.jsx
+@@ -9,8 +9,9 @@ import { useToast } from '../../components/admin/Toast';
+ import { useActiveFestival } from '../../hooks/useActiveFestival';
+ import { committeeApi, uploadImage, publicUrl } from '../../services/adminApi';
+ import { PageSkeleton, PageError } from '../../components/LoadingStates';
++import PhotoViewer from '../../components/PhotoViewer';
+ 
+-const blank = { name: '', position_en: '', position_te: '', position_source_lang: null, phone: '', sort_order: 0, photo_url: '' };
++const blank = { name: '', position_en: 'Committee Member', position_te: '', position_source_lang: 'en', phone: '', sort_order: 0, photo_url: '' };
+ 
+ export default function ManageCommittee() {
+   const toast = useToast();
+@@ -23,6 +24,7 @@ export default function ManageCommittee() {
+   const [file, setFile] = useState(null);
+   const [saving, setSaving] = useState(false);
+   const [toDelete, setToDelete] = useState(null);
++  const [viewing, setViewing] = useState(null);
+ 
+   async function reload() {
+     if (festivalLoading) return;
+@@ -144,7 +146,15 @@ export default function ManageCommittee() {
+               className="thumb"
+               loading="lazy"
+               decoding="async"
+-              style={{ width: 48, height: 48, borderRadius: '50%' }}
++              onClick={m.photo_url ? () => setViewing(m) : undefined}
++              style={{
++                width: 48,
++                height: 48,
++                borderRadius: '50%',
++                objectFit: 'cover',
++                border: '2px solid var(--color-vermillion)',
++                cursor: m.photo_url ? 'zoom-in' : undefined,
++              }}
+             />
+             <div style={{ flex: 1, minWidth: 0 }}>
+               <div className="title">{m.name}</div>
+@@ -163,6 +173,19 @@ export default function ManageCommittee() {
+         onConfirm={handleDelete}
+         onCancel={() => setToDelete(null)}
+       />
++      {viewing && (
++        <PhotoViewer
++          photos={[{
++            id: viewing.id,
++            src: publicUrl(viewing.photo_url),
++            caption: viewing.name,
++            subtitle: [viewing.position_en || viewing.position_te, viewing.phone].filter(Boolean).join(' · '),
++          }]}
++          index={0}
++          onIndexChange={() => {}}
++          onClose={() => setViewing(null)}
++        />
++      )}
+     </>
+   );
+ }
+diff --git a/src/pages/admin/Settings.jsx b/src/pages/admin/Settings.jsx
+index 1e12347..1dfa0d4 100644
+--- a/src/pages/admin/Settings.jsx
++++ b/src/pages/admin/Settings.jsx
+@@ -8,7 +8,7 @@ import { useToast } from '../../components/admin/Toast';
+ import { useAuth } from '../../auth/AuthContext';
+ import { supabase, isSupabaseConfigured } from '../../lib/supabaseClient';
+ import { useActiveFestival } from '../../hooks/useActiveFestival';
+-import { upsertFestival, setActiveFestival, deleteFestival, listProfiles, updateProfileRole, updateProfileDetails } from '../../services/adminApi';
++import { upsertFestival, setActiveFestival, deleteFestival, listProfiles, updateProfileRole, updateProfileDetails, uploadImage, publicUrl } from '../../services/adminApi';
+ import { listInviteCodes, createInviteCode, revokeInviteCode, buildWhatsAppInviteLink } from '../../services/inviteApi';
+ import { PageSkeleton } from '../../components/LoadingStates';
+ 
+@@ -16,7 +16,7 @@ const blankFestival = {
+   year: new Date().getFullYear(),
+   name_en: 'Sree Bala Ganesh', name_te: '', name_source_lang: 'en',
+   village_en: '', village_te: '', village_source_lang: null,
+-  start_date: '', end_date: '', public_donation_total: '',
++  start_date: '', end_date: '', public_donation_total: '', photo_url: '',
+ };
+ 
+ export default function Settings() {
+@@ -26,6 +26,7 @@ export default function Settings() {
+   const [adding, setAdding] = useState(false);
+   const [editingId, setEditingId] = useState(null);
+   const [form, setForm] = useState(blankFestival);
++  const [festivalPhotoFile, setFestivalPhotoFile] = useState(null);
+   const [saving, setSaving] = useState(false);
+   const [toDelete, setToDelete] = useState(null);
+ 
+@@ -46,6 +47,7 @@ export default function Settings() {
+   function startAdd() {
+     setEditingId(null);
+     setForm(blankFestival);
++    setFestivalPhotoFile(null);
+     setAdding(true);
+   }
+ 
+@@ -56,8 +58,9 @@ export default function Settings() {
+       name_en: f.name_en || '', name_te: f.name_te || '', name_source_lang: f.name_source_lang || 'en',
+       village_en: f.village_en || '', village_te: f.village_te || '', village_source_lang: f.village_source_lang || null,
+       start_date: f.start_date || '', end_date: f.end_date || '',
+-      public_donation_total: f.public_donation_total ?? '',
++      public_donation_total: f.public_donation_total ?? '', photo_url: f.photo_url || '',
+     });
++    setFestivalPhotoFile(null);
+     setAdding(true);
+   }
+ 
+@@ -65,6 +68,7 @@ export default function Settings() {
+     setAdding(false);
+     setEditingId(null);
+     setForm(blankFestival);
++    setFestivalPhotoFile(null);
+   }
+ 
+   async function handleSaveFestival(e) {
+@@ -84,7 +88,12 @@ export default function Settings() {
+     }
+     setSaving(true);
+     try {
+-      await upsertFestival({ ...form, year: yearNum, ...(editingId ? { id: editingId } : {}) });
++      let photo_url = form.photo_url;
++      if (festivalPhotoFile) {
++        const path = `festivals/${yearNum}-${Date.now()}-${festivalPhotoFile.name}`;
++        photo_url = await uploadImage(festivalPhotoFile, path);
++      }
++      await upsertFestival({ ...form, year: yearNum, photo_url, ...(editingId ? { id: editingId } : {}) });
+       toast(editingId ? 'Festival year updated' : 'Festival year saved');
+       closeForm();
+       await reloadFestivals();
+@@ -255,6 +264,13 @@ export default function Settings() {
+           {festivalsLoading && <PageSkeleton rows={2} />}
+           {!festivalsLoading && festivals.map((f) => (
+             <div key={f.id} className="card card-pad" style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 10 }}>
++              {f.photo_url && (
++                <img
++                  src={publicUrl(f.photo_url)}
++                  alt=""
++                  style={{ width: 44, height: 44, borderRadius: 'var(--radius-sm)', objectFit: 'cover', flexShrink: 0 }}
++                />
++              )}
+               <div style={{ flex: 1 }}>
+                 <div className="title">{f.year} — {f.name_en || f.name_te}</div>
+                 <div className="meta">{f.start_date} to {f.end_date}</div>
+@@ -304,6 +320,16 @@ export default function Settings() {
+                 <Field label="Public Donation Total" hint="Shown to villagers on the Home page, if set">
+                   <Input placeholder="₹8,50,000" value={form.public_donation_total} onChange={(e) => setForm({ ...form, public_donation_total: e.target.value })} />
+                 </Field>
++                <Field label="Cover Photo" hint="Shown behind the festival card on the villager Home page">
++                  <Input type="file" accept="image/*" onChange={(e) => setFestivalPhotoFile(e.target.files?.[0] || null)} />
++                  {!festivalPhotoFile && form.photo_url && (
++                    <img
++                      src={publicUrl(form.photo_url)}
++                      alt=""
++                      style={{ width: 64, height: 64, borderRadius: 'var(--radius-sm)', objectFit: 'cover', marginTop: 6 }}
++                    />
++                  )}
++                </Field>
+                 <button className="btn btn-primary btn-block" disabled={saving}>
+                   {saving ? 'Saving…' : editingId ? 'Save Changes' : 'Create Festival Year'}
+                 </button>
+diff --git a/src/services/api.js b/src/services/api.js
+index 629b2fd..18bb36b 100644
+--- a/src/services/api.js
++++ b/src/services/api.js
+@@ -50,6 +50,7 @@ const EMPTY_FESTIVAL = {
+   village: { en: '', te: '' },
+   dates: { en: '', te: '' },
+   publicDonationTotal: null,
++  photo: null,
+ };
+ 
+ // ---------- active festival (cached per session) ----------
+@@ -66,6 +67,7 @@ async function getActiveFestival() {
+       startDate: sample.festival.startDate,
+       endDate: sample.festival.endDate,
+       publicDonationTotal: sample.festival.publicDonationTotal,
++      photo: sample.festival.photo || null,
+     };
+   }
+   if (_festivalCache) return _festivalCache;
+@@ -104,6 +106,7 @@ async function getActiveFestival() {
+     startDate: data.start_date,
+     endDate: data.end_date,
+     publicDonationTotal: data.public_donation_total,
++    photo: publicImageUrl(data.photo_url),
+   };
+   return _festivalCache;
+ }
+diff --git a/src/styles/app.css b/src/styles/app.css
+index 56457cc..7b9134a 100644
+--- a/src/styles/app.css
++++ b/src/styles/app.css
+@@ -372,6 +372,19 @@ button > .card:active {
+   position: relative;
+   animation: pulseGlow 2.4s ease-in-out infinite;
+ }
++.hero-photo-bg {
++  position: absolute;
++  inset: 0;
++  background-size: cover;
++  background-position: center;
++}
++.hero-photo-overlay {
++  position: absolute;
++  inset: 0;
++  background: linear-gradient(180deg, rgba(20,10,5,0.25) 0%, rgba(20,10,5,0.65) 100%);
++  backdrop-filter: blur(1px);
++}
++.hero.hero-has-photo { cursor: zoom-in; }
+ @keyframes pulseGlow {
+   0%, 100% { box-shadow: 0 0 0 0 rgba(246,185,59,0.35); }
+   50% { box-shadow: 0 0 0 6px rgba(246,185,59,0); }
+@@ -519,7 +532,10 @@ button > .card:active {
+ }
+ .member-card {
+   text-align: center;
+-  padding: var(--space-4) var(--space-3);
++  padding: 0;
++  background: transparent;
++  box-shadow: none;
++  border: none;
+ }
+ .member-card .avatar {
+   width: 72px;
+@@ -527,7 +543,7 @@ button > .card:active {
+   border-radius: 50%;
+   object-fit: cover;
+   margin: 0 auto var(--space-2);
+-  border: 3px solid var(--color-turmeric);
++  border: 3px solid var(--color-vermillion);
+   background: var(--color-surface-alt);
+ }
+ .member-card .name { font-weight: 700; }
+@@ -597,6 +613,35 @@ button > .card:active {
+ }
+ .year-pill.active { background: var(--color-vermillion); color: #fff; border-color: var(--color-vermillion); }
+ 
++/* ---------- Gallery vertical timeline (year by year, latest first) ---------- */
++.gallery-timeline { display: flex; flex-direction: column; }
++.timeline-row { display: flex; gap: var(--space-3); align-items: stretch; }
++.timeline-rail { display: flex; flex-direction: column; align-items: center; width: 18px; flex-shrink: 0; }
++.timeline-dot {
++  width: 14px;
++  height: 14px;
++  border-radius: 50%;
++  background: var(--color-vermillion);
++  box-shadow: 0 0 0 4px rgba(199, 62, 29, 0.16);
++  margin-top: 4px;
++  flex-shrink: 0;
++}
++.timeline-line {
++  flex: 1;
++  width: 2px;
++  background: var(--color-vermillion);
++  opacity: 0.3;
++  margin-top: 4px;
++  min-height: 24px;
++}
++.timeline-body { flex: 1; min-width: 0; padding-bottom: var(--space-6); }
++.timeline-year {
++  font-size: var(--fs-lg);
++  font-weight: 800;
++  color: var(--color-vermillion);
++  margin: 0 0 var(--space-3);
++}
++
+ .lightbox {
+   position: fixed;
+   inset: 0;
+@@ -748,6 +793,8 @@ button > .card:active {
+ .photo-viewer-nav.prev { left: var(--space-3); }
+ .photo-viewer-nav.next { right: var(--space-3); }
+ .photo-viewer-caption { color: #fff; text-align: center; padding: 0 var(--space-4) var(--space-4); font-size: var(--fs-sm); flex-shrink: 0; }
++.photo-viewer-caption-title { font-weight: 700; }
++.photo-viewer-caption-subtitle { color: rgba(255,255,255,0.75); font-size: var(--fs-xs); margin-top: 2px; }
+ 
+ /* ---------- Photo upload dropzone (admin: create album / add photos) ---------- */
+ .photo-dropzone {
+diff --git a/supabase/11_committee_role_manage_members.sql b/supabase/11_committee_role_manage_members.sql
+new file mode 100644
+index 0000000..563c1ff
+--- /dev/null
++++ b/supabase/11_committee_role_manage_members.sql
+@@ -0,0 +1,17 @@
++-- ---------- open committee-member management to the "committee" role ----------
++-- Previously only admins could add/edit committee members (insert/update),
++-- even though the storage bucket already allowed committee uploads. The app
++-- now lets committee-role users manage the committee list too (adding
++-- photos + names), so widen these two policies to match. Deleting a member
++-- stays admin-only, same as other destructive actions in this app.
++
++drop policy if exists "committee: admin write" on committee_members;
++drop policy if exists "committee: admin update" on committee_members;
++
++create policy "committee: committee/admin write" on committee_members
++  for insert with check (is_committee_or_admin());
++
++create policy "committee: committee/admin update" on committee_members
++  for update using (is_committee_or_admin());
++
++-- "committee: admin delete" is left untouched — deletion remains admin-only.
+diff --git a/supabase/12_festival_photo.sql b/supabase/12_festival_photo.sql
+new file mode 100644
+index 0000000..9a3b721
+--- /dev/null
++++ b/supabase/12_festival_photo.sql
+@@ -0,0 +1,6 @@
++-- ---------- festival cover photo ----------
++-- Admin/committee can now attach a cover photo when creating or editing a
++-- festival year. Shown as the background of the festival card on the
++-- villager Home page. Nullable — existing festival rows just show no photo.
++
++alter table festivals add column if not exists photo_url text;
