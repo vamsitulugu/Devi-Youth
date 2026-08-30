@@ -1,7 +1,7 @@
-import { useEffect, useState, lazy, Suspense } from 'react';
-import { HashRouter, Routes, Route, useLocation } from 'react-router-dom';
+import { useEffect, useRef, useState, lazy, Suspense } from 'react';
+import { HashRouter, Routes, Route, useLocation, useNavigate, useNavigationType } from 'react-router-dom';
 import { LanguageProvider } from './i18n/LanguageContext';
-import { AuthProvider } from './auth/AuthContext';
+import { AuthProvider, useAuth } from './auth/AuthContext';
 import { ToastProvider } from './components/admin/Toast';
 import { ImageViewerProvider } from './components/ImageViewerContext';
 import ProtectedRoute from './auth/ProtectedRoute';
@@ -250,10 +250,39 @@ function ReceiptRoutes() {
   );
 }
 
+// Once someone is actually signed in, the device/browser back button
+// (or a back-swipe gesture) should never silently drop them out of the
+// admin area into the villager site — that's an easy accidental tap to
+// make mid-task, and re-authenticating afterward is annoying. Back
+// navigation *within* admin (e.g. Donations -> Money Dashboard) is left
+// completely alone; this only intercepts a back-press that would land
+// outside "/admin" entirely, and immediately cancels it by moving
+// forward again. The one intentional way out while signed in is the
+// "Villager App" button on the dashboard (a normal push navigation,
+// which this never touches).
+function useStayInAdminOnBack(isAuthenticated) {
+  const location = useLocation();
+  const navType = useNavigationType();
+  const navigate = useNavigate();
+  const wasAdminRef = useRef(location.pathname.startsWith('/admin'));
+
+  useEffect(() => {
+    const isAdminPath = location.pathname.startsWith('/admin');
+    if (navType === 'POP' && isAuthenticated && wasAdminRef.current && !isAdminPath) {
+      navigate(1); // undo this specific back-navigation, stay in admin
+      return;
+    }
+    wasAdminRef.current = isAdminPath;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [location, navType, isAuthenticated]);
+}
+
 function Root() {
   const location = useLocation();
   const isAdmin = location.pathname.startsWith('/admin');
   const isReceipt = location.pathname.startsWith('/r/');
+  const { user } = useAuth();
+  useStayInAdminOnBack(Boolean(user));
   return (
     <>
       <ScrollToTop />

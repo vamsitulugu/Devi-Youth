@@ -11,10 +11,12 @@ const links = [
   { to: '/contacts', icon: Phone, key: 'contacts_title' },
 ];
 
-// The committee/admin dashboard lives in a separate deployment (this
-// app is villager-facing only) — so this is a plain external link,
-// not an in-app route.
-const COMMITTEE_LOGIN_URL = 'https://deviyouth.vercel.app/#/admin/login';
+// Same app, same deployment — the admin/committee area is just another
+// route here, so this is a normal in-app link (not an external tab).
+// Keeping it in the same tab is what makes the back-button behavior
+// correct: before signing in, back naturally returns here; once
+// signed in, App.jsx's back-guard takes over instead.
+const COMMITTEE_LOGIN_PATH = '/admin/login';
 
 export default function More() {
   const { t } = useLanguage();
@@ -43,16 +45,14 @@ export default function More() {
         </div>
 
         <div className="card" style={{ overflow: 'hidden' }}>
-          <a
-            href={COMMITTEE_LOGIN_URL}
-            target="_blank"
-            rel="noopener noreferrer"
+          <Link
+            to={COMMITTEE_LOGIN_PATH}
             style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '14px 16px' }}
           >
             <div className="icon-badge"><LogIn size={18} /></div>
             <span style={{ flex: 1, fontWeight: 600 }}>{t('committee_login')}</span>
             <ChevronRight size={18} color="var(--color-border)" />
-          </a>
+          </Link>
         </div>
       </div>
     </>

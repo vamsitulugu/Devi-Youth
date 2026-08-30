@@ -74,12 +74,21 @@ export default function AdminDashboard() {
     <>
       <AdminHeader title="Dashboard" />
       <div className="page">
-        <div className="card card-pad" style={{ background: 'var(--color-surface-alt)' }}>
-          <div style={{ fontSize: 'var(--fs-sm)', color: 'var(--color-ink-soft)' }}>Welcome back,</div>
-          <div style={{ fontWeight: 700, fontSize: 'var(--fs-md)' }}>{profile?.full_name || 'Committee Member'}</div>
-          <div style={{ fontSize: 'var(--fs-xs)', color: 'var(--color-marigold-text)', fontWeight: 700, textTransform: 'capitalize' }}>
-            {profile?.role}{festival ? ` · ${festival.year} festival` : ''}
+        <div className="card card-pad" style={{ background: 'var(--color-surface-alt)', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12 }}>
+          <div>
+            <div style={{ fontSize: 'var(--fs-sm)', color: 'var(--color-ink-soft)' }}>Welcome back,</div>
+            <div style={{ fontWeight: 700, fontSize: 'var(--fs-md)' }}>{profile?.full_name || 'Committee Member'}</div>
+            <div style={{ fontSize: 'var(--fs-xs)', color: 'var(--color-marigold-text)', fontWeight: 700, textTransform: 'capitalize' }}>
+              {profile?.role}{festival ? ` · ${festival.year} festival` : ''}
+            </div>
           </div>
+          <Link
+            to="/"
+            className="btn btn-sm"
+            style={{ background: 'var(--color-danger)', color: '#fff', flexShrink: 0, whiteSpace: 'nowrap' }}
+          >
+            <Users size={14} /> Villager App
+          </Link>
         </div>
 
         {(loading || festivalLoading) && <PageSkeleton rows={4} />}
