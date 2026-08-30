@@ -12,12 +12,12 @@
 // Usage: npm run android:release
 
 import { execSync } from 'node:child_process';
-import { existsSync, mkdirSync, writeFileSync, copyFileSync } from 'node:fs';
+import { existsSync, mkdirSync, writeFileSync, copyFileSync, readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';
 
 const root = path.dirname(fileURLToPath(import.meta.url)) + '/..';
-const pkg = JSON.parse(execSync('cat package.json', { cwd: root }).toString());
+const pkg = JSON.parse(readFileSync(path.join(root, 'package.json'), 'utf8'));
 
 function run(cmd) {
   console.log(`\n$ ${cmd}`);
