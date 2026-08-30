@@ -175,6 +175,7 @@ export async function getCommittee() {
     position: await bilingual(m.position_en, m.position_te, m.position_source_lang),
     phone: m.phone,
     photo: publicImageUrl(m.photo_url),
+    qr: publicImageUrl(m.qr_url),
   })));
 }
 

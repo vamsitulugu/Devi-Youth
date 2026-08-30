@@ -54,6 +54,11 @@ export const en = {
   prize_value: 'Value',
   winners_title: 'Winners',
 
+  donations_title: 'Donations',
+  donations_hint: 'Scan any member\u2019s QR below to donate directly to them.',
+  donations_empty: 'No donation QR codes have been added yet.',
+  donations_empty_sub: 'Committee members\u2019 QR codes will appear here once the committee adds them.',
+
   committee_title: 'Committee',
   committee_login: 'Committee Login',
   app_download_ad_title: 'Get the Devi Youth app',

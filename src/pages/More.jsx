@@ -1,9 +1,10 @@
 import { Link } from 'react-router-dom';
-import { Gift, Ticket, Users, Clock3, Phone, ChevronRight, LogIn } from 'lucide-react';
+import { Gift, Ticket, Users, Clock3, Phone, ChevronRight, LogIn, HeartHandshake } from 'lucide-react';
 import { useLanguage } from '../i18n/LanguageContext';
 import Header from '../components/Header';
 
 const links = [
+  { to: '/donations', icon: HeartHandshake, key: 'donations_title' },
   { to: '/laddu', icon: Gift, key: 'laddu_title' },
   { to: '/lottery', icon: Ticket, key: 'lottery_title' },
   { to: '/committee', icon: Users, key: 'committee_title' },

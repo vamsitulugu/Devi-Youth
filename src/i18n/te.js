@@ -54,6 +54,11 @@ export const te = {
   prize_value: 'విలువ',
   winners_title: 'విజేతలు',
 
+  donations_title: 'విరాళాలు',
+  donations_hint: 'నేరుగా విరాళం ఇవ్వడానికి ఏ సభ్యుడి QR అయినా స్కాన్ చేయండి.',
+  donations_empty: 'ఇంకా విరాళాల QR కోడ్‌లు జోడించలేదు.',
+  donations_empty_sub: 'కమిటీ సభ్యుల QR కోడ్‌లు కమిటీ జోడించిన తర్వాత ఇక్కడ కనిపిస్తాయి.',
+
   committee_title: 'కమిటీ',
   committee_login: 'కమిటీ లాగిన్',
   app_download_ad_title: 'దేవి యూత్ యాప్ పొందండి',

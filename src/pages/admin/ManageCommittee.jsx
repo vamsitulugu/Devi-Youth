@@ -12,7 +12,7 @@ import { committeeApi, uploadImage, publicUrl } from '../../services/adminApi';
 import { PageSkeleton, PageError } from '../../components/LoadingStates';
 import PhotoViewer from '../../components/PhotoViewer';
 
-const blank = { name: '', position_en: 'Committee Member', position_te: '', position_source_lang: 'en', phone: '', sort_order: 0, photo_url: '' };
+const blank = { name: '', position_en: 'Committee Member', position_te: '', position_source_lang: 'en', phone: '', sort_order: 0, photo_url: '', qr_url: '' };
 
 export default function ManageCommittee() {
   const toast = useToast();
@@ -23,6 +23,7 @@ export default function ManageCommittee() {
   const [editing, setEditing] = useState(null);
   const [form, setForm] = useState(blank);
   const [file, setFile] = useState(null);
+  const [qrFile, setQrFile] = useState(null);
   const [saving, setSaving] = useState(false);
   const [toDelete, setToDelete] = useState(null);
   const [viewing, setViewing] = useState(null);
@@ -51,14 +52,16 @@ export default function ManageCommittee() {
   function openNew() {
     setForm(blank);
     setFile(null);
+    setQrFile(null);
     setEditing({});
   }
   function openEdit(item) {
     setForm({
       name: item.name, position_en: item.position_en, position_te: item.position_te, position_source_lang: item.position_source_lang,
-      phone: item.phone || '', sort_order: item.sort_order || 0, photo_url: item.photo_url || '',
+      phone: item.phone || '', sort_order: item.sort_order || 0, photo_url: item.photo_url || '', qr_url: item.qr_url || '',
     });
     setFile(null);
+    setQrFile(null);
     setEditing(item);
   }
 
@@ -71,7 +74,12 @@ export default function ManageCommittee() {
         const path = `committee/${Date.now()}-${file.name}`;
         photo_url = await uploadImage(file, path);
       }
-      const payload = { ...form, photo_url, festival_id: festivalId, sort_order: Number(form.sort_order) || 0 };
+      let qr_url = form.qr_url;
+      if (qrFile) {
+        const path = `committee-qr/${Date.now()}-${qrFile.name}`;
+        qr_url = await uploadImage(qrFile, path);
+      }
+      const payload = { ...form, photo_url, qr_url, festival_id: festivalId, sort_order: Number(form.sort_order) || 0 };
       if (editing?.id) {
         await committeeApi.update(editing.id, payload);
         toast('Member updated');
@@ -128,6 +136,17 @@ export default function ManageCommittee() {
               <Field label="Photo">
                 <Input type="file" accept="image/*" onChange={(e) => setFile(e.target.files?.[0] || null)} />
               </Field>
+              <Field label="Donation QR code">
+                <Input type="file" accept="image/*" onChange={(e) => setQrFile(e.target.files?.[0] || null)} />
+                {(qrFile || form.qr_url) && (
+                  <img
+                    src={qrFile ? URL.createObjectURL(qrFile) : publicUrl(form.qr_url)}
+                    alt="QR preview"
+                    style={{ width: 96, height: 96, objectFit: 'contain', marginTop: 8, border: '1px solid var(--color-border)', borderRadius: 8, background: '#fff' }}
+                  />
+                )}
+                <div className="meta" style={{ marginTop: 4 }}>Shown on the public Donations page so people can scan and pay this person directly.</div>
+              </Field>
               <Field label="Sort order">
                 <Input type="number" value={form.sort_order} onChange={(e) => setForm({ ...form, sort_order: e.target.value })} />
               </Field>
@@ -162,6 +181,9 @@ export default function ManageCommittee() {
             <div style={{ flex: 1, minWidth: 0 }}>
               <div className="title">{m.name}</div>
               <div className="meta">{m.position_en || m.position_te}{m.phone ? ` · ${m.phone}` : ''}</div>
+              <div className="meta" style={{ color: m.qr_url ? 'var(--color-success, green)' : 'var(--color-border)' }}>
+                {m.qr_url ? '✓ Donation QR set' : 'No donation QR yet'}
+              </div>
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
               <button className="icon-btn" onClick={() => openEdit(m)} aria-label="Edit"><Pencil size={16} /></button>

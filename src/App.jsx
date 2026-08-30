@@ -21,10 +21,12 @@ import Committee from './pages/Committee';
 import Gallery from './pages/Gallery';
 import History from './pages/History';
 import Contacts from './pages/Contacts';
+import Donations from './pages/Donations';
 import More from './pages/More';
 import Receipt from './pages/Receipt';
 import NotFound from './pages/NotFound';
 import AppDownloadAd from './components/AppDownloadAd';
+import PullToRefresh from './components/PullToRefresh';
 
 // Admin screens are lazy-loaded into a separate chunk. Villagers browsing
 // the public pages — the vast majority of visits — never pay for this
@@ -74,19 +76,22 @@ function Shell() {
   return (
     <div className="app-shell">
       <div className="app-shell-content">
-        <Routes>
-          <Route path="/" element={<Home />} />
-          <Route path="/announcements" element={<Announcements />} />
-          <Route path="/events" element={<Events />} />
-          <Route path="/laddu" element={<Laddu />} />
-          <Route path="/lottery" element={<Lottery />} />
-          <Route path="/committee" element={<Committee />} />
-          <Route path="/gallery" element={<Gallery />} />
-          <Route path="/history" element={<History />} />
-          <Route path="/contacts" element={<Contacts />} />
-          <Route path="/more" element={<More />} />
-          <Route path="*" element={<NotFound />} />
-        </Routes>
+        <PullToRefresh>
+          <Routes>
+            <Route path="/" element={<Home />} />
+            <Route path="/announcements" element={<Announcements />} />
+            <Route path="/events" element={<Events />} />
+            <Route path="/laddu" element={<Laddu />} />
+            <Route path="/lottery" element={<Lottery />} />
+            <Route path="/committee" element={<Committee />} />
+            <Route path="/gallery" element={<Gallery />} />
+            <Route path="/history" element={<History />} />
+            <Route path="/contacts" element={<Contacts />} />
+            <Route path="/donations" element={<Donations />} />
+            <Route path="/more" element={<More />} />
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </PullToRefresh>
       </div>
       <BottomNav />
       <AppDownloadAd />
