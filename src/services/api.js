@@ -50,6 +50,7 @@ const EMPTY_FESTIVAL = {
   village: { en: '', te: '' },
   dates: { en: '', te: '' },
   publicDonationTotal: null,
+  photo: null,
 };
 
 // ---------- active festival (cached per session) ----------
@@ -66,6 +67,7 @@ async function getActiveFestival() {
       startDate: sample.festival.startDate,
       endDate: sample.festival.endDate,
       publicDonationTotal: sample.festival.publicDonationTotal,
+      photo: sample.festival.photo || null,
     };
   }
   if (_festivalCache) return _festivalCache;
@@ -104,6 +106,7 @@ async function getActiveFestival() {
     startDate: data.start_date,
     endDate: data.end_date,
     publicDonationTotal: data.public_donation_total,
+    photo: publicImageUrl(data.photo_url),
   };
   return _festivalCache;
 }

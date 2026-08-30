@@ -10,15 +10,16 @@ import { PageSkeleton, PageError } from '../components/LoadingStates';
 
 export default function Gallery() {
   const { t, lang } = useLanguage();
-  const { data: years, loading: yearsLoading } = useAsyncData(getGalleryYears, []);
-  const [year, setYear] = useState(null);
   const [openAlbum, setOpenAlbum] = useState(null);
 
-  const activeYear = year ?? years?.[0];
-  const fetchAlbums = useCallback(() => getGalleryAlbums(activeYear), [activeYear]);
-  const { data: albums, loading: albumsLoading, error, reload } = useAsyncData(fetchAlbums, [activeYear]);
-
-  const loading = yearsLoading || (!!activeYear && albumsLoading);
+  const fetchTimeline = useCallback(async () => {
+    const years = await getGalleryYears();
+    const albumsByYear = await Promise.all(years.map((y) => getGalleryAlbums(y)));
+    return years
+      .map((year, i) => ({ year, albums: albumsByYear[i] }))
+      .filter((yr) => yr.albums.length > 0);
+  }, []);
+  const { data: timeline, loading, error, reload } = useAsyncData(fetchTimeline, []);
 
   if (openAlbum) {
     return (
@@ -35,50 +36,49 @@ export default function Gallery() {
     <>
       <Header title={t('gallery_title')} />
       <div className="page">
-        {years?.length > 0 && (
-          <div className="year-pills">
-            {years.map((y) => (
-              <button
-                key={y}
-                className={`year-pill${y === activeYear ? ' active' : ''}`}
-                onClick={() => setYear(y)}
-              >
-                {y}
-              </button>
-            ))}
-          </div>
-        )}
-
         {loading && <PageSkeleton rows={2} />}
         {!loading && error && <PageError onRetry={reload} />}
-        {!loading && !error && albums?.length === 0 && (
+        {!loading && !error && timeline?.length === 0 && (
           <EmptyState icon={ImageIcon} title={t('gallery_empty')} subtitle={t('gallery_empty_sub')} />
         )}
-        {!loading && !error && albums?.length > 0 && (
-          <div className="album-grid">
-            {albums.map((a) => (
-              <button key={a.id} className="card album-card" onClick={() => setOpenAlbum(a)}>
-                <div className="album-cover">
-                  {a.cover ? (
-                    <img src={a.cover} alt="" loading="lazy" decoding="async" />
-                  ) : (
-                    <div className="album-cover-empty">
-                      <ImageIcon size={26} strokeWidth={1.5} />
-                      {/* Only claim "no photos" when that's actually true — if
-                          count > 0 but no cover is set yet, just show the icon
-                          so it doesn't contradict the count badge below. */}
-                      {a.count === 0 && <span>{t('gallery_no_photos_yet')}</span>}
-                    </div>
-                  )}
-                  {a.count > 0 && (
-                    <span className="album-cover-badge">{a.count} {t('gallery_photos_word')}</span>
-                  )}
+        {!loading && !error && timeline?.length > 0 && (
+          <div className="gallery-timeline">
+            {timeline.map(({ year, albums }, i) => (
+              <div className="timeline-row" key={year}>
+                <div className="timeline-rail">
+                  <span className="timeline-dot" />
+                  {i < timeline.length - 1 && <span className="timeline-line" />}
                 </div>
-                <div className="album-info">
-                  <span className="album-name">{a.album[lang]}</span>
-                  <ChevronRight size={18} className="album-chevron" />
+                <div className="timeline-body">
+                  <h3 className="timeline-year">{year}</h3>
+                  <div className="album-grid">
+                    {albums.map((a) => (
+                      <button key={a.id} className="card album-card" onClick={() => setOpenAlbum(a)}>
+                        <div className="album-cover">
+                          {a.cover ? (
+                            <img src={a.cover} alt="" loading="lazy" decoding="async" />
+                          ) : (
+                            <div className="album-cover-empty">
+                              <ImageIcon size={26} strokeWidth={1.5} />
+                              {/* Only claim "no photos" when that's actually true — if
+                                  count > 0 but no cover is set yet, just show the icon
+                                  so it doesn't contradict the count badge below. */}
+                              {a.count === 0 && <span>{t('gallery_no_photos_yet')}</span>}
+                            </div>
+                          )}
+                          {a.count > 0 && (
+                            <span className="album-cover-badge">{a.count} {t('gallery_photos_word')}</span>
+                          )}
+                        </div>
+                        <div className="album-info">
+                          <span className="album-name">{a.album[lang]}</span>
+                          <ChevronRight size={18} className="album-chevron" />
+                        </div>
+                      </button>
+                    ))}
+                  </div>
                 </div>
-              </button>
+              </div>
             ))}
           </div>
         )}

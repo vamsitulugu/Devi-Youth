@@ -372,6 +372,19 @@ button > .card:active {
   position: relative;
   animation: pulseGlow 2.4s ease-in-out infinite;
 }
+.hero-photo-bg {
+  position: absolute;
+  inset: 0;
+  background-size: cover;
+  background-position: center;
+}
+.hero-photo-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(20,10,5,0.25) 0%, rgba(20,10,5,0.65) 100%);
+  backdrop-filter: blur(1px);
+}
+.hero.hero-has-photo { cursor: zoom-in; }
 @keyframes pulseGlow {
   0%, 100% { box-shadow: 0 0 0 0 rgba(246,185,59,0.35); }
   50% { box-shadow: 0 0 0 6px rgba(246,185,59,0); }
@@ -599,6 +612,35 @@ button > .card:active {
   white-space: nowrap;
 }
 .year-pill.active { background: var(--color-vermillion); color: #fff; border-color: var(--color-vermillion); }
+
+/* ---------- Gallery vertical timeline (year by year, latest first) ---------- */
+.gallery-timeline { display: flex; flex-direction: column; }
+.timeline-row { display: flex; gap: var(--space-3); align-items: stretch; }
+.timeline-rail { display: flex; flex-direction: column; align-items: center; width: 18px; flex-shrink: 0; }
+.timeline-dot {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--color-vermillion);
+  box-shadow: 0 0 0 4px rgba(199, 62, 29, 0.16);
+  margin-top: 4px;
+  flex-shrink: 0;
+}
+.timeline-line {
+  flex: 1;
+  width: 2px;
+  background: var(--color-vermillion);
+  opacity: 0.3;
+  margin-top: 4px;
+  min-height: 24px;
+}
+.timeline-body { flex: 1; min-width: 0; padding-bottom: var(--space-6); }
+.timeline-year {
+  font-size: var(--fs-lg);
+  font-weight: 800;
+  color: var(--color-vermillion);
+  margin: 0 0 var(--space-3);
+}
 
 .lightbox {
   position: fixed;

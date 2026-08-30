@@ -8,7 +8,7 @@ import { useToast } from '../../components/admin/Toast';
 import { useAuth } from '../../auth/AuthContext';
 import { supabase, isSupabaseConfigured } from '../../lib/supabaseClient';
 import { useActiveFestival } from '../../hooks/useActiveFestival';
-import { upsertFestival, setActiveFestival, deleteFestival, listProfiles, updateProfileRole, updateProfileDetails } from '../../services/adminApi';
+import { upsertFestival, setActiveFestival, deleteFestival, listProfiles, updateProfileRole, updateProfileDetails, uploadImage, publicUrl } from '../../services/adminApi';
 import { listInviteCodes, createInviteCode, revokeInviteCode, buildWhatsAppInviteLink } from '../../services/inviteApi';
 import { PageSkeleton } from '../../components/LoadingStates';
 
@@ -16,7 +16,7 @@ const blankFestival = {
   year: new Date().getFullYear(),
   name_en: 'Sree Bala Ganesh', name_te: '', name_source_lang: 'en',
   village_en: '', village_te: '', village_source_lang: null,
-  start_date: '', end_date: '', public_donation_total: '',
+  start_date: '', end_date: '', public_donation_total: '', photo_url: '',
 };
 
 export default function Settings() {
@@ -26,6 +26,7 @@ export default function Settings() {
   const [adding, setAdding] = useState(false);
   const [editingId, setEditingId] = useState(null);
   const [form, setForm] = useState(blankFestival);
+  const [festivalPhotoFile, setFestivalPhotoFile] = useState(null);
   const [saving, setSaving] = useState(false);
   const [toDelete, setToDelete] = useState(null);
 
@@ -46,6 +47,7 @@ export default function Settings() {
   function startAdd() {
     setEditingId(null);
     setForm(blankFestival);
+    setFestivalPhotoFile(null);
     setAdding(true);
   }
 
@@ -56,8 +58,9 @@ export default function Settings() {
       name_en: f.name_en || '', name_te: f.name_te || '', name_source_lang: f.name_source_lang || 'en',
       village_en: f.village_en || '', village_te: f.village_te || '', village_source_lang: f.village_source_lang || null,
       start_date: f.start_date || '', end_date: f.end_date || '',
-      public_donation_total: f.public_donation_total ?? '',
+      public_donation_total: f.public_donation_total ?? '', photo_url: f.photo_url || '',
     });
+    setFestivalPhotoFile(null);
     setAdding(true);
   }
 
@@ -65,6 +68,7 @@ export default function Settings() {
     setAdding(false);
     setEditingId(null);
     setForm(blankFestival);
+    setFestivalPhotoFile(null);
   }
 
   async function handleSaveFestival(e) {
@@ -84,7 +88,12 @@ export default function Settings() {
     }
     setSaving(true);
     try {
-      await upsertFestival({ ...form, year: yearNum, ...(editingId ? { id: editingId } : {}) });
+      let photo_url = form.photo_url;
+      if (festivalPhotoFile) {
+        const path = `festivals/${yearNum}-${Date.now()}-${festivalPhotoFile.name}`;
+        photo_url = await uploadImage(festivalPhotoFile, path);
+      }
+      await upsertFestival({ ...form, year: yearNum, photo_url, ...(editingId ? { id: editingId } : {}) });
       toast(editingId ? 'Festival year updated' : 'Festival year saved');
       closeForm();
       await reloadFestivals();
@@ -255,6 +264,13 @@ export default function Settings() {
           {festivalsLoading && <PageSkeleton rows={2} />}
           {!festivalsLoading && festivals.map((f) => (
             <div key={f.id} className="card card-pad" style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 10 }}>
+              {f.photo_url && (
+                <img
+                  src={publicUrl(f.photo_url)}
+                  alt=""
+                  style={{ width: 44, height: 44, borderRadius: 'var(--radius-sm)', objectFit: 'cover', flexShrink: 0 }}
+                />
+              )}
               <div style={{ flex: 1 }}>
                 <div className="title">{f.year} — {f.name_en || f.name_te}</div>
                 <div className="meta">{f.start_date} to {f.end_date}</div>
@@ -303,6 +319,16 @@ export default function Settings() {
                 </div>
                 <Field label="Public Donation Total" hint="Shown to villagers on the Home page, if set">
                   <Input placeholder="₹8,50,000" value={form.public_donation_total} onChange={(e) => setForm({ ...form, public_donation_total: e.target.value })} />
+                </Field>
+                <Field label="Cover Photo" hint="Shown behind the festival card on the villager Home page">
+                  <Input type="file" accept="image/*" onChange={(e) => setFestivalPhotoFile(e.target.files?.[0] || null)} />
+                  {!festivalPhotoFile && form.photo_url && (
+                    <img
+                      src={publicUrl(form.photo_url)}
+                      alt=""
+                      style={{ width: 64, height: 64, borderRadius: 'var(--radius-sm)', objectFit: 'cover', marginTop: 6 }}
+                    />
+                  )}
                 </Field>
                 <button className="btn btn-primary btn-block" disabled={saving}>
                   {saving ? 'Saving…' : editingId ? 'Save Changes' : 'Create Festival Year'}

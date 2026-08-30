@@ -86,7 +86,22 @@ function HomeContent({ data, t, lang }) {
 
   return (
     <>
-      <section className="hero">
+      <section
+        className={`hero${festival.photo ? ' hero-has-photo' : ''}`}
+        onClick={festival.photo ? () => openViewer([{
+          id: 'festival-photo',
+          src: festival.photo,
+          caption: festival.name[lang],
+          subtitle: [festival.village[lang], festival.dates[lang]].filter(Boolean).join(' · '),
+        }]) : undefined}
+        style={festival.photo ? { cursor: 'zoom-in' } : undefined}
+      >
+        {festival.photo && (
+          <>
+            <div className="hero-photo-bg" style={{ backgroundImage: `url(${festival.photo})` }} />
+            <div className="hero-photo-overlay" />
+          </>
+        )}
         {hasFestival ? (
           <>
             <div className="eyebrow">{festival.village[lang]} · {festival.year}</div>
