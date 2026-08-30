@@ -30,17 +30,6 @@ export default function Header({ title, showBack = false, onBack }) {
             <img src="/icon-192.png" alt="" className="brand-logo" />
             <span className="brand-name">{t('app_name')}</span>
           </Link>
-          {showDownload && (
-            <a
-              href={meta?.downloadUrl}
-              download="devi-youth.apk"
-              className="lang-toggle header-download-btn"
-              aria-label={t('app_download_button')}
-              title={t('app_download_button')}
-            >
-              <Download size={14} />
-            </a>
-          )}
           <button
             className="lang-toggle"
             onClick={() => setLang(lang === 'en' ? 'te' : 'en')}
@@ -50,6 +39,17 @@ export default function Header({ title, showBack = false, onBack }) {
             <span className="sep">|</span>
             <span className={lang === 'te' ? 'active' : ''}>తెలుగు</span>
           </button>
+          {showDownload && (
+            <a
+              href={meta?.downloadUrl}
+              download="devi-youth.apk"
+              className="header-download-btn"
+              aria-label={t('app_download_button')}
+              title={t('app_download_button')}
+            >
+              <Download size={18} />
+            </a>
+          )}
         </div>
       </header>
       {title && <h1 className="page-title-bar">{title}</h1>}

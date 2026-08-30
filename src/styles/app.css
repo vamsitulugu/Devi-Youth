@@ -48,6 +48,13 @@ a:focus-visible, button:focus-visible, [role="button"]:focus-visible {
     linear-gradient(180deg, var(--color-vermillion) 0%, var(--color-vermillion-dark) 100%);
   color: #fff;
   overflow: hidden;
+  /* Belt-and-braces for the phone's own status bar (clock/signal/battery):
+     the native shell reserves this space via StatusBar.setOverlaysWebView,
+     but on a plain browser/PWA install there's no native plugin to ask, so
+     we pad for the notch/status-bar area ourselves and paint it the same
+     plain vermillion as the rest of the header instead of letting the
+     Toranam garland run underneath it. */
+  padding-top: env(safe-area-inset-top, 0px);
 }
 
 .app-header-row {
@@ -73,13 +80,22 @@ a:focus-visible, button:focus-visible, [role="button"]:focus-visible {
 .brand-logo { transition: transform 0.15s ease; }
 
 .header-download-btn {
-  width: 30px;
-  height: 30px;
+  width: 38px;
+  height: 38px;
   padding: 0;
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
+  flex-shrink: 0;
+  color: #fff;
+  background: var(--color-danger);
+  box-shadow: 0 0 0 2px rgba(255,255,255,0.5), 0 2px 6px rgba(0,0,0,0.25);
+  transition: transform 0.12s ease, background 0.15s ease;
+}
+.header-download-btn:active {
+  transform: scale(0.92);
+  background: var(--color-vermillion-dark);
 }
 
 /* ---------- Install-the-app banner (villager pages only) ---------- */

@@ -1,5 +1,9 @@
 import { useEffect, useRef, useState, lazy, Suspense } from 'react';
 import { HashRouter, Routes, Route, useLocation, useNavigate, useNavigationType } from 'react-router-dom';
+import { Capacitor } from '@capacitor/core';
+import { StatusBar, Style } from '@capacitor/status-bar';
+import { PushNotifications } from '@capacitor/push-notifications';
+import { LocalNotifications } from '@capacitor/local-notifications';
 import { LanguageProvider } from './i18n/LanguageContext';
 import { AuthProvider, useAuth } from './auth/AuthContext';
 import { ToastProvider } from './components/admin/Toast';
@@ -294,8 +298,76 @@ function Root() {
   );
 }
 
+// On Android 13+ (targetSdk 36 here), notifications need an explicit
+// runtime permission grant on top of the manifest entry, or they never
+// show even though nothing "fails". This asks once per install, wires
+// up local notifications (for on-device reminders like "event starts
+// today") and push notifications (for anything sent from a server).
+//
+// Push delivery itself needs a Firebase project: drop a
+// google-services.json into android/app/ (the build already checks for
+// it — see android/app/build.gradle) and it starts working with no
+// further code changes, since the plugin and permissions are already
+// wired up here. Until that file exists, registration simply won't
+// produce a token, and everything else in the app is unaffected.
+function useNativeNotifications() {
+  useEffect(() => {
+    if (!Capacitor.isNativePlatform()) return;
+
+    LocalNotifications.requestPermissions().catch(() => {});
+
+    PushNotifications.requestPermissions()
+      .then((result) => {
+        if (result.receive !== 'granted') return;
+        return PushNotifications.register();
+      })
+      .catch(() => {});
+
+    const regListener = PushNotifications.addListener('registration', (token) => {
+      // Hand this to your backend (e.g. a Supabase table) to target this
+      // device with a push later. Logged for now so it's easy to verify
+      // registration is actually succeeding on a real device.
+      console.log('Push registration token:', token.value);
+    });
+    const regErrorListener = PushNotifications.addListener('registrationError', (err) => {
+      console.warn('Push registration error:', err.error);
+    });
+    const receivedListener = PushNotifications.addListener('pushNotificationReceived', (notification) => {
+      console.log('Push received in foreground:', notification);
+    });
+    const actionListener = PushNotifications.addListener('pushNotificationActionPerformed', (action) => {
+      console.log('Push tapped:', action.notification);
+    });
+
+    return () => {
+      regListener.remove();
+      regErrorListener.remove();
+      receivedListener.remove();
+      actionListener.remove();
+    };
+  }, []);
+}
+
+// On the native Android/iOS shell, the OS status bar (clock, network,
+// battery icons) draws on top of the web page by default, which is what
+// let it collide visually with the Toranam garland at the top of our own
+// header. This pins the status bar to a plain vermillion bar of its own,
+// reserves real screen space for it (so our header renders *below* it
+// instead of underneath it), and switches the status bar icons to light
+// colour so they stay readable against the red.
+function useNativeStatusBar() {
+  useEffect(() => {
+    if (!Capacitor.isNativePlatform()) return;
+    StatusBar.setOverlaysWebView({ overlay: false }).catch(() => {});
+    StatusBar.setBackgroundColor({ color: '#C22B1F' }).catch(() => {});
+    StatusBar.setStyle({ style: Style.Dark }).catch(() => {});
+  }, []);
+}
+
 export default function App() {
   const [showSplash, setShowSplash] = useState(true);
+  useNativeStatusBar();
+  useNativeNotifications();
 
   useEffect(() => {
     const timer = setTimeout(() => setShowSplash(false), 1100);
