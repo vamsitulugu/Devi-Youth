@@ -1,6 +1,7 @@
 export const te = {
-  app_name: 'దేవి యూత్',
+  app_name: 'దేవి యూత్ అప్‌డేట్స్',
   app_tag: 'శ్రీ బాల గణేష్',
+  admin_app_name: 'దేవి యూత్ కమిటీ',
   splash_loading: 'మండపం సిద్ధమవుతోంది…',
 
   nav_home: 'హోమ్',

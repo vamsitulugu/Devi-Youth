@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { ChevronLeft } from 'lucide-react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useLanguage } from '../i18n/LanguageContext';
@@ -6,6 +7,10 @@ import Toranam from './Toranam';
 export default function Header({ title, showBack = false, onBack }) {
   const navigate = useNavigate();
   const { t, lang, setLang } = useLanguage();
+
+  useEffect(() => {
+    document.title = title ? `${title} — ${t('app_name')}` : `${t('app_name')} — ${t('app_tag')}`;
+  }, [title, t, lang]);
 
   return (
     <>

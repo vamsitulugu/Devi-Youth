@@ -22,6 +22,10 @@ export function AdminHeader({ title, showBack = false }) {
   const { signOut } = useAuth();
   const { lang, setLang, t } = useLanguage();
 
+  useEffect(() => {
+    document.title = title ? `${title} — ${t('admin_app_name')}` : t('admin_app_name');
+  }, [title, t, lang]);
+
   return (
     <>
       <header className="app-header">
@@ -29,7 +33,7 @@ export function AdminHeader({ title, showBack = false }) {
         <div className="app-header-row">
           <Link to="/admin" className="brand" aria-label="Admin dashboard">
             <img src="/icon-192.png" alt="" className="brand-logo" />
-            <span className="brand-name">{t('app_name')}</span>
+            <span className="brand-name">{t('admin_app_name')}</span>
           </Link>
           <div className="app-header-actions">
             <button

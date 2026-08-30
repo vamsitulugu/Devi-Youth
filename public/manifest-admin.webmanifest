@@ -1,8 +1,8 @@
 {
-  "name": "Devi Youth Updates — Sree Bala Ganesh",
-  "short_name": "Devi Youth",
-  "description": "Devi Youth Updates — Sree Bala Ganesh: the digital home of our village Ganesh Chaturthi festival — announcements, events, gallery, history and more.",
-  "start_url": "/",
+  "name": "Devi Youth Committee",
+  "short_name": "DY Committee",
+  "description": "Devi Youth Committee — the admin and committee workspace for managing the Sree Bala Ganesh village festival: donations, expenses, content, gallery and settings.",
+  "start_url": "/#/admin",
   "scope": "/",
   "display": "standalone",
   "orientation": "portrait",

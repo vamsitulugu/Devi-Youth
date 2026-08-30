@@ -50,6 +50,20 @@ function ScrollToTop() {
   return null;
 }
 
+// Villagers installing the public site get "Devi Youth Updates" as their
+// home-screen app; committee/admin members installing from inside /admin
+// get their own "Devi Youth Committee" manifest instead — same codebase,
+// two distinct installable identities.
+function DynamicManifest() {
+  const { pathname } = useLocation();
+  useEffect(() => {
+    const link = document.querySelector('link[rel="manifest"]');
+    if (!link) return;
+    link.setAttribute('href', pathname.startsWith('/admin') ? '/manifest-admin.webmanifest' : '/manifest.webmanifest');
+  }, [pathname]);
+  return null;
+}
+
 function Shell() {
   return (
     <div className="app-shell">
@@ -243,6 +257,7 @@ function Root() {
   return (
     <>
       <ScrollToTop />
+      <DynamicManifest />
       {isReceipt ? <ReceiptRoutes /> : isAdmin ? <AdminRoutes /> : <Shell />}
     </>
   );

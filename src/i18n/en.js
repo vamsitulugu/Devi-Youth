@@ -1,6 +1,7 @@
 export const en = {
-  app_name: 'Devi Youth',
+  app_name: 'Devi Youth Updates',
   app_tag: 'Sree Bala Ganesh',
+  admin_app_name: 'Devi Youth Committee',
   splash_loading: 'Preparing the mandapam…',
 
   nav_home: 'Home',
