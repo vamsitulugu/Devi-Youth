@@ -4,7 +4,8 @@ import { Capacitor } from '@capacitor/core';
 import { StatusBar, Style } from '@capacitor/status-bar';
 import { PushNotifications } from '@capacitor/push-notifications';
 import { LocalNotifications } from '@capacitor/local-notifications';
-import { LanguageProvider } from './i18n/LanguageContext';
+import { LanguageProvider, useLanguage } from './i18n/LanguageContext';
+import { supabase, isSupabaseConfigured } from './lib/supabaseClient';
 import { AuthProvider, useAuth } from './auth/AuthContext';
 import { ToastProvider } from './components/admin/Toast';
 import { ImageViewerProvider } from './components/ImageViewerContext';
@@ -289,6 +290,10 @@ function Root() {
   const isReceipt = location.pathname.startsWith('/r/');
   const { user } = useAuth();
   useStayInAdminOnBack(Boolean(user));
+  // Needs to run inside LanguageProvider (reads/writes the villager's
+  // language choice against their saved push token), so it lives here
+  // rather than up in App() where the providers haven't mounted yet.
+  useNativeNotifications();
   return (
     <>
       <ScrollToTop />
@@ -310,7 +315,33 @@ function Root() {
 // further code changes, since the plugin and permissions are already
 // wired up here. Until that file exists, registration simply won't
 // produce a token, and everything else in the app is unaffected.
+//
+// Once a token comes back, it's upserted into the `device_tokens`
+// Supabase table (see supabase/12_push_notifications.sql) along with
+// the villager's current language choice, so the send-push Edge
+// Function (supabase/functions/send-push) can send Telugu text to
+// Telugu-language devices and English text to everyone else.
 function useNativeNotifications() {
+  const { lang } = useLanguage();
+  const langRef = useRef(lang);
+  const tokenRef = useRef(null);
+  langRef.current = lang;
+
+  // Registration only fires once per install (the token barely
+  // changes), but someone can switch EN/తెలుగు at any point afterward
+  // — keep the saved row's language in sync so future pushes land in
+  // whichever language they're currently reading in.
+  useEffect(() => {
+    if (!Capacitor.isNativePlatform() || !isSupabaseConfigured || !tokenRef.current) return;
+    supabase
+      .from('device_tokens')
+      .update({ lang })
+      .eq('token', tokenRef.current)
+      .then(({ error }) => {
+        if (error) console.warn('Updating push token language failed:', error.message);
+      });
+  }, [lang]);
+
   useEffect(() => {
     if (!Capacitor.isNativePlatform()) return;
 
@@ -324,10 +355,18 @@ function useNativeNotifications() {
       .catch(() => {});
 
     const regListener = PushNotifications.addListener('registration', (token) => {
-      // Hand this to your backend (e.g. a Supabase table) to target this
-      // device with a push later. Logged for now so it's easy to verify
-      // registration is actually succeeding on a real device.
       console.log('Push registration token:', token.value);
+      tokenRef.current = token.value;
+      if (!isSupabaseConfigured) return;
+      supabase
+        .from('device_tokens')
+        .upsert(
+          { token: token.value, platform: Capacitor.getPlatform(), lang: langRef.current },
+          { onConflict: 'token' },
+        )
+        .then(({ error }) => {
+          if (error) console.warn('Saving push token failed:', error.message);
+        });
     });
     const regErrorListener = PushNotifications.addListener('registrationError', (err) => {
       console.warn('Push registration error:', err.error);
@@ -367,7 +406,6 @@ function useNativeStatusBar() {
 export default function App() {
   const [showSplash, setShowSplash] = useState(true);
   useNativeStatusBar();
-  useNativeNotifications();
 
   useEffect(() => {
     const timer = setTimeout(() => setShowSplash(false), 1100);
