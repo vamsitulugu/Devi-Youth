@@ -39,15 +39,29 @@ if (!existsSync(builtApk)) {
   process.exit(1);
 }
 
+// 1) A dated copy in releases/ for sideloading directly (WhatsApp, Drive).
 const outDir = path.join(root, 'releases');
 mkdirSync(outDir, { recursive: true });
 const outApk = path.join(outDir, `devi-youth-v${pkg.version}.apk`);
 copyFileSync(builtApk, outApk);
 
-writeFileSync(
-  path.join(outDir, 'app-meta.json'),
-  JSON.stringify({ version: pkg.version, builtAt: new Date().toISOString() }, null, 2)
-);
+// 2) A stable-named copy in public/downloads/ — this is what the "Download"
+// button and the periodic in-app ad both link to (see useAppMeta.js).
+// Because it's a fixed filename, the villager app never needs a code
+// change when a new version ships: commit + push this file (and
+// app-meta.json below), Vercel's own `vite build` copies public/ into
+// dist/ the same way it always does, and the download link
+// automatically starts serving the new APK.
+const publicDownloadsDir = path.join(root, 'public/downloads');
+mkdirSync(publicDownloadsDir, { recursive: true });
+const publicApk = path.join(publicDownloadsDir, 'devi-youth.apk');
+copyFileSync(builtApk, publicApk);
+
+const meta = { version: pkg.version, builtAt: new Date().toISOString() };
+writeFileSync(path.join(outDir, 'app-meta.json'), JSON.stringify(meta, null, 2));
+writeFileSync(path.join(publicDownloadsDir, 'app-meta.json'), JSON.stringify(meta, null, 2));
 
 console.log(`\n✔ Signed APK ready: ${outApk}`);
-console.log('Share this file directly (WhatsApp/Drive) for sideloading, or upload it to the Play Console.');
+console.log(`✔ In-app download updated: public/downloads/devi-youth.apk (v${pkg.version})`);
+console.log('\nNext: commit public/downloads/ and push — once Vercel redeploys, the');
+console.log('Download button and the install-nudge banner both serve this version.');

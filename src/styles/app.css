@@ -72,6 +72,63 @@ a:focus-visible, button:focus-visible, [role="button"]:focus-visible {
 .brand:active .brand-logo { transform: scale(0.94); }
 .brand-logo { transition: transform 0.15s ease; }
 
+.header-download-btn {
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* ---------- Install-the-app banner (villager pages only) ---------- */
+.app-download-ad {
+  position: fixed;
+  left: var(--space-3);
+  right: var(--space-3);
+  bottom: calc(var(--nav-height) + var(--space-3) + env(safe-area-inset-bottom, 0px));
+  z-index: 40;
+  max-width: 480px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 12px;
+  border-radius: var(--radius-md);
+  background: var(--color-ink);
+  color: #fff;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.28);
+  animation: slideUpFade 0.25s ease both;
+}
+@keyframes slideUpFade {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.app-download-ad-icon {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--color-marigold);
+  color: #2a1c08;
+}
+.app-download-ad-copy { flex: 1; min-width: 0; }
+.app-download-ad-title { font-weight: 700; font-size: var(--fs-sm); }
+.app-download-ad-body { font-size: var(--fs-xs); color: rgba(255,255,255,0.75); margin-top: 1px; }
+.app-download-ad-btn { flex-shrink: 0; white-space: nowrap; }
+.app-download-ad-close {
+  flex-shrink: 0;
+  color: rgba(255,255,255,0.6);
+  padding: 4px;
+}
+@media (prefers-reduced-motion: reduce) {
+  .app-download-ad { animation: none; }
+}
+
 .app-header-actions {
   display: flex;
   align-items: center;

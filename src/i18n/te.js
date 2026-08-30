@@ -56,6 +56,9 @@ export const te = {
 
   committee_title: 'కమిటీ',
   committee_login: 'కమిటీ లాగిన్',
+  app_download_ad_title: 'దేవి యూత్ యాప్ పొందండి',
+  app_download_ad_body: 'వేగవంతమైన యాక్సెస్, ఆఫ్‌లైన్‌లో పనిచేస్తుంది, మీ హోమ్ స్క్రీన్‌పై నేరుగా.',
+  app_download_button: 'డౌన్‌లోడ్',
   committee_empty: 'ఇంకా కమిటీ సభ్యులను చేర్చలేదు.',
   committee_empty_sub: 'ప్రచురించిన తర్వాత కమిటీ జాబితా ఇక్కడ కనిపిస్తుంది.',
   contact: 'సంప్రదించండి',

@@ -56,6 +56,9 @@ export const en = {
 
   committee_title: 'Committee',
   committee_login: 'Committee Login',
+  app_download_ad_title: 'Get the Devi Youth app',
+  app_download_ad_body: 'Faster access, works offline, right on your home screen.',
+  app_download_button: 'Download',
   committee_empty: 'No committee members have been added yet.',
   committee_empty_sub: 'The committee list will appear here once it is published.',
   contact: 'Contact',

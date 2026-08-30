@@ -19,6 +19,7 @@ import Contacts from './pages/Contacts';
 import More from './pages/More';
 import Receipt from './pages/Receipt';
 import NotFound from './pages/NotFound';
+import AppDownloadAd from './components/AppDownloadAd';
 
 // Admin screens are lazy-loaded into a separate chunk. Villagers browsing
 // the public pages — the vast majority of visits — never pay for this
@@ -83,6 +84,7 @@ function Shell() {
         </Routes>
       </div>
       <BottomNav />
+      <AppDownloadAd />
     </div>
   );
 }
