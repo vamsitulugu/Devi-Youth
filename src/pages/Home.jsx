@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { CalendarDays, MapPin, ChevronRight, Sparkles, Gift } from 'lucide-react';
 import { useLanguage } from '../i18n/LanguageContext';
 import { useAsyncData } from '../hooks/useAsyncData';
+import { useCloseOnBack } from '../hooks/useCloseOnBack';
 import { getFestival, getAnnouncements, getEvents, getLaddu, getLottery, getCommittee, getLatestPhotos } from '../services/api';
 import PhotoTile from '../components/PhotoTile';
 import Header from '../components/Header';
@@ -83,6 +84,7 @@ function HomeContent({ data, t, lang }) {
   const [viewer, setViewer] = useState(null);
   const openViewer = (photos, index = 0) => setViewer({ photos, index });
   const closeViewer = () => setViewer(null);
+  useCloseOnBack(!!viewer, closeViewer);
 
   return (
     <>

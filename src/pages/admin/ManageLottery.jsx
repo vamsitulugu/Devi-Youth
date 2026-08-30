@@ -7,6 +7,7 @@ import { Field, Input, Select, FormGrid } from '../../components/admin/FormField
 import BilingualField from '../../components/admin/BilingualField';
 import { useToast } from '../../components/admin/Toast';
 import { useActiveFestival } from '../../hooks/useActiveFestival';
+import { useCloseOnBack } from '../../hooks/useCloseOnBack';
 import {
   getLotteryForFestival, upsertLottery, lotteryPrizesApi, lotteryWinnersApi, uploadImage, publicUrl,
 } from '../../services/adminApi';
@@ -30,10 +31,12 @@ export default function ManageLottery() {
   const [newPrize, setNewPrize] = useState(blankPrize);
   const [prizeFile, setPrizeFile] = useState(null);
   const [addingPrize, setAddingPrize] = useState(false);
+  useCloseOnBack(addingPrize, () => setAddingPrize(false));
   const [prizeToDelete, setPrizeToDelete] = useState(null);
 
   const [newWinner, setNewWinner] = useState(blankWinner);
   const [addingWinner, setAddingWinner] = useState(false);
+  useCloseOnBack(addingWinner, () => setAddingWinner(false));
   const [winnerToDelete, setWinnerToDelete] = useState(null);
 
   async function reload() {

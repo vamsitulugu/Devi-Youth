@@ -6,6 +6,7 @@ import ConfirmDialog from '../../components/admin/ConfirmDialog';
 import { Field, Input, FormGrid } from '../../components/admin/FormField';
 import { useToast } from '../../components/admin/Toast';
 import { useActiveFestival } from '../../hooks/useActiveFestival';
+import { useCloseOnBack } from '../../hooks/useCloseOnBack';
 import {
   albumsApi,
   listAlbumsWithCounts,
@@ -112,12 +113,14 @@ export default function ManageGallery() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [adding, setAdding] = useState(false);
+  useCloseOnBack(adding, () => setAdding(false));
   const [form, setForm] = useState(blankAlbum);
   const [staged, setStaged] = useState([]);
   const [saving, setSaving] = useState(false);
   const [albumToDelete, setAlbumToDelete] = useState(null);
 
   const [openAlbum, setOpenAlbum] = useState(null);
+  useCloseOnBack(!!openAlbum, () => setOpenAlbum(null));
 
   async function reload() {
     if (festivalLoading) return;
@@ -307,8 +310,10 @@ function AlbumDetail({ album, festivalYear, onBack, toast }) {
   const [photosError, setPhotosError] = useState(null);
   const [photoToDelete, setPhotoToDelete] = useState(null);
   const [viewerIndex, setViewerIndex] = useState(null);
+  useCloseOnBack(viewerIndex !== null, () => setViewerIndex(null));
 
   const [addingPhotos, setAddingPhotos] = useState(false);
+  useCloseOnBack(addingPhotos, () => setAddingPhotos(false));
   const [staged, setStaged] = useState([]);
   const [uploading, setUploading] = useState(false);
 

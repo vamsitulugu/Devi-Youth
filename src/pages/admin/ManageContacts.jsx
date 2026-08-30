@@ -6,6 +6,7 @@ import { Field, Input, FormGrid } from '../../components/admin/FormField';
 import BilingualField from '../../components/admin/BilingualField';
 import { useToast } from '../../components/admin/Toast';
 import { contactsApi } from '../../services/adminApi';
+import { useCloseOnBack } from '../../hooks/useCloseOnBack';
 import { PageSkeleton, PageError } from '../../components/LoadingStates';
 
 const blank = { name: '', role_en: '', role_te: '', role_source_lang: null, phone: '', sort_order: 0 };
@@ -16,6 +17,7 @@ export default function ManageContacts() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [editing, setEditing] = useState(null);
+  useCloseOnBack(!!editing, () => setEditing(null));
   const [form, setForm] = useState(blank);
   const [saving, setSaving] = useState(false);
   const [toDelete, setToDelete] = useState(null);

@@ -2,6 +2,7 @@ import { useCallback, useState } from 'react';
 import { ChevronRight, ImageIcon } from 'lucide-react';
 import { useLanguage } from '../i18n/LanguageContext';
 import { useAsyncData } from '../hooks/useAsyncData';
+import { useCloseOnBack } from '../hooks/useCloseOnBack';
 import { getGalleryYears, getGalleryAlbums, getAlbumPhotos } from '../services/api';
 import Header from '../components/Header';
 import PhotoViewer from '../components/PhotoViewer';
@@ -11,6 +12,7 @@ import { PageSkeleton, PageError } from '../components/LoadingStates';
 export default function Gallery() {
   const { t, lang } = useLanguage();
   const [openAlbum, setOpenAlbum] = useState(null);
+  useCloseOnBack(!!openAlbum, () => setOpenAlbum(null));
 
   const fetchTimeline = useCallback(async () => {
     const years = await getGalleryYears();
@@ -91,6 +93,7 @@ function AlbumView({ album, lang, t, onBack }) {
   const fetchPhotos = useCallback(() => getAlbumPhotos(album.id), [album.id]);
   const { data: photos, loading, error, reload } = useAsyncData(fetchPhotos, [album.id]);
   const [viewerIndex, setViewerIndex] = useState(null);
+  useCloseOnBack(viewerIndex !== null, () => setViewerIndex(null));
 
   return (
     <>

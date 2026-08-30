@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react';
 import { CalendarDays, Megaphone } from 'lucide-react';
 import { useLanguage } from '../i18n/LanguageContext';
 import { useAsyncData } from '../hooks/useAsyncData';
+import { useCloseOnBack } from '../hooks/useCloseOnBack';
 import { getAnnouncements } from '../services/api';
 import PhotoTile from '../components/PhotoTile';
 import WhatsAppShare from '../components/WhatsAppShare';
@@ -14,6 +15,7 @@ export default function Announcements() {
   const { t, lang } = useLanguage();
   const { data: announcements, loading, error, reload } = useAsyncData(getAnnouncements, []);
   const [viewerIndex, setViewerIndex] = useState(null);
+  useCloseOnBack(viewerIndex !== null, () => setViewerIndex(null));
 
   const photos = useMemo(
     () => (announcements || [])

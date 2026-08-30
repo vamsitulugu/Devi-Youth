@@ -6,6 +6,7 @@ import ConfirmDialog from '../../components/admin/ConfirmDialog';
 import { Field, Input, Select, Textarea, FormGrid } from '../../components/admin/FormField';
 import { useToast } from '../../components/admin/Toast';
 import { useActiveFestival } from '../../hooks/useActiveFestival';
+import { useCloseOnBack } from '../../hooks/useCloseOnBack';
 import { expensesApi } from '../../services/adminApi';
 import { PageSkeleton, PageError } from '../../components/LoadingStates';
 
@@ -60,6 +61,7 @@ export default function ManageExpenses() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [adding, setAdding] = useState(false);
+  useCloseOnBack(adding, () => setAdding(false));
   const [form, setForm] = useState(blank);
   const [clientId, setClientId] = useState(null);
   const [saving, setSaving] = useState(false);

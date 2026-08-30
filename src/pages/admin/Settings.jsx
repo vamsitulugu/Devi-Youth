@@ -8,6 +8,7 @@ import { useToast } from '../../components/admin/Toast';
 import { useAuth } from '../../auth/AuthContext';
 import { supabase, isSupabaseConfigured } from '../../lib/supabaseClient';
 import { useActiveFestival } from '../../hooks/useActiveFestival';
+import { useCloseOnBack } from '../../hooks/useCloseOnBack';
 import { upsertFestival, setActiveFestival, deleteFestival, listProfiles, updateProfileRole, updateProfileDetails, uploadImage, publicUrl } from '../../services/adminApi';
 import { listInviteCodes, createInviteCode, revokeInviteCode, buildWhatsAppInviteLink } from '../../services/inviteApi';
 import { PageSkeleton } from '../../components/LoadingStates';
@@ -24,6 +25,7 @@ export default function Settings() {
   const { user, profile, isAdmin, signOut, refreshProfile } = useAuth();
   const { festivals, reload: reloadFestivals, loading: festivalsLoading } = useActiveFestival();
   const [adding, setAdding] = useState(false);
+  useCloseOnBack(adding, () => closeForm());
   const [editingId, setEditingId] = useState(null);
   const [form, setForm] = useState(blankFestival);
   const [festivalPhotoFile, setFestivalPhotoFile] = useState(null);

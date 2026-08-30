@@ -7,6 +7,7 @@ import { Field, Input, FormGrid } from '../../components/admin/FormField';
 import BilingualField from '../../components/admin/BilingualField';
 import { useToast } from '../../components/admin/Toast';
 import { useActiveFestival } from '../../hooks/useActiveFestival';
+import { useCloseOnBack } from '../../hooks/useCloseOnBack';
 import { announcementsApi, uploadImage, publicUrl } from '../../services/adminApi';
 import { PageSkeleton, PageError } from '../../components/LoadingStates';
 
@@ -23,6 +24,7 @@ export default function ManageAnnouncements() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [editing, setEditing] = useState(null); // null=closed, {} = new, obj = edit
+  useCloseOnBack(!!editing, () => setEditing(null));
   const [form, setForm] = useState(blank);
   const [saving, setSaving] = useState(false);
   const [file, setFile] = useState(null);

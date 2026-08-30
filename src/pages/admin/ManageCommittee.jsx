@@ -7,6 +7,7 @@ import { Field, Input, FormGrid } from '../../components/admin/FormField';
 import BilingualField from '../../components/admin/BilingualField';
 import { useToast } from '../../components/admin/Toast';
 import { useActiveFestival } from '../../hooks/useActiveFestival';
+import { useCloseOnBack } from '../../hooks/useCloseOnBack';
 import { committeeApi, uploadImage, publicUrl } from '../../services/adminApi';
 import { PageSkeleton, PageError } from '../../components/LoadingStates';
 import PhotoViewer from '../../components/PhotoViewer';
@@ -25,6 +26,8 @@ export default function ManageCommittee() {
   const [saving, setSaving] = useState(false);
   const [toDelete, setToDelete] = useState(null);
   const [viewing, setViewing] = useState(null);
+  useCloseOnBack(!!editing, () => setEditing(null));
+  useCloseOnBack(!!viewing, () => setViewing(null));
 
   async function reload() {
     if (festivalLoading) return;

@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react';
 import { Users } from 'lucide-react';
 import { useLanguage } from '../i18n/LanguageContext';
 import { useAsyncData } from '../hooks/useAsyncData';
+import { useCloseOnBack } from '../hooks/useCloseOnBack';
 import { getCommittee } from '../services/api';
 import PhotoTile from '../components/PhotoTile';
 import Header from '../components/Header';
@@ -13,6 +14,7 @@ export default function Committee() {
   const { t, lang } = useLanguage();
   const { data: committee, loading, error, reload } = useAsyncData(getCommittee, []);
   const [viewerIndex, setViewerIndex] = useState(null);
+  useCloseOnBack(viewerIndex !== null, () => setViewerIndex(null));
 
   // Only members with a real photo can be opened in the lightbox; keep a
   // parallel index map so clicking a tile opens the right photo.

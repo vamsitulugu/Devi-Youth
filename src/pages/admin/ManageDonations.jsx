@@ -8,6 +8,7 @@ import { Field, Input, Select, Textarea, FormGrid } from '../../components/admin
 import { useToast } from '../../components/admin/Toast';
 import { useAuth } from '../../auth/AuthContext';
 import { useActiveFestival } from '../../hooks/useActiveFestival';
+import { useCloseOnBack } from '../../hooks/useCloseOnBack';
 import { donationsApi, getDonorHistory, deleteDonationWithReason } from '../../services/adminApi';
 import { openWhatsAppReceipt } from '../../lib/whatsappReceipt';
 import { PageSkeleton, PageError } from '../../components/LoadingStates';
@@ -70,6 +71,7 @@ export default function ManageDonations() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [adding, setAdding] = useState(false);
+  useCloseOnBack(adding, () => setAdding(false));
   const [form, setForm] = useState(blank);
   const [clientId, setClientId] = useState(null);
   const [saving, setSaving] = useState(false);

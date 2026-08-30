@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react';
 import { CalendarDays, MapPin, Info, Trophy } from 'lucide-react';
 import { useLanguage } from '../i18n/LanguageContext';
 import { useAsyncData } from '../hooks/useAsyncData';
+import { useCloseOnBack } from '../hooks/useCloseOnBack';
 import { getLottery } from '../services/api';
 import PhotoTile from '../components/PhotoTile';
 import Header from '../components/Header';
@@ -13,6 +14,7 @@ export default function Lottery() {
   const { t, lang } = useLanguage();
   const { data: lottery, loading, error, reload } = useAsyncData(getLottery, []);
   const [viewerIndex, setViewerIndex] = useState(null);
+  useCloseOnBack(viewerIndex !== null, () => setViewerIndex(null));
 
   const prizePhotos = useMemo(
     () => (lottery?.prizes || [])
