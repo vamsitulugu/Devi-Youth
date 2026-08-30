@@ -55,6 +55,7 @@ export const en = {
   winners_title: 'Winners',
 
   committee_title: 'Committee',
+  committee_login: 'Committee Login',
   committee_empty: 'No committee members have been added yet.',
   committee_empty_sub: 'The committee list will appear here once it is published.',
   contact: 'Contact',

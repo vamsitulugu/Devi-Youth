@@ -55,6 +55,7 @@ export const te = {
   winners_title: 'విజేతలు',
 
   committee_title: 'కమిటీ',
+  committee_login: 'కమిటీ లాగిన్',
   committee_empty: 'ఇంకా కమిటీ సభ్యులను చేర్చలేదు.',
   committee_empty_sub: 'ప్రచురించిన తర్వాత కమిటీ జాబితా ఇక్కడ కనిపిస్తుంది.',
   contact: 'సంప్రదించండి',
