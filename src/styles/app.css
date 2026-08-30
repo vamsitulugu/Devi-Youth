@@ -83,17 +83,40 @@
   position: sticky;
   top: 0;
   z-index: 19;
-  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
   padding: var(--space-3) var(--space-4);
+  background: var(--color-surface);
+  border-bottom: 1px solid var(--color-border);
+  animation: titleBarIn 0.22s ease;
+}
+@keyframes titleBarIn {
+  from { opacity: 0; transform: translateY(-4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.page-title-back {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+  color: var(--color-ink);
+  transition: transform 0.15s ease;
+}
+.page-title-back:active { transform: scale(0.88) translateX(-2px); }
+.page-title-bar-text {
+  flex: 1;
+  min-width: 0;
+  margin: 0;
   font-family: var(--font-display);
   font-size: var(--fs-md);
   color: var(--color-ink);
   text-align: center;
-  background: var(--color-surface);
-  border-bottom: 1px solid var(--color-border);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+.page-title-bar.with-back .page-title-bar-text {
+  text-align: left;
 }
 
 .lang-toggle {
@@ -113,12 +136,21 @@
 .toranam {
   display: block;
   width: 100%;
-  height: 20px;
+  height: 30px;
   margin-top: -1px;
-  margin-bottom: -6px;
+  margin-bottom: -8px;
   line-height: 0;
 }
 .toranam svg { display: block; width: 100%; height: 100%; }
+.toranam svg path:not(:first-child) {
+  animation: toranamTwinkle 2.6s ease-in-out infinite;
+  transform-origin: center;
+}
+.toranam svg path:nth-child(odd) { animation-delay: 0.4s; }
+@keyframes toranamTwinkle {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.55; }
+}
 
 /* ---------- Auth shell (login) — always centered, never the sidebar grid ---------- */
 .auth-shell {
@@ -224,8 +256,11 @@
   font-weight: 600;
   padding: 6px 2px;
   position: relative;
+  transition: color 0.2s ease, transform 0.15s ease;
 }
+.nav-item:active { transform: scale(0.92); }
 .nav-item.active { color: var(--color-vermillion); }
+.nav-item.active svg { animation: navPop 0.32s ease; }
 .nav-item.active::before {
   content: "";
   position: absolute;
@@ -235,6 +270,16 @@
   border-radius: var(--radius-pill);
   background: var(--color-marigold);
   box-shadow: 0 0 8px rgba(240,148,15,0.7);
+  animation: navIndicatorIn 0.22s ease;
+}
+@keyframes navPop {
+  0% { transform: scale(0.7); }
+  60% { transform: scale(1.15); }
+  100% { transform: scale(1); }
+}
+@keyframes navIndicatorIn {
+  from { opacity: 0; transform: scaleX(0.3); }
+  to { opacity: 1; transform: scaleX(1); }
 }
 .nav-item .nav-label {
   max-width: 62px;
@@ -390,17 +435,17 @@ button > .card:active {
 }
 .hero.hero-has-photo { cursor: zoom-in; }
 @keyframes pulseGlow {
-  0%, 100% { box-shadow: 0 0 0 0 rgba(246,185,59,0.35); }
-  50% { box-shadow: 0 0 0 6px rgba(246,185,59,0); }
+  0%, 100% { box-shadow: 0 0 0 0 rgba(194,43,31,0.55); }
+  50% { box-shadow: 0 0 0 6px rgba(194,43,31,0); }
 }
 @media (prefers-reduced-motion: reduce) {
   .hero-countdown { animation: none; }
-}
-.hero .modak-icon {
-  position: absolute;
-  right: var(--space-4);
-  bottom: var(--space-3);
-  opacity: 0.9;
+  .nav-item.active svg,
+  .nav-item.active::before,
+  .page-title-bar,
+  .toranam svg path {
+    animation: none;
+  }
 }
 
 /* ---------- Buttons ---------- */
@@ -906,7 +951,9 @@ button > .card:active {
   display: flex; align-items: center; justify-content: center;
   background: var(--color-surface-alt);
   color: var(--color-ink);
+  transition: transform 0.12s ease, background 0.15s ease;
 }
+.icon-btn:active { transform: scale(0.88); }
 .icon-btn.whatsapp { background: #DDF3E3; color: #1e8f47; }
 .icon-btn.call { background: #E4EFFB; color: #1f6fbf; }
 

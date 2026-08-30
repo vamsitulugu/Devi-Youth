@@ -43,7 +43,7 @@ export default function Home() {
   );
 }
 
-function FestivalCountdown({ festival, t }) {
+function FestivalCountdown({ festival, t, lang }) {
   if (!festival.startDate || !festival.endDate) return null;
   const startOfDay = (d) => { const x = new Date(d); x.setHours(0, 0, 0, 0); return x; };
   const today = startOfDay(new Date());
@@ -54,7 +54,7 @@ function FestivalCountdown({ festival, t }) {
   if (today > end) {
     label = t('countdown_over');
   } else if (today >= start) {
-    label = today.getTime() === start.getTime() ? t('countdown_today') : t('countdown_live');
+    label = `${festival.year} — ${festival.name[lang]}`;
   } else {
     const days = Math.round((start - today) / 86400000);
     label = (days === 1 ? t('countdown_days_one') : t('countdown_days_other')).replace('{n}', days);
@@ -112,17 +112,11 @@ function HomeContent({ data, t, lang }) {
               <CalendarDays size={14} style={{ verticalAlign: -2, marginRight: 4 }} />
               {festival.dates[lang]}
             </div>
-            <FestivalCountdown festival={festival} t={t} />
+            <FestivalCountdown festival={festival} t={t} lang={lang} />
           </>
         ) : (
           <h1 style={{ fontSize: 'var(--fs-lg)' }}>{t('home_no_festival')}</h1>
         )}
-        <div className="modak-icon">
-          <svg width="48" height="48" viewBox="0 0 48 48" fill="none">
-            <path d="M24 10c9 0 16 8 16 16 0 8-7 12-16 12S8 34 8 26c0-8 7-16 16-16Z" fill="#F6B93B" opacity="0.9" />
-            <path d="M24 10c2-4 5-6 8-6" stroke="#F6B93B" strokeWidth="2.5" strokeLinecap="round" />
-          </svg>
-        </div>
       </section>
 
       {nothingPublishedYet && (
