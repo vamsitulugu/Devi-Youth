@@ -451,10 +451,21 @@ index 629b2fd..18bb36b 100644
    return _festivalCache;
  }
 diff --git a/src/styles/app.css b/src/styles/app.css
-index 56457cc..7b9134a 100644
+index 56457cc..8e33576 100644
 --- a/src/styles/app.css
 +++ b/src/styles/app.css
-@@ -372,6 +372,19 @@ button > .card:active {
+@@ -314,6 +314,10 @@ button > .card:active {
+   position: relative;
+   overflow: hidden;
+   box-shadow: var(--shadow-pop);
++  min-height: 270px;
++  display: flex;
++  flex-direction: column;
++  justify-content: flex-end;
+ }
+ .hero::before {
+   /* Subtle repeating mandala-dot motif, temple-brass on vermillion —
+@@ -372,6 +376,19 @@ button > .card:active {
    position: relative;
    animation: pulseGlow 2.4s ease-in-out infinite;
  }
@@ -474,7 +485,7 @@ index 56457cc..7b9134a 100644
  @keyframes pulseGlow {
    0%, 100% { box-shadow: 0 0 0 0 rgba(246,185,59,0.35); }
    50% { box-shadow: 0 0 0 6px rgba(246,185,59,0); }
-@@ -519,7 +532,10 @@ button > .card:active {
+@@ -519,7 +536,10 @@ button > .card:active {
  }
  .member-card {
    text-align: center;
@@ -486,7 +497,7 @@ index 56457cc..7b9134a 100644
  }
  .member-card .avatar {
    width: 72px;
-@@ -527,7 +543,7 @@ button > .card:active {
+@@ -527,7 +547,7 @@ button > .card:active {
    border-radius: 50%;
    object-fit: cover;
    margin: 0 auto var(--space-2);
@@ -495,7 +506,7 @@ index 56457cc..7b9134a 100644
    background: var(--color-surface-alt);
  }
  .member-card .name { font-weight: 700; }
-@@ -597,6 +613,35 @@ button > .card:active {
+@@ -597,6 +617,35 @@ button > .card:active {
  }
  .year-pill.active { background: var(--color-vermillion); color: #fff; border-color: var(--color-vermillion); }
  
@@ -531,7 +542,7 @@ index 56457cc..7b9134a 100644
  .lightbox {
    position: fixed;
    inset: 0;
-@@ -748,6 +793,8 @@ button > .card:active {
+@@ -748,6 +797,8 @@ button > .card:active {
  .photo-viewer-nav.prev { left: var(--space-3); }
  .photo-viewer-nav.next { right: var(--space-3); }
  .photo-viewer-caption { color: #fff; text-align: center; padding: 0 var(--space-4) var(--space-4); font-size: var(--fs-sm); flex-shrink: 0; }

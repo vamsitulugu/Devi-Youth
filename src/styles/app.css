@@ -314,6 +314,10 @@ button > .card:active {
   position: relative;
   overflow: hidden;
   box-shadow: var(--shadow-pop);
+  min-height: 270px;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
 }
 .hero::before {
   /* Subtle repeating mandala-dot motif, temple-brass on vermillion —
