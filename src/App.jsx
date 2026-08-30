@@ -113,144 +113,146 @@ function AdminFallback() {
 
 function AdminRoutes() {
   return (
-    <Suspense fallback={<AdminFallback />}>
-    <Routes>
-      <Route path="/admin/login" element={<Login />} />
-      <Route path="/admin/join" element={<Join />} />
-      <Route
-        path="/admin"
-        element={
-          <ProtectedRoute>
-            <AdminLayout><AdminDashboard /></AdminLayout>
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/admin/content"
-        element={
-          <ProtectedRoute>
-            <AdminLayout><ContentHub /></AdminLayout>
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/admin/content/announcements"
-        element={
-          <ProtectedRoute>
-            <AdminLayout><ManageAnnouncements /></AdminLayout>
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/admin/content/events"
-        element={
-          <ProtectedRoute>
-            <AdminLayout><ManageEvents /></AdminLayout>
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/admin/content/committee"
-        element={
-          <ProtectedRoute>
-            <AdminLayout><ManageCommittee /></AdminLayout>
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/admin/content/laddu"
-        element={
-          <ProtectedRoute>
-            <AdminLayout><ManageLaddu /></AdminLayout>
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/admin/content/lottery"
-        element={
-          <ProtectedRoute>
-            <AdminLayout><ManageLottery /></AdminLayout>
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/admin/content/contacts"
-        element={
-          <ProtectedRoute requireAdmin>
-            <AdminLayout><ManageContacts /></AdminLayout>
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/admin/content/donations"
-        element={
-          <ProtectedRoute>
-            <AdminLayout><ManageDonations /></AdminLayout>
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/admin/content/expenses"
-        element={
-          <ProtectedRoute>
-            <AdminLayout><ManageExpenses /></AdminLayout>
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/admin/money"
-        element={
-          <ProtectedRoute>
-            <AdminLayout><MoneyDashboard /></AdminLayout>
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/admin/money/deleted-donations"
-        element={
-          <ProtectedRoute>
-            <AdminLayout><ManageDeletedDonations /></AdminLayout>
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/admin/money/pending-sends"
-        element={
-          <ProtectedRoute>
-            <AdminLayout><PendingSends /></AdminLayout>
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/admin/gallery"
-        element={
-          <ProtectedRoute>
-            <AdminLayout><ManageGallery /></AdminLayout>
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/admin/settings"
-        element={
-          <ProtectedRoute>
-            <AdminLayout><Settings /></AdminLayout>
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/admin/*"
-        element={
-          <ProtectedRoute>
-            <AdminLayout>
-              <div className="page">
-                <div className="card card-pad empty-state">That admin page doesn't exist.</div>
-              </div>
-            </AdminLayout>
-          </ProtectedRoute>
-        }
-      />
-    </Routes>
-    </Suspense>
+    <PullToRefresh>
+      <Suspense fallback={<AdminFallback />}>
+      <Routes>
+        <Route path="/admin/login" element={<Login />} />
+        <Route path="/admin/join" element={<Join />} />
+        <Route
+          path="/admin"
+          element={
+            <ProtectedRoute>
+              <AdminLayout><AdminDashboard /></AdminLayout>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/content"
+          element={
+            <ProtectedRoute>
+              <AdminLayout><ContentHub /></AdminLayout>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/content/announcements"
+          element={
+            <ProtectedRoute>
+              <AdminLayout><ManageAnnouncements /></AdminLayout>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/content/events"
+          element={
+            <ProtectedRoute>
+              <AdminLayout><ManageEvents /></AdminLayout>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/content/committee"
+          element={
+            <ProtectedRoute>
+              <AdminLayout><ManageCommittee /></AdminLayout>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/content/laddu"
+          element={
+            <ProtectedRoute>
+              <AdminLayout><ManageLaddu /></AdminLayout>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/content/lottery"
+          element={
+            <ProtectedRoute>
+              <AdminLayout><ManageLottery /></AdminLayout>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/content/contacts"
+          element={
+            <ProtectedRoute requireAdmin>
+              <AdminLayout><ManageContacts /></AdminLayout>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/content/donations"
+          element={
+            <ProtectedRoute>
+              <AdminLayout><ManageDonations /></AdminLayout>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/content/expenses"
+          element={
+            <ProtectedRoute>
+              <AdminLayout><ManageExpenses /></AdminLayout>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/money"
+          element={
+            <ProtectedRoute>
+              <AdminLayout><MoneyDashboard /></AdminLayout>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/money/deleted-donations"
+          element={
+            <ProtectedRoute>
+              <AdminLayout><ManageDeletedDonations /></AdminLayout>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/money/pending-sends"
+          element={
+            <ProtectedRoute>
+              <AdminLayout><PendingSends /></AdminLayout>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/gallery"
+          element={
+            <ProtectedRoute>
+              <AdminLayout><ManageGallery /></AdminLayout>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/settings"
+          element={
+            <ProtectedRoute>
+              <AdminLayout><Settings /></AdminLayout>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/*"
+          element={
+            <ProtectedRoute>
+              <AdminLayout>
+                <div className="page">
+                  <div className="card card-pad empty-state">That admin page doesn't exist.</div>
+                </div>
+              </AdminLayout>
+            </ProtectedRoute>
+          }
+        />
+      </Routes>
+      </Suspense>
+    </PullToRefresh>
   );
 }
 
