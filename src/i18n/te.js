@@ -66,6 +66,7 @@ export const te = {
   app_download_button: 'డౌన్‌లోడ్',
   committee_empty: 'ఇంకా కమిటీ సభ్యులను చేర్చలేదు.',
   committee_empty_sub: 'ప్రచురించిన తర్వాత కమిటీ జాబితా ఇక్కడ కనిపిస్తుంది.',
+  committee_scan_to_pay: 'డొనేషన్ QR',
   contact: 'సంప్రదించండి',
 
   gallery_title: 'గ్యాలరీ',

@@ -66,6 +66,7 @@ export const en = {
   app_download_button: 'Download',
   committee_empty: 'No committee members have been added yet.',
   committee_empty_sub: 'The committee list will appear here once it is published.',
+  committee_scan_to_pay: 'Donation QR',
   contact: 'Contact',
 
   gallery_title: 'Gallery',
