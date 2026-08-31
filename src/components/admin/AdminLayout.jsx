@@ -7,6 +7,13 @@ import { supabase, isSupabaseConfigured } from '../../lib/supabaseClient';
 import Toranam from '../Toranam';
 import AppQrCode from '../AppQrCode';
 
+/**
+ * AdminLayout — identical routes/behavior to the original. The bottom nav
+ * is now the same frosted "nav-v2" treatment as the public app's
+ * BottomNav (upgrade.css), so committee members get the same polish
+ * without a second nav component to maintain.
+ */
+
 function useNavItems() {
   const { t } = useLanguage();
   return [
@@ -66,9 +73,6 @@ export function AdminHeader({ title, showBack = false }) {
   );
 }
 
-// A small red dot on the Settings tab so an admin notices a pending
-// invite without having to open Settings first. Live-updates the same
-// way Settings itself does, via Supabase Realtime on invite_codes.
 function usePendingInviteCount(isAdmin) {
   const [count, setCount] = useState(0);
 
@@ -107,27 +111,19 @@ export default function AdminLayout({ children }) {
   const pendingInvites = usePendingInviteCount(isAdmin);
 
   return (
-    <div className="app-shell">
+    <div className="app-shell admin-shell">
       <div className="app-shell-content">
         {children}
       </div>
-      <nav className="bottom-nav">
+      <nav className="bottom-nav nav-v2">
         {navItems.map(({ to, icon: Icon, label, exact }) => {
           const active = exact ? location.pathname === to : location.pathname.startsWith(to);
           const showDot = to === '/admin/settings' && pendingInvites > 0;
           return (
             <Link key={to} to={to} className={`nav-item ${active ? 'active' : ''}`}>
-              <span style={{ position: 'relative', display: 'inline-flex' }}>
+              <span className="nav-icon-wrap">
                 <Icon size={20} />
-                {showDot && (
-                  <span
-                    aria-label={`${pendingInvites} pending invite${pendingInvites === 1 ? '' : 's'}`}
-                    style={{
-                      position: 'absolute', top: -2, right: -4, width: 8, height: 8, borderRadius: '50%',
-                      background: 'var(--color-vermillion)', border: '1.5px solid var(--color-surface)',
-                    }}
-                  />
-                )}
+                {showDot && <span className="nav-dot" />}
               </span>
               <span className="nav-label">{label}</span>
             </Link>

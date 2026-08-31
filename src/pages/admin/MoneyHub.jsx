@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom';
 import { IndianRupee, Wallet, ChevronRight, ListX } from 'lucide-react';
 import { AdminHeader } from '../../components/admin/AdminLayout';
 import { useLanguage } from '../../i18n/LanguageContext';
+import Reveal from '../../components/Reveal';
 
 export default function MoneyHub() {
   const { t } = useLanguage();
@@ -17,7 +18,7 @@ export default function MoneyHub() {
       <AdminHeader title={t('admin_money_title')} />
       <div className="page">
         <div className="chip chip-danger" style={{ alignSelf: 'flex-start' }}>{t('admin_money_private_note')}</div>
-        <div className="card" style={{ overflow: 'hidden' }}>
+        <Reveal as="div" className="card" style={{ overflow: 'hidden' }}>
           {items.map(({ to, icon: Icon, label, sub }, i) => (
             <Link
               key={to}
@@ -38,7 +39,7 @@ export default function MoneyHub() {
               <ChevronRight size={18} color="var(--color-border)" />
             </Link>
           ))}
-        </div>
+        </Reveal>
       </div>
     </>
   );

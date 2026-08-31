@@ -1,12 +1,14 @@
 import { useCallback, useState } from 'react';
-import { ChevronRight, ImageIcon } from 'lucide-react';
+import { ChevronRight, ImageIcon, Heart, Play } from 'lucide-react';
 import { useLanguage } from '../i18n/LanguageContext';
 import { useAsyncData } from '../hooks/useAsyncData';
 import { useCloseOnBack } from '../hooks/useCloseOnBack';
+import { useFavorites } from '../hooks/useFavorites';
 import { getGalleryYears, getGalleryAlbums, getAlbumPhotos } from '../services/api';
 import Header from '../components/Header';
 import PhotoViewer from '../components/PhotoViewer';
 import EmptyState from '../components/EmptyState';
+import Reveal from '../components/Reveal';
 import { PageSkeleton, PageError } from '../components/LoadingStates';
 
 export default function Gallery() {
@@ -46,7 +48,7 @@ export default function Gallery() {
         {!loading && !error && timeline?.length > 0 && (
           <div className="gallery-timeline">
             {timeline.map(({ year, albums }, i) => (
-              <div className="timeline-row" key={year}>
+              <Reveal key={year} delay={Math.min(i, 4) * 60} as="div" className="timeline-row">
                 <div className="timeline-rail">
                   <span className="timeline-dot" />
                   {i < timeline.length - 1 && <span className="timeline-line" />}
@@ -62,9 +64,6 @@ export default function Gallery() {
                           ) : (
                             <div className="album-cover-empty">
                               <ImageIcon size={26} strokeWidth={1.5} />
-                              {/* Only claim "no photos" when that's actually true — if
-                                  count > 0 but no cover is set yet, just show the icon
-                                  so it doesn't contradict the count badge below. */}
                               {a.count === 0 && <span>{t('gallery_no_photos_yet')}</span>}
                             </div>
                           )}
@@ -80,7 +79,7 @@ export default function Gallery() {
                     ))}
                   </div>
                 </div>
-              </div>
+              </Reveal>
             ))}
           </div>
         )}
@@ -93,6 +92,7 @@ function AlbumView({ album, lang, t, onBack }) {
   const fetchPhotos = useCallback(() => getAlbumPhotos(album.id), [album.id]);
   const { data: photos, loading, error, reload } = useAsyncData(fetchPhotos, [album.id]);
   const [viewerIndex, setViewerIndex] = useState(null);
+  const { isFav, toggle } = useFavorites();
   useCloseOnBack(viewerIndex !== null, () => setViewerIndex(null));
 
   return (
@@ -106,17 +106,37 @@ function AlbumView({ album, lang, t, onBack }) {
         )}
         {!loading && !error && photos?.length > 0 && (
           <div className="gallery-grid">
-            {photos.map((p, i) => (
-              <img
-                key={p.id}
-                src={p.src}
-                alt=""
-                loading="lazy"
-                decoding="async"
-                onClick={() => setViewerIndex(i)}
-                style={{ cursor: 'pointer' }}
-              />
-            ))}
+            {photos.map((p, i) => {
+              const isVideo = p.type === 'video' || Boolean(p.videoUrl);
+              return (
+                <div className="photo-wrap" key={p.id}>
+                  {isVideo ? (
+                    <div className="video-tile" onClick={() => setViewerIndex(i)} style={{ aspectRatio: 1, cursor: 'pointer' }}>
+                      <img src={p.thumbnail || p.src} alt="" loading="lazy" decoding="async" style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: 'var(--radius-sm)' }} />
+                      <div className="play"><span className="play-ring"><Play size={16} fill="#fff" /></span></div>
+                      {p.duration && <span className="dur">{p.duration}</span>}
+                    </div>
+                  ) : (
+                    <img
+                      src={p.src}
+                      alt=""
+                      loading="lazy"
+                      decoding="async"
+                      onClick={() => setViewerIndex(i)}
+                      style={{ cursor: 'pointer' }}
+                    />
+                  )}
+                  <button
+                    className={`fav-btn${isFav(p.id) ? ' on' : ''}`}
+                    onClick={(e) => { e.stopPropagation(); toggle(p.id); }}
+                    aria-pressed={isFav(p.id)}
+                    aria-label="Save"
+                  >
+                    <Heart size={15} fill={isFav(p.id) ? 'currentColor' : 'none'} strokeWidth={2.2} />
+                  </button>
+                </div>
+              );
+            })}
           </div>
         )}
       </div>

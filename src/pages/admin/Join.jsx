@@ -48,8 +48,6 @@ export default function Join() {
     }
     setSubmitting(true);
     try {
-      // Re-check right before signing up — the code could have been
-      // used by someone else in the meantime.
       const recheck = await validateInviteCode(code.trim());
       if (!recheck.is_valid) throw new Error(recheck.reason || 'That code is no longer valid.');
 
@@ -60,9 +58,6 @@ export default function Join() {
       });
       if (signUpError) throw signUpError;
 
-      // Role is assigned server-side by a database trigger the instant
-      // the account is created — it doesn't need an active session, so
-      // this works whether or not "Confirm email" is on in Supabase.
       setNeedsConfirm(!data.session);
       setDone(true);
     } catch (err) {
@@ -77,7 +72,7 @@ export default function Join() {
       <div className="auth-shell">
         <div className="auth-card-wrap page">
           <div className="card card-pad" style={{ textAlign: 'center', display: 'flex', flexDirection: 'column', gap: 12, alignItems: 'center' }}>
-            <CheckCircle2 size={40} color="var(--color-leaf)" />
+            <CheckCircle2 size={40} color="var(--color-leaf)" style={{ animation: 'adminEmblemIn 520ms cubic-bezier(0.34,1.56,0.64,1) both' }} />
             <h1 style={{ fontSize: 'var(--fs-lg)' }}>You're in!</h1>
             <p style={{ color: 'var(--color-ink-soft)', fontSize: 'var(--fs-sm)' }}>
               {needsConfirm
@@ -100,9 +95,10 @@ export default function Join() {
           <div
             style={{
               width: 64, height: 64, borderRadius: '50%',
-              background: 'linear-gradient(160deg, var(--color-vermillion) 0%, var(--color-vermillion-dark) 100%)',
+              background: 'var(--grad-kumkum, linear-gradient(160deg, var(--color-vermillion) 0%, var(--color-vermillion-dark) 100%))',
               boxShadow: '0 0 0 1px rgba(255,255,255,0.4) inset, 0 0 24px rgba(246,185,59,0.35)',
               display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 12px', color: '#fff',
+              animation: 'adminEmblemIn 640ms cubic-bezier(0.34,1.56,0.64,1) both',
             }}
           >
             <UserPlus size={30} />

@@ -7,17 +7,20 @@ import { Field, Input, Select, Textarea, FormGrid } from '../../components/admin
 import { useToast } from '../../components/admin/Toast';
 import { useActiveFestival } from '../../hooks/useActiveFestival';
 import { useCloseOnBack } from '../../hooks/useCloseOnBack';
+import { useCountUp } from '../../hooks/useCountUp';
 import { expensesApi } from '../../services/adminApi';
 import { PageSkeleton, PageError } from '../../components/LoadingStates';
+import Reveal from '../../components/Reveal';
 
 const inr = (n) => `₹${Number(n || 0).toLocaleString('en-IN')}`;
 const categories = ['Decoration', 'Lighting', 'Sound', 'Food', 'Idol', 'Transport', 'Prasadam', 'Programs', 'Other'];
 const blank = { name: '', category: 'Decoration', amount: '', expense_date: new Date().toISOString().slice(0, 10), notes: '' };
 
-// ---------- crash / refresh / lost-connection safety net ----------
-// Same reasoning as ManageDonations.jsx: this is money, so a half-typed
-// expense is mirrored to localStorage as it's typed, and every save is
-// idempotent so a dropped response + retry can never double-record it.
+function AnimatedAmount({ value }) {
+  const shown = useCountUp(Number(value) || 0);
+  return <span className="amount-lg admin-stat-value">{inr(shown)}</span>;
+}
+
 const DRAFT_KEY = 'expense_draft_v1';
 
 function loadDraft() {
@@ -28,16 +31,14 @@ function loadDraft() {
     if (!parsed || typeof parsed !== 'object' || !parsed.form) return null;
     return parsed;
   } catch {
-    return null; // corrupted draft should never crash the page
+    return null;
   }
 }
 
 function saveDraft(festivalId, form, clientId) {
   try {
     localStorage.setItem(DRAFT_KEY, JSON.stringify({ festivalId, form, clientId, savedAt: Date.now() }));
-  } catch {
-    // Storage full/unavailable — non-fatal, form still works in-memory.
-  }
+  } catch { /* non-fatal */ }
 }
 
 function clearDraft() {
@@ -69,7 +70,7 @@ export default function ManageExpenses() {
   const [toDelete, setToDelete] = useState(null);
   const [online, setOnline] = useState(typeof navigator === 'undefined' ? true : navigator.onLine);
   const [restoredDraft, setRestoredDraft] = useState(false);
-  const savingRef = useRef(false); // guards against double-submit from a double-tap
+  const savingRef = useRef(false);
 
   async function reload() {
     if (festivalLoading) return;
@@ -90,8 +91,6 @@ export default function ManageExpenses() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [festivalId, festivalLoading]);
 
-  // Draft recovery: on first mount, offer to restore any half-typed
-  // expense left over from a refresh/crash/closed tab.
   useEffect(() => {
     const draft = loadDraft();
     if (draft && hasMeaningfulInput(draft.form)) {
@@ -102,13 +101,11 @@ export default function ManageExpenses() {
     }
   }, []);
 
-  // Mirror the form to localStorage while it's open.
   useEffect(() => {
     if (!adding) return;
     saveDraft(festivalId, form, clientId);
   }, [adding, form, clientId, festivalId]);
 
-  // Warn before an accidental tab close/refresh with unsaved data.
   useEffect(() => {
     function beforeUnload(e) {
       if (adding && hasMeaningfulInput(form) && !saving) {
@@ -120,8 +117,6 @@ export default function ManageExpenses() {
     return () => window.removeEventListener('beforeunload', beforeUnload);
   }, [adding, form, saving]);
 
-  // Track online/offline so Save can refuse a request that's guaranteed
-  // to fail, instead of silently losing the attempt.
   useEffect(() => {
     function goOnline() { setOnline(true); }
     function goOffline() { setOnline(false); }
@@ -137,7 +132,7 @@ export default function ManageExpenses() {
 
   async function handleSave(e) {
     e.preventDefault();
-    if (savingRef.current) return; // double-tap / double form-submit guard
+    if (savingRef.current) return;
     setSaveError(null);
 
     const amount = Number(form.amount);
@@ -150,9 +145,6 @@ export default function ManageExpenses() {
       return;
     }
 
-    // Reusing the same client_id on every attempt (including retries)
-    // means a dropped response followed by a retry can never create a
-    // duplicate expense row — see expensesApi.add / 11_expense_reliability.sql.
     const id = clientId || makeClientId();
     if (!clientId) setClientId(id);
 
@@ -168,9 +160,6 @@ export default function ManageExpenses() {
       setRestoredDraft(false);
       await reload();
     } catch (err) {
-      // Do NOT clear the form or the draft here — the typed expense
-      // stays exactly as entered so the person can just hit Save again;
-      // reusing the same client_id makes that retry safe.
       const msg = err?.message || 'Something went wrong.';
       setSaveError(msg);
       toast(msg, 'error');
@@ -209,17 +198,17 @@ export default function ManageExpenses() {
       <div className="page">
         <FestivalBanner festival={festival} />
 
-        <div className="card card-pad" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <Reveal as="div" className="card card-pad" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <div>
             <div style={{ fontSize: 'var(--fs-xs)', color: 'var(--color-ink-soft)' }}>Total this year</div>
-            <div className="amount-lg">{inr(total)}</div>
+            <AnimatedAmount value={total} />
           </div>
           {!adding && (
             <button className="btn btn-primary" onClick={() => { setForm(blank); setClientId(makeClientId()); setAdding(true); }} disabled={!festivalId}>
               <Plus size={16} /> Add
             </button>
           )}
-        </div>
+        </Reveal>
 
         {!online && (
           <div className="card card-pad" style={{ display: 'flex', alignItems: 'center', gap: 8, background: 'var(--color-warning-bg, #FFF6E5)', color: 'var(--color-warning-ink, #8A5A00)' }}>
@@ -274,15 +263,15 @@ export default function ManageExpenses() {
         {loading && <PageSkeleton />}
         {!loading && error && <PageError onRetry={reload} />}
         {!loading && !error && items.length === 0 && <div className="card empty-state">No expenses recorded.</div>}
-        {!loading && !error && items.map((e) => (
-          <div key={e.id} className="card card-pad" style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+        {!loading && !error && items.map((e, i) => (
+          <Reveal key={e.id} delay={Math.min(i, 10) * 25} as="div" className="card card-pad" style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
             <div style={{ flex: 1, minWidth: 0 }}>
               <div className="title">{e.name}</div>
               <div className="meta"><span className="chip">{e.category}</span> {e.expense_date}</div>
             </div>
             <div className="amount">{inr(e.amount)}</div>
             <button className="icon-btn" onClick={() => setToDelete(e)} aria-label="Delete"><Trash2 size={16} color="var(--color-danger)" /></button>
-          </div>
+          </Reveal>
         ))}
       </div>
       <ConfirmDialog

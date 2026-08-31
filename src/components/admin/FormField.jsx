@@ -31,16 +31,18 @@ export function Field({ label, children, hint, required, error }) {
   );
 }
 
+// className="admin-input" (admin-premium.css) adds a themed focus ring —
+// harmless no-op if that stylesheet isn't loaded.
 export const Input = forwardRef(function Input(props, ref) {
-  return <input ref={ref} {...props} style={{ ...fieldStyle, ...(props.style || {}) }} />;
+  return <input ref={ref} {...props} className={`admin-input${props.className ? ` ${props.className}` : ''}`} style={{ ...fieldStyle, ...(props.style || {}) }} />;
 });
 
 export const Textarea = forwardRef(function Textarea(props, ref) {
-  return <textarea ref={ref} rows={3} {...props} style={{ ...fieldStyle, resize: 'vertical', ...(props.style || {}) }} />;
+  return <textarea ref={ref} rows={3} {...props} className={`admin-input${props.className ? ` ${props.className}` : ''}`} style={{ ...fieldStyle, resize: 'vertical', ...(props.style || {}) }} />;
 });
 
 export function Select(props) {
-  return <select {...props} style={{ ...fieldStyle, ...(props.style || {}) }} />;
+  return <select {...props} className={`admin-input${props.className ? ` ${props.className}` : ''}`} style={{ ...fieldStyle, ...(props.style || {}) }} />;
 }
 
 export function FormGrid({ children }) {

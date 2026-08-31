@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { Users, QrCode } from 'lucide-react';
+import { Users, QrCode, Search } from 'lucide-react';
 import { useLanguage } from '../i18n/LanguageContext';
 import { useAsyncData } from '../hooks/useAsyncData';
 import { useCloseOnBack } from '../hooks/useCloseOnBack';
@@ -8,20 +8,23 @@ import PhotoTile from '../components/PhotoTile';
 import Header from '../components/Header';
 import PhotoViewer from '../components/PhotoViewer';
 import EmptyState from '../components/EmptyState';
+import Reveal from '../components/Reveal';
 import { PageSkeleton, PageError } from '../components/LoadingStates';
+
+const COPY = { en: { search: 'Find a member…', none: 'No one matches that search.' }, te: { search: 'సభ్యుడిని వెతకండి…', none: 'ఆ పేరుతో ఎవరూ లేరు.' } };
 
 export default function Committee() {
   const { t, lang } = useLanguage();
+  const c = COPY[lang] || COPY.en;
   const { data: committee, loading, error, reload } = useAsyncData(getCommittee, []);
   const [viewerIndex, setViewerIndex] = useState(null);
   const [qrViewerIndex, setQrViewerIndex] = useState(null);
+  const [q, setQ] = useState('');
   useCloseOnBack(viewerIndex !== null || qrViewerIndex !== null, () => {
     setViewerIndex(null);
     setQrViewerIndex(null);
   });
 
-  // Only members with a real photo can be opened in the lightbox; keep a
-  // parallel index map so clicking a tile opens the right photo.
   const photos = useMemo(
     () => (committee || [])
       .filter((m) => m.photo)
@@ -34,10 +37,6 @@ export default function Committee() {
     [committee, lang]
   );
 
-  // Same pattern, but for each member's own donation QR code — kept as a
-  // separate list/viewer from the profile photos above so tapping one
-  // never mixes with the other, and so someone can page through just the
-  // QR codes if several members have one set.
   const qrPhotos = useMemo(
     () => (committee || [])
       .filter((m) => m.qr)
@@ -50,6 +49,13 @@ export default function Committee() {
     [committee, t]
   );
 
+  const filtered = useMemo(() => {
+    const needle = q.trim().toLowerCase();
+    if (!needle) return committee || [];
+    return (committee || []).filter((m) =>
+      m.name?.toLowerCase().includes(needle) || m.position?.[lang]?.toLowerCase().includes(needle));
+  }, [committee, q, lang]);
+
   return (
     <>
       <Header title={t('committee_title')} />
@@ -59,13 +65,25 @@ export default function Committee() {
         {!loading && !error && (!committee || committee.length === 0) && (
           <EmptyState icon={Users} title={t('committee_empty')} subtitle={t('committee_empty_sub')} />
         )}
-        {!loading && !error && committee?.length > 0 && (
+
+        {!loading && !error && committee?.length > 6 && (
+          <div className="search-bar" style={{ margin: 0 }}>
+            <Search size={16} strokeWidth={2.4} />
+            <input value={q} onChange={(e) => setQ(e.target.value)} placeholder={c.search} aria-label={c.search} />
+          </div>
+        )}
+
+        {!loading && !error && committee?.length > 0 && filtered.length === 0 && (
+          <EmptyState icon={Users} title={c.none} />
+        )}
+
+        {!loading && !error && filtered.length > 0 && (
           <div className="committee-grid">
-            {committee.map((m) => {
+            {filtered.map((m, i) => {
               const photoIndex = m.photo ? photos.findIndex((p) => p.id === m.id) : -1;
               const qrIndex = m.qr ? qrPhotos.findIndex((p) => p.id === m.id) : -1;
               return (
-                <div className="member-card" key={m.id}>
+                <Reveal key={m.id} delay={Math.min(i, 8) * 35} as="div" className="member-card">
                   <PhotoTile
                     src={m.photo}
                     className="avatar"
@@ -85,7 +103,7 @@ export default function Committee() {
                       <span><QrCode size={12} /> {t('committee_scan_to_pay')}</span>
                     </button>
                   )}
-                </div>
+                </Reveal>
               );
             })}
           </div>

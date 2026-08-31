@@ -7,14 +7,19 @@ import {
 import { AdminHeader } from '../../components/admin/AdminLayout';
 import { useAuth } from '../../auth/AuthContext';
 import { useActiveFestival } from '../../hooks/useActiveFestival';
+import { useCountUp } from '../../hooks/useCountUp';
 import { getDashboardStats } from '../../services/adminApi';
 import { PageSkeleton, PageError } from '../../components/LoadingStates';
+import Reveal from '../../components/Reveal';
+import LiveStreamControl from '../../components/admin/LiveStreamControl';
 
 const inr = (n) => `₹${Number(n || 0).toLocaleString('en-IN')}`;
 
-function StatCard({ icon: Icon, label, value, tone }) {
+function StatCard({ icon: Icon, label, value, tone, delay }) {
+  const shown = useCountUp(Number(value) || 0);
+  const isNumber = typeof value === 'number';
   return (
-    <div className="card card-pad" style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+    <Reveal as="div" delay={delay} className="card card-pad" style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
       <div
         className="icon-badge"
         style={{ background: tone || 'var(--color-surface-alt)', color: '#fff', flexShrink: 0 }}
@@ -23,9 +28,28 @@ function StatCard({ icon: Icon, label, value, tone }) {
       </div>
       <div style={{ minWidth: 0 }}>
         <div style={{ fontSize: 'var(--fs-xs)', color: 'var(--color-ink-soft)' }}>{label}</div>
-        <div style={{ fontWeight: 700, fontSize: 'var(--fs-md)', overflowWrap: 'break-word' }}>{value}</div>
+        <div style={{ fontWeight: 700, fontSize: 'var(--fs-md)', overflowWrap: 'break-word', fontVariantNumeric: 'tabular-nums' }}>
+          {isNumber ? Math.round(shown).toLocaleString('en-IN') : value}
+        </div>
       </div>
-    </div>
+    </Reveal>
+  );
+}
+
+function MoneyStatCard({ icon: Icon, label, value, tone, delay }) {
+  const shown = useCountUp(Number(value) || 0);
+  return (
+    <Reveal as="div" delay={delay} className="card card-pad" style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+      <div className="icon-badge" style={{ background: tone || 'var(--color-surface-alt)', color: '#fff', flexShrink: 0 }}>
+        <Icon size={18} />
+      </div>
+      <div style={{ minWidth: 0 }}>
+        <div style={{ fontSize: 'var(--fs-xs)', color: 'var(--color-ink-soft)' }}>{label}</div>
+        <div style={{ fontWeight: 700, fontSize: 'var(--fs-md)', overflowWrap: 'break-word', fontVariantNumeric: 'tabular-nums' }}>
+          {inr(shown)}
+        </div>
+      </div>
+    </Reveal>
   );
 }
 
@@ -74,7 +98,7 @@ export default function AdminDashboard() {
     <>
       <AdminHeader title="Dashboard" />
       <div className="page">
-        <div className="card card-pad" style={{ background: 'var(--color-surface-alt)', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12 }}>
+        <Reveal as="div" className="card card-pad" style={{ background: 'var(--color-surface-alt)', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12 }}>
           <div>
             <div style={{ fontSize: 'var(--fs-sm)', color: 'var(--color-ink-soft)' }}>Welcome back,</div>
             <div style={{ fontWeight: 700, fontSize: 'var(--fs-md)' }}>{profile?.full_name || 'Committee Member'}</div>
@@ -89,7 +113,9 @@ export default function AdminDashboard() {
           >
             <Users size={14} /> Villager App
           </Link>
-        </div>
+        </Reveal>
+
+        <LiveStreamControl festivalId={festivalId} />
 
         {(loading || festivalLoading) && <PageSkeleton rows={4} />}
         {!loading && !festivalLoading && (error || festivalError) && (
@@ -104,38 +130,25 @@ export default function AdminDashboard() {
         {!loading && !festivalLoading && !error && !festivalError && stats && (
           <>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-              <StatCard icon={IndianRupee} label="Total Donations" value={inr(stats.totalDonations)} tone="var(--color-leaf)" />
-              <StatCard icon={Wallet} label="Total Expenses" value={inr(stats.totalExpenses)} tone="var(--color-vermillion)" />
-              <StatCard icon={Scale} label="Current Balance" value={inr(stats.balance)} tone="var(--color-brass)" />
-              <StatCard icon={Users} label="Donors" value={stats.donorCount} tone="var(--color-marigold-text)" />
-              <StatCard icon={CalendarClock} label="Upcoming Events" value={stats.upcomingEvents} tone="var(--color-leaf-dark)" />
-              <StatCard icon={Megaphone} label="Announcements" value={stats.announcementCount} tone="var(--color-vermillion-dark)" />
+              <MoneyStatCard icon={IndianRupee} label="Total Donations" value={stats.totalDonations} tone="var(--color-leaf)" delay={0} />
+              <MoneyStatCard icon={Wallet} label="Total Expenses" value={stats.totalExpenses} tone="var(--color-vermillion)" delay={30} />
+              <MoneyStatCard icon={Scale} label="Current Balance" value={stats.balance} tone="var(--color-brass)" delay={60} />
+              <StatCard icon={Users} label="Donors" value={stats.donorCount} tone="var(--color-marigold-text)" delay={90} />
+              <StatCard icon={CalendarClock} label="Upcoming Events" value={stats.upcomingEvents} tone="var(--color-leaf-dark)" delay={120} />
+              <StatCard icon={Megaphone} label="Announcements" value={stats.announcementCount} tone="var(--color-vermillion-dark)" delay={150} />
             </div>
 
-            <div>
+            <Reveal delay={180}>
               <div className="section-title"><h2>Quick Actions</h2></div>
-              <div className="hscroll">
+              <div className="quick-grid">
                 {quickActions.map(({ to, icon: Icon, label }) => (
-                  <Link
-                    key={label}
-                    to={to}
-                    className="card"
-                    style={{
-                      width: 108,
-                      padding: '16px 8px',
-                      display: 'flex',
-                      flexDirection: 'column',
-                      alignItems: 'center',
-                      gap: 8,
-                      textAlign: 'center',
-                    }}
-                  >
-                    <div className="icon-badge"><Icon size={18} /></div>
-                    <span style={{ fontSize: 'var(--fs-xs)', fontWeight: 600 }}>{label}</span>
+                  <Link key={label} to={to} className="quick-tile">
+                    <span className="quick-tile-icon"><Icon size={19} strokeWidth={2.2} /></span>
+                    <span className="quick-tile-label">{label}</span>
                   </Link>
                 ))}
               </div>
-            </div>
+            </Reveal>
           </>
         )}
       </div>

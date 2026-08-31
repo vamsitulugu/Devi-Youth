@@ -1,9 +1,10 @@
 import { Link } from 'react-router-dom';
 import {
-  Megaphone, CalendarClock, Users, Gift, Ticket, Phone, IndianRupee, Wallet, ChevronRight,
+  Megaphone, CalendarClock, Users, Gift, Ticket, Phone, IndianRupee, Wallet, PartyPopper,
 } from 'lucide-react';
 import { AdminHeader } from '../../components/admin/AdminLayout';
 import { useAuth } from '../../auth/AuthContext';
+import Reveal from '../../components/Reveal';
 
 const items = [
   { to: '/admin/content/announcements', icon: Megaphone, label: 'Announcements' },
@@ -14,6 +15,7 @@ const items = [
   { to: '/admin/content/contacts', icon: Phone, label: 'Contacts', adminOnly: true },
   { to: '/admin/content/donations', icon: IndianRupee, label: 'Donations' },
   { to: '/admin/content/expenses', icon: Wallet, label: 'Expenses' },
+  { to: '/admin/content/rsvps', icon: PartyPopper, label: 'RSVPs' },
 ];
 
 export default function ContentHub() {
@@ -24,25 +26,14 @@ export default function ContentHub() {
     <>
       <AdminHeader title="Manage Content" />
       <div className="page">
-        <div className="card" style={{ overflow: 'hidden' }}>
-          {visible.map(({ to, icon: Icon, label }, i) => (
-            <Link
-              key={to}
-              to={to}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: 12,
-                padding: '14px 16px',
-                borderBottom: i < visible.length - 1 ? '1px solid var(--color-border)' : 'none',
-              }}
-            >
-              <div className="icon-badge"><Icon size={18} /></div>
-              <span style={{ flex: 1, fontWeight: 600 }}>{label}</span>
-              <ChevronRight size={18} color="var(--color-border)" />
+        <Reveal className="quick-grid" style={{ gridTemplateColumns: 'repeat(4, 1fr)' }}>
+          {visible.map(({ to, icon: Icon, label }) => (
+            <Link key={to} to={to} className="quick-tile">
+              <span className="quick-tile-icon"><Icon size={19} strokeWidth={2.2} /></span>
+              <span className="quick-tile-label">{label}</span>
             </Link>
           ))}
-        </div>
+        </Reveal>
       </div>
     </>
   );

@@ -3,10 +3,13 @@ import { Link } from 'react-router-dom';
 import { IndianRupee, Wallet, ChevronRight, ListX, Send, Plus } from 'lucide-react';
 import { AdminHeader } from '../../components/admin/AdminLayout';
 import { useActiveFestival } from '../../hooks/useActiveFestival';
+import { useCountUp } from '../../hooks/useCountUp';
 import { donationsApi, expensesApi } from '../../services/adminApi';
 import { supabase, isSupabaseConfigured } from '../../lib/supabaseClient';
 import { PageSkeleton, PageError } from '../../components/LoadingStates';
 import { useLanguage } from '../../i18n/LanguageContext';
+import Reveal from '../../components/Reveal';
+import MiniBarChart from '../../components/admin/MiniBarChart';
 
 const inr = (n) => `₹${Number(n || 0).toLocaleString('en-IN')}`;
 const isoDay = (d) => d.toISOString().slice(0, 10);
@@ -29,11 +32,16 @@ function Bar({ label, sub, amount, total, color }) {
         <span>{label}{sub ? <span style={{ color: 'var(--color-ink-soft)' }}> · {sub}</span> : null}</span>
         <strong>{inr(amount)}</strong>
       </div>
-      <div style={{ height: 6, borderRadius: 999, background: 'var(--color-border)', overflow: 'hidden' }}>
-        <div style={{ width: `${pct}%`, height: '100%', background: color || 'var(--color-vermillion)' }} />
+      <div className="admin-bar-track">
+        <div className="admin-bar-fill" style={{ width: `${pct}%`, background: color || 'var(--color-vermillion)' }} />
       </div>
     </div>
   );
+}
+
+function AnimatedAmount({ value, style }) {
+  const shown = useCountUp(Number(value) || 0);
+  return <span className="admin-stat-value" style={style}>{inr(shown)}</span>;
 }
 
 export default function MoneyDashboard() {
@@ -66,9 +74,6 @@ export default function MoneyDashboard() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [festivalId, festivalLoading]);
 
-  // Live sync: any committee member adding/editing/deleting a donation or
-  // expense refreshes everyone else's dashboard automatically — no manual
-  // refresh, no "sync" button needed.
   useEffect(() => {
     if (!isSupabaseConfigured || !festivalId) return;
     const channel = supabase
@@ -83,6 +88,11 @@ export default function MoneyDashboard() {
   const days = useMemo(() => lastNDays(7), []);
   const dayLabel = (iso) => new Date(iso).toLocaleDateString('en-IN', { weekday: 'short' }).toUpperCase();
   const dayNum = (iso) => new Date(iso).getDate();
+
+  const trend = useMemo(() => days.slice().reverse().map((iso) => ({
+    label: dayNum(iso),
+    value: donations.filter((d) => d.donation_date === iso).reduce((s, d) => s + Number(d.amount || 0), 0),
+  })), [days, donations]);
 
   const dayDonations = useMemo(
     () => donations.filter((d) => d.donation_date === selectedDay),
@@ -134,7 +144,7 @@ export default function MoneyDashboard() {
       <div className="page">
         <div className="chip chip-danger" style={{ alignSelf: 'flex-start' }}>{t('admin_money_private_note')}</div>
 
-        <div className="card card-pad">
+        <Reveal as="div" className="card card-pad admin-daypicker">
           <div style={{ fontWeight: 700, marginBottom: 10 }}>{t('admin_dashboard_by_day')}</div>
           <div style={{ display: 'flex', gap: 8, overflowX: 'auto', paddingBottom: 4 }}>
             {days.map((iso) => (
@@ -146,7 +156,7 @@ export default function MoneyDashboard() {
                   flexShrink: 0,
                   flexDirection: 'column',
                   minWidth: 52,
-                  background: selectedDay === iso ? 'var(--color-ink)' : 'transparent',
+                  background: selectedDay === iso ? 'var(--grad-kumkum, var(--color-ink))' : 'transparent',
                   color: selectedDay === iso ? '#fff' : 'var(--color-ink)',
                   border: selectedDay === iso ? 'none' : '1.5px solid var(--color-border)',
                 }}
@@ -156,9 +166,14 @@ export default function MoneyDashboard() {
               </button>
             ))}
           </div>
-        </div>
+        </Reveal>
 
-        <div className="card card-pad">
+        <Reveal as="div" delay={20} className="card card-pad">
+          <div style={{ fontWeight: 700, marginBottom: 6 }}>Last 7 days</div>
+          <MiniBarChart data={trend} color="var(--color-vermillion)" />
+        </Reveal>
+
+        <Reveal as="div" delay={40} className="card card-pad">
           {dayDonations.length === 0 ? (
             <div style={{ textAlign: 'center', padding: '16px 0', color: 'var(--color-ink-soft)' }}>
               <div style={{ fontSize: '1.6rem', fontWeight: 700, opacity: 0.4 }}>{inr(0)}</div>
@@ -169,8 +184,8 @@ export default function MoneyDashboard() {
               <div style={{ fontSize: 'var(--fs-xs)', fontWeight: 700, color: 'var(--color-ink-soft)', textTransform: 'uppercase' }}>
                 {isToday ? t('admin_dashboard_collected_today') : t('admin_dashboard_collected_on_day')}
               </div>
-              <div style={{ fontSize: '1.8rem', fontWeight: 700, color: 'var(--color-leaf-dark, #2F6B3E)' }}>
-                {inr(dayTotal)}
+              <div style={{ fontSize: '1.8rem' }}>
+                <AnimatedAmount value={dayTotal} style={{ color: 'var(--color-leaf-dark, #2F6B3E)', fontWeight: 800 }} />
               </div>
               <div style={{ color: 'var(--color-ink-soft)', fontSize: 'var(--fs-sm)', marginBottom: 14 }}>
                 {dayDonations.length} {t('admin_dashboard_donations_collected')}
@@ -199,19 +214,19 @@ export default function MoneyDashboard() {
               ))}
             </>
           )}
-        </div>
+        </Reveal>
 
-        <div className="card card-pad" style={{ display: 'flex', justifyContent: 'space-between' }}>
+        <Reveal as="div" delay={80} className="card card-pad" style={{ display: 'flex', justifyContent: 'space-between' }}>
           <span>{t('admin_dashboard_expenses_this_day')}</span>
           <strong>{inr(dayExpenseTotal)}</strong>
-        </div>
+        </Reveal>
 
-        <div className="card card-pad" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <Reveal as="div" delay={100} className="card card-pad" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <span style={{ color: 'var(--color-ink-soft)' }}>{t('admin_dashboard_year_total_hint')}</span>
-          <strong>{inr(yearTotal)}</strong>
-        </div>
+          <AnimatedAmount value={yearTotal} style={{ fontWeight: 800 }} />
+        </Reveal>
 
-        <div className="card" style={{ overflow: 'hidden' }}>
+        <Reveal as="div" delay={120} className="card" style={{ overflow: 'hidden' }}>
           {menuItems.map(({ to, icon: Icon, label }, i) => (
             <Link
               key={to}
@@ -226,7 +241,7 @@ export default function MoneyDashboard() {
               <ChevronRight size={18} color="var(--color-border)" />
             </Link>
           ))}
-        </div>
+        </Reveal>
 
         <Link to="/admin/content/donations" className="btn btn-primary" style={{ alignSelf: 'flex-end' }}>
           <Plus size={16} /> {t('admin_donations_add')}

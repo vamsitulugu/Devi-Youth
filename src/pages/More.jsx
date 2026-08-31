@@ -1,10 +1,17 @@
+import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Gift, Ticket, Users, Clock3, Phone, ChevronRight, LogIn, HeartHandshake, Download, Smartphone } from 'lucide-react';
+import {
+  Gift, Ticket, Users, Clock3, Phone, ChevronRight, LogIn, HeartHandshake,
+  Download, Smartphone, Heart, WifiOff,
+} from 'lucide-react';
 import { Capacitor } from '@capacitor/core';
 import { useLanguage } from '../i18n/LanguageContext';
 import { useAppMeta } from '../hooks/useAppMeta';
+import { useFavorites } from '../hooks/useFavorites';
 import Header from '../components/Header';
 import AppQrCode from '../components/AppQrCode';
+import Reveal from '../components/Reveal';
+import SavedPhotosSheet from '../components/SavedPhotosSheet';
 
 const links = [
   { to: '/donations', icon: HeartHandshake, key: 'donations_title' },
@@ -15,24 +22,40 @@ const links = [
   { to: '/contacts', icon: Phone, key: 'contacts_title' },
 ];
 
-// Same app, same deployment — the admin/committee area is just another
-// route here, so this is a normal in-app link (not an external tab).
-// Keeping it in the same tab is what makes the back-button behavior
-// correct: before signing in, back naturally returns here; once
-// signed in, App.jsx's back-guard takes over instead.
+const COPY = { en: { saved: 'Saved Photos', offline: "You're offline — showing what's already loaded." }, te: { saved: 'సేవ్ చేసిన ఫోటోలు', offline: 'ఆఫ్‌లైన్‌లో ఉన్నారు — ముందుగా లోడ్ అయినవి చూపిస్తున్నాం.' } };
+
 const COMMITTEE_LOGIN_PATH = '/admin/login';
 
+function useOnline() {
+  const [online, setOnline] = useState(typeof navigator === 'undefined' ? true : navigator.onLine);
+  useEffect(() => {
+    const on = () => setOnline(true);
+    const off = () => setOnline(false);
+    window.addEventListener('online', on);
+    window.addEventListener('offline', off);
+    return () => { window.removeEventListener('online', on); window.removeEventListener('offline', off); };
+  }, []);
+  return online;
+}
+
 export default function More() {
-  const { t } = useLanguage();
+  const { t, lang } = useLanguage();
+  const c = COPY[lang] || COPY.en;
   const meta = useAppMeta();
+  const { count } = useFavorites();
+  const online = useOnline();
+  const [savedOpen, setSavedOpen] = useState(false);
   const downloadEligible = !Capacitor.isNativePlatform() && Boolean(meta?.downloadUrl);
 
   return (
     <>
       <Header title={t('nav_more')} />
+      {!online && (
+        <div className="offline-strip"><WifiOff size={14} /> {c.offline}</div>
+      )}
       <div className="page">
         {downloadEligible && (
-          <div className="card" style={{ overflow: 'hidden' }}>
+          <Reveal as="div" className="card" style={{ overflow: 'hidden' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '14px 16px' }}>
               <div className="icon-badge"><Smartphone size={18} /></div>
               <div style={{ flex: 1, minWidth: 0 }}>
@@ -46,10 +69,22 @@ export default function More() {
               </a>
               <AppQrCode variant="icon" />
             </div>
-          </div>
+          </Reveal>
         )}
 
-        <div className="card" style={{ overflow: 'hidden' }}>
+        <Reveal as="div" delay={40} className="card" style={{ overflow: 'hidden' }}>
+          <button
+            onClick={() => setSavedOpen(true)}
+            style={{
+              display: 'flex', alignItems: 'center', gap: 12, padding: '14px 16px', width: '100%',
+              borderBottom: '1px solid var(--color-border)', textAlign: 'left',
+            }}
+          >
+            <div className="icon-badge"><Heart size={18} /></div>
+            <span style={{ flex: 1, fontWeight: 600 }}>{c.saved}</span>
+            {count > 0 && <span className="chip chip-danger">{count}</span>}
+            <ChevronRight size={18} color="var(--color-border)" />
+          </button>
           {links.map(({ to, icon: Icon, key }, i) => (
             <Link
               key={to}
@@ -67,9 +102,9 @@ export default function More() {
               <ChevronRight size={18} color="var(--color-border)" />
             </Link>
           ))}
-        </div>
+        </Reveal>
 
-        <div className="card" style={{ overflow: 'hidden' }}>
+        <Reveal as="div" delay={80} className="card" style={{ overflow: 'hidden' }}>
           <Link
             to={COMMITTEE_LOGIN_PATH}
             style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '14px 16px' }}
@@ -78,8 +113,10 @@ export default function More() {
             <span style={{ flex: 1, fontWeight: 600 }}>{t('committee_login')}</span>
             <ChevronRight size={18} color="var(--color-border)" />
           </Link>
-        </div>
+        </Reveal>
       </div>
+
+      {savedOpen && <SavedPhotosSheet onClose={() => setSavedOpen(false)} />}
     </>
   );
 }

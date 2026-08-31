@@ -9,15 +9,22 @@ import { useToast } from '../../components/admin/Toast';
 import { useAuth } from '../../auth/AuthContext';
 import { useActiveFestival } from '../../hooks/useActiveFestival';
 import { useCloseOnBack } from '../../hooks/useCloseOnBack';
+import { useCountUp } from '../../hooks/useCountUp';
 import { donationsApi, getDonorHistory, deleteDonationWithReason, publicUrl } from '../../services/adminApi';
 import { openWhatsAppReceipt } from '../../lib/whatsappReceipt';
 import { PageSkeleton, PageError } from '../../components/LoadingStates';
 import { useLanguage } from '../../i18n/LanguageContext';
+import Reveal from '../../components/Reveal';
 
 const inr = (n) => `₹${Number(n || 0).toLocaleString('en-IN')}`;
 const todayIso = () => new Date().toISOString().slice(0, 10);
 const blank = { donor_name: '', donor_phone: '', donor_village: '', amount: '', donation_date: todayIso(), payment_method: 'Cash', source: 'Other', collector: '', notes: '' };
 const SOURCES = ['Shop', 'Society', 'Other'];
+
+function AnimatedAmount({ value, style }) {
+  const shown = useCountUp(Number(value) || 0);
+  return <span className="amount-lg admin-stat-value" style={style}>{inr(shown)}</span>;
+}
 
 // ---------- crash / refresh / lost-connection safety net ----------
 // Every keystroke in the "add donation" form is mirrored to localStorage.
@@ -87,8 +94,6 @@ export default function ManageDonations() {
   const [restoredDraft, setRestoredDraft] = useState(false);
   const savingRef = useRef(false); // guards against double-submit from a double-tap
 
-  // ---------- draft recovery: on first mount, offer to restore any
-  // half-typed donation left over from a refresh/crash/closed tab ----------
   useEffect(() => {
     const draft = loadDraft();
     if (draft && hasMeaningfulInput(draft.form)) {
@@ -99,15 +104,11 @@ export default function ManageDonations() {
     }
   }, []);
 
-  // Keep the draft mirrored to localStorage while the form is open, so a
-  // refresh mid-entry never loses what was typed.
   useEffect(() => {
     if (!adding) return;
     saveDraft(festivalId, form, clientId);
   }, [adding, form, clientId, festivalId]);
 
-  // Warn before an accidental tab close/refresh while there's unsaved
-  // donation data sitting in the form.
   useEffect(() => {
     function beforeUnload(e) {
       if (adding && hasMeaningfulInput(form) && !saving) {
@@ -119,9 +120,6 @@ export default function ManageDonations() {
     return () => window.removeEventListener('beforeunload', beforeUnload);
   }, [adding, form, saving]);
 
-  // Track online/offline so the Save button can refuse to fire a request
-  // that's guaranteed to fail, and instead tell the person plainly that
-  // their entry is safe on-device but hasn't reached the server yet.
   useEffect(() => {
     function goOnline() { setOnline(true); }
     function goOffline() { setOnline(false); }
@@ -152,12 +150,6 @@ export default function ManageDonations() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [festivalId, festivalLoading]);
 
-  // Contacts-app-style search: type a few letters/digits and matching
-  // rows filter live. Matches across name, village, phone and amount.
-  // Each word in the query must match the *start* of some word in the
-  // donor name/village (so "va" finds "Vamsi" and "Vasavi", but not
-  // "Shivaji"), while phone/amount match anywhere in the digits (so "43"
-  // finds a phone ending in ...43 or an amount of 4300).
   function wordStartMatch(text, token) {
     if (!text) return false;
     return text
@@ -189,7 +181,7 @@ export default function ManageDonations() {
 
   async function handleSave(e) {
     e.preventDefault();
-    if (savingRef.current) return; // double-tap / double form-submit guard
+    if (savingRef.current) return;
     setSaveError(null);
 
     const amount = Number(form.amount);
@@ -202,9 +194,6 @@ export default function ManageDonations() {
       return;
     }
 
-    // Every attempt (including retries) reuses the same client_id, so a
-    // dropped response followed by a retry can never create a duplicate
-    // donation row — see donationsApi.add / 10_donation_reliability.sql.
     const id = clientId || makeClientId();
     if (!clientId) setClientId(id);
 
@@ -220,9 +209,6 @@ export default function ManageDonations() {
       setRestoredDraft(false);
       await reload();
 
-      // Instant WhatsApp receipt: only when a phone number was given.
-      // No phone -> logged silently, shows up later in "Pending sends"
-      // with no phone (nothing to send to), same as before.
       if (saved?.donor_phone) {
         openWhatsAppReceipt({
           phone: saved.donor_phone,
@@ -235,17 +221,10 @@ export default function ManageDonations() {
           await donationsApi.update(saved.id, { receipt_sent: true, receipt_sent_at: new Date().toISOString() });
           await reload();
         } catch {
-          // Non-fatal: the WhatsApp message already opened; if marking
-          // "sent" fails it'll just also show up in Pending sends, where
-          // re-sending is harmless.
+          // Non-fatal: the WhatsApp message already opened.
         }
       }
     } catch (err) {
-      // Deliberately do NOT clear the form or the draft here. The typed
-      // donation stays exactly as entered (and stays mirrored in
-      // localStorage) so the person can just hit Save again — reusing
-      // the same client_id makes that retry safe even if the first
-      // attempt actually reached the server.
       const msg = err?.message || 'Something went wrong.';
       setSaveError(msg);
       toast(msg, 'error');
@@ -267,10 +246,6 @@ export default function ManageDonations() {
     setRestoredDraft(false);
   }
 
-  // Deleting always requires a reason and the deleter's name (enforced
-  // again at the database level) — the donation is archived into
-  // Deleted Donations rather than simply removed. See
-  // supabase/07_donation_deletion.sql and DeleteDonationDialog.
   async function handleDelete(reason, deletedByName) {
     try {
       await deleteDonationWithReason(toDelete.id, reason, deletedByName);
@@ -312,20 +287,20 @@ export default function ManageDonations() {
           </Link>
         </div>
 
-        <div className="card card-pad" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12 }}>
+        <Reveal as="div" className="card card-pad" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12 }}>
           <div style={{ display: 'flex', gap: 20, flexWrap: 'wrap' }}>
             <div>
               <div style={{ fontSize: 'var(--fs-xs)', color: 'var(--color-ink-soft)' }}>
                 {search ? t('admin_donations_total_matching') : t('admin_donations_total_year')}
               </div>
-              <div className="amount-lg">{inr(total)}</div>
+              <AnimatedAmount value={total} />
             </div>
             {!search && (
               <div>
                 <div style={{ fontSize: 'var(--fs-xs)', color: 'var(--color-ink-soft)' }}>
                   {t('admin_donations_total_today')}
                 </div>
-                <div className="amount-lg" style={{ color: 'var(--color-leaf-dark, #2F6B3E)' }}>{inr(todayTotal)}</div>
+                <AnimatedAmount value={todayTotal} style={{ color: 'var(--color-leaf-dark, #2F6B3E)' }} />
               </div>
             )}
           </div>
@@ -338,7 +313,7 @@ export default function ManageDonations() {
               <Plus size={16} /> {t('admin_donations_add')}
             </button>
           )}
-        </div>
+        </Reveal>
 
         {!online && (
           <div className="card card-pad" style={{ display: 'flex', alignItems: 'center', gap: 8, background: 'var(--color-warning-bg, #FFF6E5)', color: 'var(--color-warning-ink, #8A5A00)' }}>
@@ -451,12 +426,14 @@ export default function ManageDonations() {
         {loading && <PageSkeleton />}
         {!loading && error && <PageError onRetry={reload} />}
         {!loading && !error && filtered.length === 0 && <div className="card empty-state">{t('admin_donations_empty')}</div>}
-        {!loading && !error && filtered.map((d) => {
+        {!loading && !error && filtered.map((d, i) => {
           const isToday = d.donation_date === todayIso();
           const expanded = expandedId === d.id;
           return (
-            <div
+            <Reveal
               key={d.id}
+              delay={Math.min(i, 10) * 25}
+              as="div"
               className="card donation-row"
               onClick={() => setExpandedId(expanded ? null : d.id)}
               role="button"
@@ -488,7 +465,7 @@ export default function ManageDonations() {
                   </div>
                 </div>
               )}
-            </div>
+            </Reveal>
           );
         })}
       </div>

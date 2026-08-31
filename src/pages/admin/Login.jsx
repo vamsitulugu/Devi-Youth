@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate, useLocation, Navigate, Link } from 'react-router-dom';
-import { LogIn, ShieldCheck } from 'lucide-react';
+import { LogIn, ShieldCheck, Eye, EyeOff } from 'lucide-react';
 import { useAuth } from '../../auth/AuthContext';
 import { isSupabaseConfigured } from '../../lib/supabaseClient';
 import { Field, Input, Select } from '../../components/admin/FormField';
@@ -11,6 +11,7 @@ export default function Login() {
   const location = useLocation();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [role, setRole] = useState('committee');
   const [error, setError] = useState(location.state?.sessionExpiredMessage || '');
   const [submitting, setSubmitting] = useState(false);
@@ -41,13 +42,14 @@ export default function Login() {
               width: 64,
               height: 64,
               borderRadius: '50%',
-              background: 'linear-gradient(160deg, var(--color-vermillion) 0%, var(--color-vermillion-dark) 100%)',
+              background: 'var(--grad-kumkum, linear-gradient(160deg, var(--color-vermillion) 0%, var(--color-vermillion-dark) 100%))',
               boxShadow: '0 0 0 1px rgba(255,255,255,0.4) inset, 0 0 24px rgba(246,185,59,0.35)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
               margin: '0 auto 12px',
               color: '#fff',
+              animation: 'emblemIn 640ms cubic-bezier(0.34,1.56,0.64,1) both',
             }}
           >
             <ShieldCheck size={30} />
@@ -64,7 +66,7 @@ export default function Login() {
           </div>
         )}
 
-        <form className="card card-pad" onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+        <form className="card card-pad" onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 14, boxShadow: 'var(--shadow-lift, var(--shadow-card))' }}>
           <Field label="Role">
             <Select value={role} onChange={(e) => setRole(e.target.value)}>
               <option value="admin">Admin</option>
@@ -83,14 +85,28 @@ export default function Login() {
             />
           </Field>
           <Field label="Password">
-            <Input
-              type="password"
-              required
-              autoComplete="current-password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder="••••••••"
-            />
+            <div style={{ position: 'relative' }}>
+              <Input
+                type={showPassword ? 'text' : 'password'}
+                required
+                autoComplete="current-password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="••••••••"
+                style={{ paddingRight: 40 }}
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword((s) => !s)}
+                aria-label={showPassword ? 'Hide password' : 'Show password'}
+                style={{
+                  position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)',
+                  color: 'var(--color-ink-soft)', display: 'flex', padding: 4,
+                }}
+              >
+                {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+              </button>
+            </div>
           </Field>
           {error && <div style={{ color: 'var(--color-danger)', fontSize: 'var(--fs-sm)' }}>{error}</div>}
           <button className="btn btn-primary btn-block" disabled={submitting || !isSupabaseConfigured}>
@@ -105,4 +121,3 @@ export default function Login() {
     </div>
   );
 }
-
