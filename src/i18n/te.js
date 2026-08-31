@@ -190,4 +190,8 @@ export const te = {
   qr_modal_subtitle: 'దీన్ని స్కాన్ చేసేవారు నేరుగా గ్రామస్తుల యాప్ హోమ్ పేజీకి చేరుకుంటారు.',
   qr_modal_download: 'క్యూఆర్ చిత్రాన్ని డౌన్‌లోడ్ చేయండి',
   qr_modal_close: 'మూసివేయండి',
+
+  app_download_ad_title: 'దేవి యూత్ యాప్ పొందండి',
+  app_download_ad_body: 'వేగవంతమైన యాక్సెస్ కోసం మీ ఫోన్‌లో యాప్‌ను ఇన్‌స్టాల్ చేయండి.',
+  app_download_button: 'డౌన్‌లోడ్',
 };

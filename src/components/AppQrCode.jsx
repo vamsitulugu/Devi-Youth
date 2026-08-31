@@ -7,12 +7,17 @@ import { SITE_URL } from '../config';
 
 /**
  * A small "QR Code" button that, when tapped, shows a full-size QR code
- * pointing at the villager-facing home page (SITE_URL). Used in both the
- * villager header and the admin/committee header — same button, same code,
- * same destination — so whoever is showing it, the person scanning always
- * lands on the villager app, never an admin screen.
+ * pointing at the villager-facing home page (SITE_URL). Used in the header
+ * (both villager and admin/committee) and next to the "Download the app"
+ * banner — same button, same code, same destination — so whoever is
+ * showing it, the person scanning always lands on the villager app, never
+ * an admin screen.
+ *
+ * variant="header"  — the red-pill style used inside app-header (default).
+ * variant="icon"    — a plain round icon button for use on light
+ *                     backgrounds, like the download banner.
  */
-export default function AppQrCode() {
+export default function AppQrCode({ variant = 'header' }) {
   const { t } = useLanguage();
   const [open, setOpen] = useState(false);
   const canvasRef = useRef(null);
@@ -38,8 +43,12 @@ export default function AppQrCode() {
 
   return (
     <>
-      <button className="lang-toggle qr-toggle" onClick={() => setOpen(true)} aria-label={t('qr_button_label')}>
-        <QrCodeIcon size={14} />
+      <button
+        className={variant === 'icon' ? 'icon-btn qr-toggle-icon' : 'lang-toggle qr-toggle'}
+        onClick={() => setOpen(true)}
+        aria-label={t('qr_button_label')}
+      >
+        <QrCodeIcon size={variant === 'icon' ? 18 : 14} />
       </button>
       {open && (
         <div className="lightbox" style={{ background: 'rgba(20,10,5,0.6)' }} onClick={() => setOpen(false)}>

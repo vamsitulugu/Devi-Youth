@@ -190,4 +190,8 @@ export const en = {
   qr_modal_subtitle: 'Anyone who scans this lands straight on the villager app home page.',
   qr_modal_download: 'Download QR image',
   qr_modal_close: 'Close',
+
+  app_download_ad_title: 'Get the Devi Youth app',
+  app_download_ad_body: 'Install the app on your phone for faster access.',
+  app_download_button: 'Download',
 };
