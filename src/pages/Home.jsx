@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import {
   CalendarDays, MapPin, ChevronRight, Sparkles, Gift, Ticket, Users, Phone,
-  Images, Heart, Share2, Clock, History as HistoryIcon, PartyPopper,
+  Images, Heart, Share2, Clock, History as HistoryIcon,
 } from 'lucide-react';
 import { useLanguage } from '../i18n/LanguageContext';
 import { useAsyncData } from '../hooks/useAsyncData';
@@ -125,7 +125,6 @@ const COPY = {
     raised: 'raised so far', milestone: 'next milestone', donors: 'contributions',
     albums: 'Albums', share: 'Share', saved: 'Saved',
     countdownDays: 'days', countdownHrs: 'hrs', countdownMin: 'min',
-    rsvp: 'RSVP',
   },
   te: {
     quick: 'త్వరిత ప్రవేశం', laddu: 'లడ్డు', lottery: 'లాటరీ', committee: 'కమిటీ',
@@ -134,7 +133,6 @@ const COPY = {
     raised: 'ఇప్పటి వరకు సేకరణ', milestone: 'తదుపరి లక్ష్యం', donors: 'విరాళాలు',
     albums: 'ఆల్బమ్‌లు', share: 'పంచుకోండి', saved: 'సేవ్ చేసినవి',
     countdownDays: 'రోజులు', countdownHrs: 'గంటలు', countdownMin: 'నిమిషాలు',
-    rsvp: 'హాజరు',
   },
 };
 
@@ -247,7 +245,6 @@ function HomeContent({ data, t, lang }) {
   const quickTiles = [
     laddu?.current && { to: '/laddu', icon: Gift, label: c.laddu },
     lottery && { to: '/lottery', icon: Ticket, label: c.lottery },
-    { to: '/rsvp', icon: PartyPopper, label: c.rsvp },
     committee.length > 0 && { to: '/committee', icon: Users, label: c.committee },
     { to: '/gallery', icon: Images, label: c.gallery },
     { to: '/contacts', icon: Phone, label: c.contacts },

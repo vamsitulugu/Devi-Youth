@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom';
 import {
-  Megaphone, CalendarClock, Users, Gift, Ticket, Phone, IndianRupee, Wallet, PartyPopper,
+  Megaphone, CalendarClock, Users, Gift, Ticket, Phone, IndianRupee, Wallet,
 } from 'lucide-react';
 import { AdminHeader } from '../../components/admin/AdminLayout';
 import { useAuth } from '../../auth/AuthContext';
@@ -15,7 +15,6 @@ const items = [
   { to: '/admin/content/contacts', icon: Phone, label: 'Contacts', adminOnly: true },
   { to: '/admin/content/donations', icon: IndianRupee, label: 'Donations' },
   { to: '/admin/content/expenses', icon: Wallet, label: 'Expenses' },
-  { to: '/admin/content/rsvps', icon: PartyPopper, label: 'RSVPs' },
 ];
 
 export default function ContentHub() {

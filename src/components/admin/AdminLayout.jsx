@@ -67,8 +67,8 @@ export function AdminHeader({ title, showBack = false }) {
             </button>
           </div>
         </div>
+        {title && <h1 className="page-title-bar">{title}</h1>}
       </header>
-      {title && <h1 className="page-title-bar">{title}</h1>}
     </>
   );
 }

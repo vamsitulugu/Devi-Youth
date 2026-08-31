@@ -71,8 +71,8 @@ export default function Header({ title, showBack = false, onBack }) {
             </button>
           </div>
         </div>
+        {title && <h1 className="page-title-bar">{title}</h1>}
       </header>
-      {title && <h1 className="page-title-bar">{title}</h1>}
 
       {sheet === 'search' && <SearchSheet onClose={() => setSheet(null)} />}
       {sheet === 'notifications' && <NotificationSheet onClose={() => setSheet(null)} />}

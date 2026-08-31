@@ -5,23 +5,31 @@ import { useLanguage } from '../i18n/LanguageContext';
 import { useAppMeta } from '../hooks/useAppMeta';
 import AppQrCode from './AppQrCode';
 
-const SHOW_DELAY_MS = 4_000;
+const FIRST_SHOW_DELAY_MS = 4_000;
+const SHOW_MS = 5_000;
+const CYCLE_MS = 5 * 60 * 1000;
 
+/** A brief nudge, not a nag: shows for 5 seconds, then stays away for 5
+ * minutes before showing again — never sits on screen permanently. */
 export default function AppDownloadAd() {
   const { t } = useLanguage();
   const meta = useAppMeta();
   const [visible, setVisible] = useState(false);
   const [dismissed, setDismissed] = useState(false);
 
-  // Never inside the installed native app (it would be nagging someone
-  // to download the app they're already using), and never before a
-  // real APK has actually been published — see useAppMeta.
   const eligible = !Capacitor.isNativePlatform() && Boolean(meta?.downloadUrl);
 
   useEffect(() => {
     if (!eligible) return undefined;
-    const timer = setTimeout(() => setVisible(true), SHOW_DELAY_MS);
-    return () => clearTimeout(timer);
+    let showTimer;
+    const tick = () => {
+      setDismissed(false);
+      setVisible(true);
+      showTimer = setTimeout(() => setVisible(false), SHOW_MS);
+    };
+    const first = setTimeout(tick, FIRST_SHOW_DELAY_MS);
+    const interval = setInterval(tick, CYCLE_MS);
+    return () => { clearTimeout(first); clearInterval(interval); clearTimeout(showTimer); };
   }, [eligible]);
 
   if (!eligible || !visible || dismissed) return null;

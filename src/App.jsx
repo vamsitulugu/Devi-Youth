@@ -25,7 +25,6 @@ import Donations from './pages/Donations';
 import More from './pages/More';
 import Receipt from './pages/Receipt';
 import NotFound from './pages/NotFound';
-import Rsvp from './pages/Rsvp';
 import AppDownloadAd from './components/AppDownloadAd';
 import PullToRefresh from './components/PullToRefresh';
 
@@ -49,7 +48,6 @@ const ManageDeletedDonations = lazy(() => import('./pages/admin/ManageDeletedDon
 const PendingSends = lazy(() => import('./pages/admin/PendingSends'));
 const ManageExpenses = lazy(() => import('./pages/admin/ManageExpenses'));
 const ManageGallery = lazy(() => import('./pages/admin/ManageGallery'));
-const ManageRsvp = lazy(() => import('./pages/admin/ManageRsvp'));
 const Settings = lazy(() => import('./pages/admin/Settings'));
 
 function ScrollToTop() {
@@ -90,7 +88,6 @@ function Shell() {
             <Route path="/history" element={<History />} />
             <Route path="/contacts" element={<Contacts />} />
             <Route path="/donations" element={<Donations />} />
-            <Route path="/rsvp" element={<Rsvp />} />
             <Route path="/more" element={<More />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
@@ -198,14 +195,6 @@ function AdminRoutes() {
           element={
             <ProtectedRoute>
               <AdminLayout><ManageExpenses /></AdminLayout>
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/admin/content/rsvps"
-          element={
-            <ProtectedRoute>
-              <AdminLayout><ManageRsvp /></AdminLayout>
             </ProtectedRoute>
           }
         />
