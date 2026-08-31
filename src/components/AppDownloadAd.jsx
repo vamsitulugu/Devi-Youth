@@ -5,7 +5,7 @@ import { useLanguage } from '../i18n/LanguageContext';
 import { useAppMeta } from '../hooks/useAppMeta';
 
 const FIRST_SHOW_DELAY_MS = 4_000;
-const REPEAT_EVERY_MS = 9 * 60 * 1000;
+const REPEAT_EVERY_MS = 4 * 60 * 1000;
 const VISIBLE_FOR_MS = 3_000;
 
 export default function AppDownloadAd() {
