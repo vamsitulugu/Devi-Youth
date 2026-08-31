@@ -170,6 +170,8 @@ export const en = {
   admin_deleted_donations_empty_sub: 'Deleted donor records will appear here with the reason and who removed them.',
 
   admin_donations_pending_sends: 'Pending Sends',
+  admin_donations_my_qr: 'My QR',
+  admin_donations_show_qr: 'Show my QR to the donor',
   admin_donations_receipt_sent: 'Receipt sent',
   admin_donations_receipt_pending: 'Receipt not sent yet',
 

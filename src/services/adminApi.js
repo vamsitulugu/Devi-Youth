@@ -439,6 +439,17 @@ export async function updateProfileDetails(id, { full_name, phone }) {
   return data;
 }
 
+// Lets the signed-in person (admin or committee) set their own donation
+// QR code, shown to them while collecting donations so they can pull it
+// up for a donor to scan on the spot. Separate from committee_members'
+// public-facing QR — this one lives on the login account itself.
+export async function updateProfileQr(id, qr_url) {
+  assertReady();
+  const { data, error } = await supabase.from('profiles').update({ qr_url }).eq('id', id).select().single();
+  up(error);
+  return data;
+}
+
 // ---------- dashboard ----------
 export async function getDashboardStats(festivalId) {
   assertReady();

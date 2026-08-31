@@ -9,7 +9,7 @@ import { useAuth } from '../../auth/AuthContext';
 import { supabase, isSupabaseConfigured } from '../../lib/supabaseClient';
 import { useActiveFestival } from '../../hooks/useActiveFestival';
 import { useCloseOnBack } from '../../hooks/useCloseOnBack';
-import { upsertFestival, setActiveFestival, deleteFestival, listProfiles, updateProfileRole, updateProfileDetails, uploadImage, publicUrl } from '../../services/adminApi';
+import { upsertFestival, setActiveFestival, deleteFestival, listProfiles, updateProfileRole, updateProfileDetails, updateProfileQr, uploadImage, publicUrl } from '../../services/adminApi';
 import { listInviteCodes, createInviteCode, revokeInviteCode, buildWhatsAppInviteLink } from '../../services/inviteApi';
 import { PageSkeleton } from '../../components/LoadingStates';
 
@@ -172,6 +172,42 @@ export default function Settings() {
       toast(err.message, 'error');
     } finally {
       setSavingName(false);
+    }
+  }
+
+  // ---------- my own donation QR (separate from the public
+  // committee_members directory entry — this one lives on the login
+  // account and follows this person into the donation screens) ----------
+  const [qrFile, setQrFile] = useState(null);
+  const [savingQr, setSavingQr] = useState(false);
+  async function handleQrFileChange(e) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setQrFile(file);
+    setSavingQr(true);
+    try {
+      const path = `profile-qr/${user.id}-${Date.now()}-${file.name}`;
+      const qr_url = await uploadImage(file, path);
+      await updateProfileQr(user.id, qr_url);
+      await refreshProfile();
+      toast('Your donation QR is saved');
+    } catch (err) {
+      toast(err.message, 'error');
+    } finally {
+      setSavingQr(false);
+      setQrFile(null);
+    }
+  }
+  async function handleRemoveQr() {
+    setSavingQr(true);
+    try {
+      await updateProfileQr(user.id, null);
+      await refreshProfile();
+      toast('QR removed');
+    } catch (err) {
+      toast(err.message, 'error');
+    } finally {
+      setSavingQr(false);
     }
   }
 
@@ -366,6 +402,33 @@ export default function Settings() {
               Add your name so the rest of the committee can tell it's you — it shows as "Unnamed User" to admins until you do.
             </p>
           )}
+
+          <div className="card card-pad" style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
+            {profile?.qr_url ? (
+              <img
+                src={publicUrl(profile.qr_url)}
+                alt="Your donation QR"
+                style={{ width: 64, height: 64, objectFit: 'contain', border: '1px solid var(--color-border)', borderRadius: 8, background: '#fff' }}
+              />
+            ) : (
+              <div style={{ width: 64, height: 64, borderRadius: 8, background: 'var(--color-surface-alt)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--color-border)', fontSize: 'var(--fs-xs)', textAlign: 'center' }}>
+                No QR
+              </div>
+            )}
+            <div style={{ flex: 1, minWidth: 160 }}>
+              <div style={{ fontWeight: 700, fontSize: 'var(--fs-sm)', marginBottom: 2 }}>My Donation QR</div>
+              <div className="meta">Upload once here — it'll be ready to show donors from the Donations screen while you're collecting.</div>
+            </div>
+            <label className="btn btn-outline btn-sm" style={{ cursor: 'pointer' }}>
+              {savingQr ? 'Saving…' : profile?.qr_url ? 'Replace' : 'Upload'}
+              <input type="file" accept="image/*" onChange={handleQrFileChange} disabled={savingQr} style={{ display: 'none' }} />
+            </label>
+            {profile?.qr_url && (
+              <button type="button" className="btn btn-outline btn-sm" onClick={handleRemoveQr} disabled={savingQr}>
+                Remove
+              </button>
+            )}
+          </div>
         </div>
 
         {isAdmin && (

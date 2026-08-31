@@ -170,6 +170,8 @@ export const te = {
   admin_deleted_donations_empty_sub: 'తొలగించిన దాత రికార్డులు కారణం మరియు తొలగించినవారి వివరాలతో ఇక్కడ కనిపిస్తాయి.',
 
   admin_donations_pending_sends: 'పంపవలసినవి',
+  admin_donations_my_qr: 'నా QR',
+  admin_donations_show_qr: 'దాతకు నా QR చూపించు',
   admin_donations_receipt_sent: 'రసీదు పంపబడింది',
   admin_donations_receipt_pending: 'రసీదు ఇంకా పంపలేదు',
 

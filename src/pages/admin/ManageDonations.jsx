@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Plus, Search, Trash2, X, History, ListX, Send, WifiOff, AlertTriangle } from 'lucide-react';
+import { Plus, Search, Trash2, X, History, ListX, Send, WifiOff, AlertTriangle, QrCode } from 'lucide-react';
 import { AdminHeader } from '../../components/admin/AdminLayout';
 import FestivalBanner from '../../components/admin/FestivalBanner';
 import DeleteDonationDialog from '../../components/admin/DeleteDonationDialog';
@@ -9,7 +9,7 @@ import { useToast } from '../../components/admin/Toast';
 import { useAuth } from '../../auth/AuthContext';
 import { useActiveFestival } from '../../hooks/useActiveFestival';
 import { useCloseOnBack } from '../../hooks/useCloseOnBack';
-import { donationsApi, getDonorHistory, deleteDonationWithReason } from '../../services/adminApi';
+import { donationsApi, getDonorHistory, deleteDonationWithReason, publicUrl } from '../../services/adminApi';
 import { openWhatsAppReceipt } from '../../lib/whatsappReceipt';
 import { PageSkeleton, PageError } from '../../components/LoadingStates';
 import { useLanguage } from '../../i18n/LanguageContext';
@@ -80,6 +80,8 @@ export default function ManageDonations() {
   const [toDelete, setToDelete] = useState(null);
   const [historyFor, setHistoryFor] = useState(null);
   const [expandedId, setExpandedId] = useState(null);
+  const [showMyQr, setShowMyQr] = useState(false);
+  useCloseOnBack(showMyQr, () => setShowMyQr(false));
   const [history, setHistory] = useState([]);
   const [online, setOnline] = useState(typeof navigator === 'undefined' ? true : navigator.onLine);
   const [restoredDraft, setRestoredDraft] = useState(false);
@@ -297,6 +299,11 @@ export default function ManageDonations() {
         <FestivalBanner festival={festival} />
         <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 8 }}>
           <div className="chip chip-danger" style={{ flex: '1 1 100%' }}>{t('admin_money_private_note')}</div>
+          {profile?.qr_url && (
+            <button type="button" className="btn btn-outline btn-xs" onClick={() => setShowMyQr(true)}>
+              <QrCode size={13} /> {t('admin_donations_my_qr')}
+            </button>
+          )}
           <Link to="/admin/money/pending-sends" className="btn btn-outline btn-xs">
             <Send size={13} /> {t('admin_donations_pending_sends')}
           </Link>
@@ -389,6 +396,11 @@ export default function ManageDonations() {
                   <option>Other</option>
                 </Select>
               </Field>
+              {form.payment_method === 'UPI' && profile?.qr_url && (
+                <button type="button" className="btn btn-outline btn-block" onClick={() => setShowMyQr(true)}>
+                  <QrCode size={16} /> {t('admin_donations_show_qr')}
+                </button>
+              )}
               <Field label={t('admin_donations_source')}>
                 <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
                   {SOURCES.map((s) => (
@@ -494,6 +506,22 @@ export default function ManageDonations() {
                 <strong>{inr(h.amount)}</strong>
               </div>
             ))}
+          </div>
+        </div>
+      )}
+
+      {showMyQr && profile?.qr_url && (
+        <div className="lightbox" style={{ background: 'rgba(20,10,5,0.55)' }} onClick={() => setShowMyQr(false)}>
+          <div className="card card-pad" style={{ width: 'min(88vw, 340px)', textAlign: 'center' }} onClick={(e) => e.stopPropagation()}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 10 }}>
+              <strong>{t('admin_donations_my_qr')}</strong>
+              <button onClick={() => setShowMyQr(false)} aria-label="Close"><X size={18} /></button>
+            </div>
+            <img
+              src={publicUrl(profile.qr_url)}
+              alt={t('admin_donations_my_qr')}
+              style={{ width: '100%', aspectRatio: '1', objectFit: 'contain', background: '#fff', borderRadius: 8, border: '1px solid var(--color-border)' }}
+            />
           </div>
         </div>
       )}
