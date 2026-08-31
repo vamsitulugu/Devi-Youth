@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Play, Youtube } from 'lucide-react';
+import { Play, Video } from 'lucide-react';
 
 const COPY = {
   en: { live: 'Live Now', tap: 'Tap to watch on YouTube', fallback: 'Watch the live broadcast' },
@@ -57,7 +57,7 @@ export default function LiveStream({ url, active, lang = 'en' }) {
       </div>
       <div className="live-session-info">
         <div className="live-session-title">{meta?.title || c.fallback}</div>
-        <div className="live-session-sub"><Youtube size={14} /> {c.tap}</div>
+        <div className="live-session-sub"><Video size={14} /> {c.tap}</div>
       </div>
     </a>
   );

@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Radio, Copy, Youtube } from 'lucide-react';
+import { Radio, Copy, Video } from 'lucide-react';
 import { getLiveStatus, setLiveStatus } from '../../services/livestream';
 import { useToast } from './Toast';
 import Reveal from '../Reveal';
@@ -81,7 +81,7 @@ export default function LiveStreamControl({ festivalId }) {
         )}
       </div>
       <div className="meta" style={{ fontSize: 'var(--fs-xs)', display: 'flex', alignItems: 'center', gap: 5 }}>
-        <Youtube size={13} /> Broadcast from the YouTube app/Studio as usual — this just controls the card villagers see on Home.
+        <Video size={13} /> Broadcast from the YouTube app/Studio as usual — this just controls the card villagers see on Home.
       </div>
     </Reveal>
   );
