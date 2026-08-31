@@ -43,9 +43,17 @@ export default function Home() {
   );
 }
 
-function FestivalCountdown({ festival, t, lang }) {
+function startOfDay(d) { const x = new Date(d); x.setHours(0, 0, 0, 0); return x; }
+
+// Has the festival's start date arrived yet? Used to switch the hero
+// heading over to "<year> <name>" once the event is actually underway.
+function hasFestivalStarted(festival) {
+  if (!festival.startDate) return false;
+  return startOfDay(new Date()) >= startOfDay(festival.startDate);
+}
+
+function FestivalCountdown({ festival, t }) {
   if (!festival.startDate || !festival.endDate) return null;
-  const startOfDay = (d) => { const x = new Date(d); x.setHours(0, 0, 0, 0); return x; };
   const today = startOfDay(new Date());
   const start = startOfDay(festival.startDate);
   const end = startOfDay(festival.endDate);
@@ -54,7 +62,7 @@ function FestivalCountdown({ festival, t, lang }) {
   if (today > end) {
     label = t('countdown_over');
   } else if (today >= start) {
-    label = `${festival.year} — ${festival.name[lang]}`;
+    label = today.getTime() === start.getTime() ? t('countdown_today') : t('countdown_live');
   } else {
     const days = Math.round((start - today) / 86400000);
     label = (days === 1 ? t('countdown_days_one') : t('countdown_days_other')).replace('{n}', days);
@@ -107,12 +115,12 @@ function HomeContent({ data, t, lang }) {
         {hasFestival ? (
           <>
             <div className="eyebrow">{festival.village[lang]} · {festival.year}</div>
-            <h1>{festival.name[lang]}</h1>
+            <h1>{hasFestivalStarted(festival) ? `${festival.year} ${festival.name[lang]}` : festival.name[lang]}</h1>
             <div className="dates">
               <CalendarDays size={14} style={{ verticalAlign: -2, marginRight: 4 }} />
               {festival.dates[lang]}
             </div>
-            <FestivalCountdown festival={festival} t={t} lang={lang} />
+            <FestivalCountdown festival={festival} t={t} />
           </>
         ) : (
           <h1 style={{ fontSize: 'var(--fs-lg)' }}>{t('home_no_festival')}</h1>

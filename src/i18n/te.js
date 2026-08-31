@@ -1,7 +1,6 @@
 export const te = {
-  app_name: 'దేవి యూత్ అప్‌డేట్స్',
+  app_name: 'దేవి యూత్',
   app_tag: 'శ్రీ బాల గణేష్',
-  admin_app_name: 'దేవి యూత్ కమిటీ',
   splash_loading: 'మండపం సిద్ధమవుతోంది…',
 
   nav_home: 'హోమ్',
@@ -54,19 +53,9 @@ export const te = {
   prize_value: 'విలువ',
   winners_title: 'విజేతలు',
 
-  donations_title: 'విరాళాలు',
-  donations_hint: 'నేరుగా విరాళం ఇవ్వడానికి ఏ సభ్యుడి QR అయినా స్కాన్ చేయండి.',
-  donations_empty: 'ఇంకా విరాళాల QR కోడ్‌లు జోడించలేదు.',
-  donations_empty_sub: 'కమిటీ సభ్యుల QR కోడ్‌లు కమిటీ జోడించిన తర్వాత ఇక్కడ కనిపిస్తాయి.',
-
   committee_title: 'కమిటీ',
-  committee_login: 'కమిటీ లాగిన్',
-  app_download_ad_title: 'దేవి యూత్ యాప్ పొందండి',
-  app_download_ad_body: 'వేగవంతమైన యాక్సెస్, ఆఫ్‌లైన్‌లో పనిచేస్తుంది, మీ హోమ్ స్క్రీన్‌పై నేరుగా.',
-  app_download_button: 'డౌన్‌లోడ్',
   committee_empty: 'ఇంకా కమిటీ సభ్యులను చేర్చలేదు.',
   committee_empty_sub: 'ప్రచురించిన తర్వాత కమిటీ జాబితా ఇక్కడ కనిపిస్తుంది.',
-  committee_scan_to_pay: 'డొనేషన్ QR',
   contact: 'సంప్రదించండి',
 
   gallery_title: 'గ్యాలరీ',
@@ -170,8 +159,6 @@ export const te = {
   admin_deleted_donations_empty_sub: 'తొలగించిన దాత రికార్డులు కారణం మరియు తొలగించినవారి వివరాలతో ఇక్కడ కనిపిస్తాయి.',
 
   admin_donations_pending_sends: 'పంపవలసినవి',
-  admin_donations_my_qr: 'నా QR',
-  admin_donations_show_qr: 'దాతకు నా QR చూపించు',
   admin_donations_receipt_sent: 'రసీదు పంపబడింది',
   admin_donations_receipt_pending: 'రసీదు ఇంకా పంపలేదు',
 
@@ -197,4 +184,10 @@ export const te = {
   admin_deleted_donations_by: 'తొలగించినవారు',
   admin_deleted_donations_on: 'తొలగించిన తేదీ',
   admin_deleted_donations_original_date: 'అసలు విరాళం తేదీ',
+
+  qr_button_label: 'క్యూఆర్ కోడ్',
+  qr_modal_title: 'యాప్ తెరవడానికి స్కాన్ చేయండి',
+  qr_modal_subtitle: 'దీన్ని స్కాన్ చేసేవారు నేరుగా గ్రామస్తుల యాప్ హోమ్ పేజీకి చేరుకుంటారు.',
+  qr_modal_download: 'క్యూఆర్ చిత్రాన్ని డౌన్‌లోడ్ చేయండి',
+  qr_modal_close: 'మూసివేయండి',
 };

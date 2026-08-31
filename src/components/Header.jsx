@@ -1,20 +1,12 @@
-import { useEffect } from 'react';
-import { ChevronLeft, Download } from 'lucide-react';
+import { ChevronLeft } from 'lucide-react';
 import { useNavigate, Link } from 'react-router-dom';
-import { Capacitor } from '@capacitor/core';
 import { useLanguage } from '../i18n/LanguageContext';
-import { useAppMeta } from '../hooks/useAppMeta';
 import Toranam from './Toranam';
+import AppQrCode from './AppQrCode';
 
 export default function Header({ title, showBack = false, onBack }) {
   const navigate = useNavigate();
   const { t, lang, setLang } = useLanguage();
-  const meta = useAppMeta();
-  const showDownload = !Capacitor.isNativePlatform() && Boolean(meta?.downloadUrl);
-
-  useEffect(() => {
-    document.title = title ? `${title} — ${t('app_name')}` : `${t('app_name')} — ${t('app_tag')}`;
-  }, [title, t, lang]);
 
   return (
     <>
@@ -30,26 +22,18 @@ export default function Header({ title, showBack = false, onBack }) {
             <img src="/icon-192.png" alt="" className="brand-logo" />
             <span className="brand-name">{t('app_name')}</span>
           </Link>
-          <button
-            className="lang-toggle"
-            onClick={() => setLang(lang === 'en' ? 'te' : 'en')}
-            aria-label="Switch language"
-          >
-            <span className={lang === 'en' ? 'active' : ''}>EN</span>
-            <span className="sep">|</span>
-            <span className={lang === 'te' ? 'active' : ''}>తెలుగు</span>
-          </button>
-          {showDownload && (
-            <a
-              href={meta?.downloadUrl}
-              download="devi-youth.apk"
-              className="header-download-btn"
-              aria-label={t('app_download_button')}
-              title={t('app_download_button')}
+          <div className="app-header-actions">
+            <AppQrCode />
+            <button
+              className="lang-toggle"
+              onClick={() => setLang(lang === 'en' ? 'te' : 'en')}
+              aria-label="Switch language"
             >
-              <Download size={18} />
-            </a>
-          )}
+              <span className={lang === 'en' ? 'active' : ''}>EN</span>
+              <span className="sep">|</span>
+              <span className={lang === 'te' ? 'active' : ''}>తెలుగు</span>
+            </button>
+          </div>
         </div>
       </header>
       {title && <h1 className="page-title-bar">{title}</h1>}

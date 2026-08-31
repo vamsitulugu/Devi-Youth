@@ -1,7 +1,6 @@
 export const en = {
-  app_name: 'Devi Youth Updates',
+  app_name: 'Devi Youth',
   app_tag: 'Sree Bala Ganesh',
-  admin_app_name: 'Devi Youth Committee',
   splash_loading: 'Preparing the mandapam…',
 
   nav_home: 'Home',
@@ -54,19 +53,9 @@ export const en = {
   prize_value: 'Value',
   winners_title: 'Winners',
 
-  donations_title: 'Donations',
-  donations_hint: 'Scan any member\u2019s QR below to donate directly to them.',
-  donations_empty: 'No donation QR codes have been added yet.',
-  donations_empty_sub: 'Committee members\u2019 QR codes will appear here once the committee adds them.',
-
   committee_title: 'Committee',
-  committee_login: 'Committee Login',
-  app_download_ad_title: 'Get the Devi Youth app',
-  app_download_ad_body: 'Faster access, works offline, right on your home screen.',
-  app_download_button: 'Download',
   committee_empty: 'No committee members have been added yet.',
   committee_empty_sub: 'The committee list will appear here once it is published.',
-  committee_scan_to_pay: 'Donation QR',
   contact: 'Contact',
 
   gallery_title: 'Gallery',
@@ -170,8 +159,6 @@ export const en = {
   admin_deleted_donations_empty_sub: 'Deleted donor records will appear here with the reason and who removed them.',
 
   admin_donations_pending_sends: 'Pending Sends',
-  admin_donations_my_qr: 'My QR',
-  admin_donations_show_qr: 'Show my QR to the donor',
   admin_donations_receipt_sent: 'Receipt sent',
   admin_donations_receipt_pending: 'Receipt not sent yet',
 
@@ -197,4 +184,10 @@ export const en = {
   admin_deleted_donations_by: 'Deleted by',
   admin_deleted_donations_on: 'Deleted on',
   admin_deleted_donations_original_date: 'Original donation date',
+
+  qr_button_label: 'QR Code',
+  qr_modal_title: 'Scan to open the app',
+  qr_modal_subtitle: 'Anyone who scans this lands straight on the villager app home page.',
+  qr_modal_download: 'Download QR image',
+  qr_modal_close: 'Close',
 };

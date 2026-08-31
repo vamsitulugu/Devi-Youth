@@ -5,6 +5,7 @@ import { useAuth } from '../../auth/AuthContext';
 import { useLanguage } from '../../i18n/LanguageContext';
 import { supabase, isSupabaseConfigured } from '../../lib/supabaseClient';
 import Toranam from '../Toranam';
+import AppQrCode from '../AppQrCode';
 
 function useNavItems() {
   const { t } = useLanguage();
@@ -22,20 +23,22 @@ export function AdminHeader({ title, showBack = false }) {
   const { signOut } = useAuth();
   const { lang, setLang, t } = useLanguage();
 
-  useEffect(() => {
-    document.title = title ? `${title} — ${t('admin_app_name')}` : t('admin_app_name');
-  }, [title, t, lang]);
-
   return (
     <>
       <header className="app-header">
         <Toranam />
         <div className="app-header-row">
+          {showBack && (
+            <button className="back-btn" onClick={() => navigate(-1)} aria-label="Go back">
+              <ChevronLeft size={22} />
+            </button>
+          )}
           <Link to="/admin" className="brand" aria-label="Admin dashboard">
             <img src="/icon-192.png" alt="" className="brand-logo" />
-            <span className="brand-name">{t('admin_app_name')}</span>
+            <span className="brand-name">{t('app_name')}</span>
           </Link>
           <div className="app-header-actions">
+            <AppQrCode />
             <button
               className="lang-toggle"
               onClick={() => setLang(lang === 'en' ? 'te' : 'en')}
@@ -58,16 +61,7 @@ export function AdminHeader({ title, showBack = false }) {
           </div>
         </div>
       </header>
-      {title && (
-        <div className={`page-title-bar${showBack ? ' with-back' : ''}`}>
-          {showBack && (
-            <button className="page-title-back" onClick={() => navigate(-1)} aria-label="Go back">
-              <ChevronLeft size={20} />
-            </button>
-          )}
-          <h1 className="page-title-bar-text">{title}</h1>
-        </div>
-      )}
+      {title && <h1 className="page-title-bar">{title}</h1>}
     </>
   );
 }

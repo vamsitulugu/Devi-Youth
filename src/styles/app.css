@@ -1,27 +1,4 @@
 /* ============================================================
-   GLOBAL RESET & TAP BEHAVIOUR
-   Kills the default blue/grey tap-highlight box every mobile
-   browser draws on click, and the double-tap-to-zoom delay —
-   our own :active scale/opacity feedback (below) replaces it.
-   ============================================================ */
-* {
-  -webkit-tap-highlight-color: transparent;
-  tap-highlight-color: transparent;
-}
-html, body {
-  -webkit-tap-highlight-color: transparent;
-}
-a, button, [role="button"], .card, .nav-item, .icon-btn {
-  -webkit-tap-highlight-color: transparent;
-  touch-action: manipulation;
-  outline: none;
-}
-a:focus-visible, button:focus-visible, [role="button"]:focus-visible {
-  outline: 2px solid var(--color-marigold);
-  outline-offset: 2px;
-}
-
-/* ============================================================
    LAYOUT SHELL
    ============================================================ */
 
@@ -48,13 +25,6 @@ a:focus-visible, button:focus-visible, [role="button"]:focus-visible {
     linear-gradient(180deg, var(--color-vermillion) 0%, var(--color-vermillion-dark) 100%);
   color: #fff;
   overflow: hidden;
-  /* Belt-and-braces for the phone's own status bar (clock/signal/battery):
-     the native shell reserves this space via StatusBar.setOverlaysWebView,
-     but on a plain browser/PWA install there's no native plugin to ask, so
-     we pad for the notch/status-bar area ourselves and paint it the same
-     plain vermillion as the rest of the header instead of letting the
-     Toranam garland run underneath it. */
-  padding-top: env(safe-area-inset-top, 0px);
 }
 
 .app-header-row {
@@ -64,85 +34,31 @@ a:focus-visible, button:focus-visible, [role="button"]:focus-visible {
   justify-content: space-between;
   gap: var(--space-2);
   padding: 0 var(--space-4);
+  /* Reserve a constant gutter for the back button so the logo/name sit in
+     the exact same spot whether or not a back button is showing on this
+     page — otherwise the brand visibly jumps sideways between screens. */
+  position: relative;
+  padding-left: calc(var(--space-4) + 34px);
 }
 
-.app-header .back-btn,
+.app-header .back-btn {
+  position: absolute;
+  left: var(--space-4);
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  align-items: center;
+  color: #fff;
+  transition: transform 0.12s ease, opacity 0.12s ease;
+}
+.app-header .back-btn:active { transform: translateY(-50%) scale(0.85); }
+
 .app-header .lang-toggle {
   display: flex;
   align-items: center;
   gap: 4px;
   color: #fff;
   flex-shrink: 0;
-  transition: transform 0.12s ease;
-}
-.app-header .back-btn:active { transform: scale(0.88) translateX(-2px); }
-.brand:active .brand-logo { transform: scale(0.94); }
-.brand-logo { transition: transform 0.15s ease; }
-
-.header-download-btn {
-  width: 38px;
-  height: 38px;
-  padding: 0;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-  color: #fff;
-  background: var(--color-danger);
-  box-shadow: 0 0 0 2px rgba(255,255,255,0.5), 0 2px 6px rgba(0,0,0,0.25);
-  transition: transform 0.12s ease, background 0.15s ease;
-}
-.header-download-btn:active {
-  transform: scale(0.92);
-  background: var(--color-vermillion-dark);
-}
-
-/* ---------- Install-the-app banner (villager pages only) ---------- */
-.app-download-ad {
-  position: fixed;
-  left: var(--space-3);
-  right: var(--space-3);
-  bottom: calc(var(--nav-height) + var(--space-3) + env(safe-area-inset-bottom, 0px));
-  z-index: 40;
-  max-width: 480px;
-  margin: 0 auto;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 12px 12px;
-  border-radius: var(--radius-md);
-  background: var(--color-ink);
-  color: #fff;
-  box-shadow: 0 10px 30px rgba(0,0,0,0.28);
-  animation: slideUpFade 0.25s ease both;
-}
-@keyframes slideUpFade {
-  from { opacity: 0; transform: translateY(10px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-.app-download-ad-icon {
-  width: 34px;
-  height: 34px;
-  border-radius: 50%;
-  flex-shrink: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: var(--color-marigold);
-  color: #2a1c08;
-}
-.app-download-ad-copy { flex: 1; min-width: 0; }
-.app-download-ad-title { font-weight: 700; font-size: var(--fs-sm); }
-.app-download-ad-body { font-size: var(--fs-xs); color: rgba(255,255,255,0.75); margin-top: 1px; }
-.app-download-ad-btn { flex-shrink: 0; white-space: nowrap; }
-.app-download-ad-close {
-  flex-shrink: 0;
-  color: rgba(255,255,255,0.6);
-  padding: 4px;
-}
-@media (prefers-reduced-motion: reduce) {
-  .app-download-ad { animation: none; }
 }
 
 .app-header-actions {
@@ -160,7 +76,9 @@ a:focus-visible, button:focus-visible, [role="button"]:focus-visible {
   min-width: 0;
   justify-content: flex-start;
   color: #fff;
+  transition: opacity 0.12s ease;
 }
+.brand:active { opacity: 0.8; }
 .brand-logo {
   width: 34px;
   height: 34px;
@@ -168,7 +86,9 @@ a:focus-visible, button:focus-visible, [role="button"]:focus-visible {
   box-shadow: 0 0 0 2px rgba(255,255,255,0.55);
   display: block;
   flex-shrink: 0;
+  transition: transform 0.15s ease;
 }
+.brand:active .brand-logo { transform: scale(0.92); }
 .brand-name {
   font-family: var(--font-display);
   font-size: var(--fs-md);
@@ -183,40 +103,17 @@ a:focus-visible, button:focus-visible, [role="button"]:focus-visible {
   position: sticky;
   top: 0;
   z-index: 19;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: var(--space-3) var(--space-4);
-  background: var(--color-surface);
-  border-bottom: 1px solid var(--color-border);
-  animation: titleBarIn 0.22s ease;
-}
-@keyframes titleBarIn {
-  from { opacity: 0; transform: translateY(-4px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-.page-title-back {
-  display: flex;
-  align-items: center;
-  flex-shrink: 0;
-  color: var(--color-ink);
-  transition: transform 0.15s ease;
-}
-.page-title-back:active { transform: scale(0.88) translateX(-2px); }
-.page-title-bar-text {
-  flex: 1;
-  min-width: 0;
   margin: 0;
+  padding: var(--space-3) var(--space-4);
   font-family: var(--font-display);
   font-size: var(--fs-md);
   color: var(--color-ink);
   text-align: center;
+  background: var(--color-surface);
+  border-bottom: 1px solid var(--color-border);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-}
-.page-title-bar.with-back .page-title-bar-text {
-  text-align: left;
 }
 
 .lang-toggle {
@@ -228,30 +125,22 @@ a:focus-visible, button:focus-visible, [role="button"]:focus-visible {
   background: rgba(255,255,255,0.18);
   padding: 6px 10px;
   border-radius: var(--radius-pill);
-  transition: transform 0.12s ease, background 0.15s ease;
+  transition: transform 0.12s ease, background 0.12s ease;
 }
 .lang-toggle:active { transform: scale(0.94); background: rgba(255,255,255,0.28); }
-.lang-toggle .active { color: var(--color-turmeric); transition: color 0.2s ease; }
+.lang-toggle .active { color: var(--color-turmeric); transition: color 0.15s ease; }
 .lang-toggle .sep { opacity: 0.5; margin: 0 3px; }
 
 /* ---------- Toranam garland — woven into the header itself, no seam ---------- */
 .toranam {
   display: block;
   width: 100%;
-  height: 34px;
+  height: 20px;
   margin-top: -1px;
-  margin-bottom: -8px;
+  margin-bottom: -6px;
   line-height: 0;
-  overflow: visible;
 }
-.toranam svg { display: block; width: 100%; height: 100%; overflow: visible; }
-.toranam-leaf {
-  animation: toranamTwinkle 2.6s ease-in-out infinite;
-}
-@keyframes toranamTwinkle {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.6; }
-}
+.toranam svg { display: block; width: 100%; height: 100%; }
 
 /* ---------- Auth shell (login) — always centered, never the sidebar grid ---------- */
 .auth-shell {
@@ -357,11 +246,10 @@ a:focus-visible, button:focus-visible, [role="button"]:focus-visible {
   font-weight: 600;
   padding: 6px 2px;
   position: relative;
-  transition: color 0.2s ease, transform 0.15s ease;
+  transition: color 0.15s ease, transform 0.12s ease;
 }
-.nav-item:active { transform: scale(0.92); }
+.nav-item:active { transform: scale(0.9); }
 .nav-item.active { color: var(--color-vermillion); }
-.nav-item.active svg { animation: navPop 0.32s ease; }
 .nav-item.active::before {
   content: "";
   position: absolute;
@@ -371,14 +259,9 @@ a:focus-visible, button:focus-visible, [role="button"]:focus-visible {
   border-radius: var(--radius-pill);
   background: var(--color-marigold);
   box-shadow: 0 0 8px rgba(240,148,15,0.7);
-  animation: navIndicatorIn 0.22s ease;
+  animation: navDotIn 0.2s ease both;
 }
-@keyframes navPop {
-  0% { transform: scale(0.7); }
-  60% { transform: scale(1.15); }
-  100% { transform: scale(1); }
-}
-@keyframes navIndicatorIn {
+@keyframes navDotIn {
   from { opacity: 0; transform: scaleX(0.3); }
   to { opacity: 1; transform: scaleX(1); }
 }
@@ -513,14 +396,12 @@ button > .card:active {
   margin-top: var(--space-3);
   padding: 7px 14px;
   border-radius: var(--radius-pill);
-  background: rgba(255,255,255,0.3);
-  border: 1px solid rgba(255,255,255,0.45);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
+  background: rgba(255,255,255,0.16);
+  border: 1px solid rgba(255,255,255,0.3);
+  backdrop-filter: blur(2px);
   font-size: var(--fs-sm);
   font-weight: 700;
-  color: #FF3B2E;
-  text-shadow: 0 1px 2px rgba(255,255,255,0.4);
+  color: var(--color-turmeric);
   position: relative;
   animation: pulseGlow 2.4s ease-in-out infinite;
 }
@@ -538,17 +419,17 @@ button > .card:active {
 }
 .hero.hero-has-photo { cursor: zoom-in; }
 @keyframes pulseGlow {
-  0%, 100% { box-shadow: 0 0 0 0 rgba(194,43,31,0.55); }
-  50% { box-shadow: 0 0 0 6px rgba(194,43,31,0); }
+  0%, 100% { box-shadow: 0 0 0 0 rgba(240,70,50,0.55); }
+  50% { box-shadow: 0 0 0 7px rgba(240,70,50,0); }
 }
 @media (prefers-reduced-motion: reduce) {
   .hero-countdown { animation: none; }
-  .nav-item.active svg,
-  .nav-item.active::before,
-  .page-title-bar,
-  .toranam svg path {
-    animation: none;
-  }
+}
+.hero .modak-icon {
+  position: absolute;
+  right: var(--space-4);
+  bottom: var(--space-3);
+  opacity: 0.9;
 }
 
 /* ---------- Buttons ---------- */
@@ -700,30 +581,6 @@ button > .card:active {
 }
 .member-card .name { font-weight: 700; }
 .member-card .position { font-size: var(--fs-xs); color: var(--color-marigold-text); font-weight: 600; margin: 2px 0 var(--space-2); }
-.member-qr-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  margin-top: var(--space-2);
-  padding: 4px 10px 4px 4px;
-  border-radius: var(--radius-pill);
-  background: var(--color-surface-alt);
-  border: 1px solid var(--color-border);
-  font-size: 11px;
-  font-weight: 600;
-  color: var(--color-vermillion-dark);
-  transition: transform 0.12s ease, background 0.15s ease;
-}
-.member-qr-btn:active { transform: scale(0.95); background: var(--color-surface); }
-.member-qr-btn span { display: inline-flex; align-items: center; gap: 3px; }
-.member-qr-thumb {
-  width: 22px;
-  height: 22px;
-  border-radius: 5px;
-  object-fit: cover;
-  background: #fff;
-  border: 1px solid var(--color-border);
-}
 
 /* ---------- Prize / laddu feature card ---------- */
 .feature-card {
@@ -832,6 +689,30 @@ button > .card:active {
 .lightbox img { max-height: 75vh; border-radius: var(--radius-md); }
 .lightbox .close-btn { position: absolute; top: var(--space-4); right: var(--space-4); color: #fff; }
 .lightbox .caption { color: #fff; margin-top: var(--space-3); text-align: center; font-size: var(--fs-sm); }
+
+/* ---------- App QR code button + modal ---------- */
+.qr-toggle { padding: 6px 9px; }
+.qr-modal {
+  width: min(92vw, 340px);
+  position: relative;
+  animation: fadeUp 0.25s ease both;
+}
+.qr-modal-close {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  width: 30px;
+  height: 30px;
+}
+.qr-canvas-wrap {
+  display: flex;
+  justify-content: center;
+  padding: var(--space-3);
+  background: #fff;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-border);
+}
+.qr-canvas-wrap canvas { display: block; width: 100%; max-width: 240px; height: auto; }
 
 /* ---------- Album cards (public gallery + admin gallery manager) ---------- */
 .album-grid {
@@ -1078,7 +959,7 @@ button > .card:active {
   display: flex; align-items: center; justify-content: center;
   background: var(--color-surface-alt);
   color: var(--color-ink);
-  transition: transform 0.12s ease, background 0.15s ease;
+  transition: transform 0.12s ease, background 0.12s ease;
 }
 .icon-btn:active { transform: scale(0.88); }
 .icon-btn.whatsapp { background: #DDF3E3; color: #1e8f47; }
