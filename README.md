@@ -1,407 +1,458 @@
-# Devi Youth — Sree Bala Ganesh
+# Devi Youth — UI v2, Stage 1
 
-Phase 1 (App Foundation + Public UI) of the four-phase build. React + Vite,
-mobile-first, bilingual (English / Telugu), running entirely on sample data
-so every page already looks and feels real.
+Drop-in files. Nothing in your existing folder is modified — copy these
+over the matching paths when you're ready.
 
-## What's in Phase 1
+## Files in this stage
 
-- Vite + React + React Router app shell, mobile-first (max-width 520px, works down to 360px)
-- Festive design system (`src/styles/tokens.css`, `src/styles/app.css`) — kumkum/marigold palette, Baloo 2 + Poppins + Noto Sans Telugu type, a toranam-garland divider as the signature motif
-- Splash screen → bottom-nav app shell
-- Pages: Home, Announcements, Events, Laddu Velam, Lottery, Committee, Gallery (year filter + lightbox), History (timeline), Contacts, and a "More" menu for the pages that don't fit the 5-tab bottom nav
-- EN | తెలుగు language toggle (`src/i18n`), persisted to localStorage
-- WhatsApp share button that opens a pre-formatted message
-- Sample data (`src/data/sampleData.js`) shaped exactly like the Phase 2 Supabase tables (announcements, events, committee_members, laddu_auctions, lottery, lottery_prizes, lottery_winners, photo_albums, photos, contacts) — swapping it for live Supabase queries later is a drop-in
-- `src/lib/supabaseClient.js` wired up and ready (reads `VITE_SUPABASE_URL` / `VITE_SUPABASE_ANON_KEY`), inert until Phase 2
-- Lottery and Laddu Velam pages are read-only by design — no bidding, no ticket purchase, no payment. They just display details entered manually by the committee after the offline event, per the project rules.
-- No placeholder buttons that look functional but do nothing — anything not yet wired (photo upload, admin login, etc.) simply isn't shown yet.
-
-## Run it
-
-```bash
-npm install
-npm run dev
-```
-
-Open the printed local URL and resize your browser to a phone width (or open dev tools device mode) — this is a mobile-first layout.
-
-## Project structure
-
-```
-src/
-  components/   Header, BottomNav, Toranam, Splash, WhatsAppShare, PhotoTile
-  data/         sampleData.js — stand-in for Supabase until Phase 2
-  i18n/         LanguageContext + en.js / te.js dictionaries
-  lib/          supabaseClient.js
-  pages/        Home, Announcements, Events, Laddu, Lottery, Committee,
-                Gallery, History, Contacts, More
-  styles/       tokens.css (design tokens), app.css (components/layout)
-```
-
-## Next phases (not built yet, by design)
-
-- **Phase 2 — done.** See "Phase 2: connect Supabase" below.
-- **Phase 3** — Supabase Auth, admin + committee roles, the protected admin dashboard, donation/expense management with RLS locking villagers out of private financial data.
-- **Phase 4** — toast messages, confirmation dialogs, image optimization, full Telugu QA, production deploy to Vercel (+ Render only if a backend service turns out to be genuinely necessary).
-
-## Phase 2: connect Supabase
-
-Phase 1 ran entirely on `src/data/sampleData.js`. Phase 2 adds a real Supabase
-project behind it — the app now queries Supabase when it's configured, and
-silently falls back to sample data when it isn't, so it's safe to develop
-against either.
-
-### 1. Create the project and run the SQL
-
-In the Supabase SQL editor, run the files in `supabase/` **in order**:
-
-1. `01_schema.sql` — every table from section 15 of the brief, plus two
-   helper functions (`is_admin()`, `is_committee_or_admin()`) that later
-   RLS policies use, and a trigger that auto-creates a `profiles` row
-   (default role `villager`) for every new auth user.
-2. `02_policies.sql` — Row Level Security. Festival content (announcements,
-   events, committee, laddu, lottery, gallery, contacts) is public to
-   *read*, but only committee/admin can write and only admin can delete.
-   `donations` and `expenses` are locked to committee/admin in **both**
-   directions — villagers get no access at all, matching the brief's
-   privacy rule.
-3. `03_storage.sql` — a single public `gallery` bucket for every image
-   (committee photos, gallery photos, lottery prize images, laddu images).
-   Public read, committee/admin upload, admin delete.
-4. `04_seed.sql` *(optional)* — sample rows mirroring `sampleData.js`, so
-   you can see the live-Supabase path working before real committee data
-   exists.
-
-### 2. Point the app at it
-
-```bash
-cp .env.example .env
-# then fill in:
-# VITE_SUPABASE_URL=https://xxxx.supabase.co
-# VITE_SUPABASE_ANON_KEY=xxxx
-```
-
-Restart `npm run dev`. As soon as those two variables are set, every page
-switches from sample data to live Supabase queries automatically — no code
-change needed. Leave `.env` empty/absent and the app keeps working on
-sample data, which is what Phase 1 relied on.
-
-### 3. How the data layer works
-
-`src/services/api.js` is the only place that talks to Supabase. Each
-function (`getAnnouncements()`, `getEvents()`, `getLaddu()`, …) returns
-data shaped exactly like `sampleData.js` — bilingual fields as
-`{ en, te }` — so page components never need to know or care whether
-they're looking at a live row or a sample one. If a Supabase query errors
-or returns nothing, the function fails soft back to sample data instead of
-breaking the page.
-
-Photos are referenced by `storage_path` in the database and resolved to a
-public URL via `publicImageUrl()` (`src/services/api.js`), which calls
-Supabase Storage's `getPublicUrl`.
-
-Pages fetch through a small `useAsyncData` hook (`src/hooks/useAsyncData.js`)
-and show a loading skeleton or an inline error state (`src/components/LoadingStates.jsx`)
-around the content — the first piece of Phase 4's polish pulled forward
-because it's needed as soon as data can actually fail to load.
-
-### What Phase 2 intentionally leaves out
-
-No auth, no admin screens, no way to *write* data from the app yet — that's
-Phase 3. Right now the only way to add or edit rows is directly in the
-Supabase table editor or via SQL, which is fine for standing up a first
-real festival year before the admin UI exists.
-
-## Phase 3 — Admin + Private Data
-
-Phase 3 adds Supabase Authentication, a protected admin area, and full
-CRUD for everything a committee needs to run day-to-day — including the
-private donation and expense records that villagers must never see.
-
-### Signing in
-
-There's no public sign-up screen — accounts are created by an existing
-admin, straight in Supabase:
-
-1. Supabase dashboard → **Authentication → Users → Add user** (email +
-   password). The `handle_new_user` trigger from `01_schema.sql`
-   automatically creates a matching `profiles` row with `role = 'villager'`.
-2. Promote that user: `Table editor → profiles → role → committee` or
-   `admin` (or use the **Settings → Users & Roles** screen once you have
-   at least one admin).
-3. Open the app → **More → Committee Login** (or `#/admin/login`) and sign
-   in with that email/password.
-
-The very first admin has to be promoted by hand in the table editor,
-since there's no admin yet to do it from the UI.
-
-### What's in the admin area
-
-- **`src/auth/AuthContext.jsx`** — wraps the Supabase session + the
-  matching `profiles` row (which carries `role`) in a `useAuth()` hook.
-- **`src/auth/ProtectedRoute.jsx`** — gates a route behind sign-in and,
-  optionally, `requireAdmin` for admin-only screens (Committee members,
-  Contacts, deleting things, festival-year management, user roles).
-- **`src/components/admin/AdminLayout.jsx`** — a second app shell (its own
-  header + bottom nav: Dashboard / Content / Money / Gallery / Settings)
-  that reuses the same design tokens and `.card`/`.btn` classes as the
-  public app, so it doesn't feel like a bolted-on backend panel.
-- **`src/services/adminApi.js`** — the write-side data layer. Unlike
-  `services/api.js`, it never falls back to sample data: the admin area
-  requires a live Supabase connection, and Row Level Security
-  (`02_policies.sql`) is the actual enforcement — the client just calls
-  Supabase directly and surfaces whatever RLS allows or blocks.
-- **`src/hooks/useActiveFestival.js`** — every management screen edits one
-  festival year at a time (defaults to whichever is marked active; a
-  committee member can switch years from **Settings** to backfill an old
-  lottery result, for example).
-
-### Pages
-
-| Route | What it does |
+| Copy this | To this path |
 |---|---|
-| `/admin` | Dashboard — totals, balance, donor count, upcoming events, quick actions |
-| `/admin/content` | Hub linking to every content type below |
-| `/admin/content/announcements` | Add/edit/delete, optional photo, important flag |
-| `/admin/content/events` | Add/edit/delete, date/time/location |
-| `/admin/content/committee` | Admin-only. Members, photos, phone, sort order |
-| `/admin/content/laddu` | This year's Laddu Velam (single form; starting/final price, winner) |
-| `/admin/content/lottery` | Draw details + prizes + winners (three sub-forms) |
-| `/admin/content/contacts` | Admin-only. Village-wide contact list |
-| `/admin/content/donations` | **Private.** Add, search by donor, per-donor history across years, delete |
-| `/admin/content/expenses` | **Private.** Add by category, running total, delete |
-| `/admin/gallery` | Create albums, bulk photo upload, delete photos/albums |
-| `/admin/settings` | Festival years (create/activate/delete), Users & Roles (admin-only), log out |
+| `src/main.jsx` | `project/src/main.jsx` *(replaces — wires both stylesheets in, no manual edit needed)* |
+| `src/App.jsx` | `project/src/App.jsx` *(replaces — wires the `/rsvp` and `/admin/content/rsvps` routes in, no manual edit needed)* |
+| `src/styles/upgrade.css` | `project/src/styles/upgrade.css` *(new)* |
+| `src/components/Header.jsx` | `project/src/components/Header.jsx` *(replaces)* |
+| `src/components/BottomNav.jsx` | `project/src/components/BottomNav.jsx` *(replaces)* |
+| `src/components/Splash.jsx` | `project/src/components/Splash.jsx` *(replaces)* |
+| `src/components/SearchSheet.jsx` | `project/src/components/SearchSheet.jsx` *(new)* |
+| `src/components/NotificationSheet.jsx` | `project/src/components/NotificationSheet.jsx` *(new)* |
+| `src/hooks/useFavorites.js` | `project/src/hooks/useFavorites.js` *(new)* |
+| `src/pages/Home.jsx` | `project/src/pages/Home.jsx` *(replaces)* |
 
-Every list/add/edit screen uses the shared `ConfirmDialog` before deleting
-anything, and every save/delete reports through the shared `Toast` helper
-(`src/components/admin/Toast.jsx`) — both new, reusable across all of
-Phase 4's remaining polish too.
+## One line you must add
 
-### Privacy, enforced twice
+Already done for you in this version — `main.jsx` is included above with
+both stylesheets wired in. Nothing to add by hand.
 
-Donations and expenses are hidden from villagers in two independent
-places: the public pages/`api.js` never query those tables at all, *and*
-`02_policies.sql` denies villagers read access at the database level. A
-bug in the UI can't leak them — RLS is the real backstop.
+## What changed
 
-## Phase 4 — Final Polish + Deployment
+**Header** — search and a notification bell sit beside the QR and
+language buttons. Both open bottom sheets; the bell carries an unread
+badge.
 
-Phase 4 doesn't add new features — it hardens what Phases 1–3 built and
-gets it ready to hand to a real village committee.
+**Search** (`SearchSheet.jsx`) — one fetch on open, then local filtering
+across announcements, events, committee, contacts, laddu and lottery
+prizes. Matches on both English and Telugu text regardless of the
+current language, with scope pills and highlighted matches.
 
-### What changed
+**Notifications** (`NotificationSheet.jsx`) — a feed assembled from the
+newest announcements and events, newest first. Read state persists to
+`localStorage` under `gc_read_notifications`. The header badge and the
+News nav dot read the same shared store, so opening the sheet clears
+both. Exports `useUnreadCount()`.
 
-- **Performance / code-splitting.** The admin area (`src/pages/admin/*`,
-  `AdminLayout`) is now loaded with `React.lazy` + `Suspense` instead of
-  being bundled with the public app. Villagers browsing Home/Announcements/
-  Gallery/etc. — the overwhelming majority of visits — now download a
-  smaller main bundle (~278 KB vs. ~339 KB before); the admin code only
-  loads the first time someone opens `/admin`.
-- **Image loading.** Every image across the app (public `PhotoTile` and
-  every admin thumbnail/preview) uses `loading="lazy" decoding="async"`,
-  so off-screen photos in Gallery, Committee, and the admin lists don't
-  block the initial page render.
-- **404 handling.** A `NotFound` page catches any unmatched public route
-  (`<Route path="*">`), and the admin router has its own graceful
-  "that admin page doesn't exist" fallback instead of a blank screen.
-- **Form validation.** Donation/expense amounts must be a positive number
-  (rejected client-side with a toast before the request is even sent, in
-  addition to the `min="1"` on the input); a new festival year's start
-  date is checked against its end date before saving.
-- **Loading / empty / error states** — already present since Phase 2/3
-  (`PageSkeleton`, `PageError`, and each list's own "no X yet" empty
-  state) — were audited page-by-page and are consistent across every
-  admin screen added in Phase 3.
-- **Confirmation dialogs & toasts** — already shared components since
-  Phase 3 (`ConfirmDialog`, `Toast`) — were checked against every delete
-  action (announcements, events, committee, contacts, donations,
-  expenses, lottery prizes/winners, gallery albums/photos, festival
-  years) to make sure none can fire without a confirm step.
-- **Telugu translations** — `src/i18n/en.js` and `src/i18n/te.js` were
-  diffed key-by-key; both have exactly the same 42 keys, so nothing on
-  the public side silently falls back to English. (The admin area is
-  intentionally English-only — it's a backend tool for the committee, not
-  villager-facing content, matching the brief's public-page language
-  requirement.)
-- **Responsive desktop support.** The `.app-shell` stays centered at a
-  520px max-width on wider screens rather than stretching full-bleed, so
-  the app still reads as a phone-shaped app if a committee member opens
-  it on a laptop.
+**BottomNav** — frosted glass bar; the active icon sits in a lifted
+capsule and pops on select; the marigold rail measures the active tab and
+slides to it, so it stays centred when Telugu labels change width.
 
-### Security checklist (verify before go-live)
+**Splash** — emblem blooms in, three toranam rings ripple outward, and a
+marigold bar tracks the existing 1100 ms boot window in `App.jsx`.
 
-Run through this once against your real Supabase project, not just the
-seed data:
+**Home** — same sections you had, plus:
+- Hero countdown now ticks in days / hours / minutes, and switches to a
+  pulsing "live" state once the festival starts. A share button posts a
+  pre-formatted WhatsApp message.
+- **Quick access** grid — only renders tiles for content that exists.
+- **Donation progress** — counts up from zero and fills a bar toward
+  `festival.donationGoal` if your row has one; otherwise it targets the
+  next ₹1 lakh milestone above the current total. Nothing renders if the
+  public total is empty.
+- **Today's schedule** — today's events on a live rail with done / now /
+  next states, re-evaluated every minute. Falls back to the next event
+  day when there's nothing today. Parses both `6:30 AM` and `18:30`.
+- **Album story rail** — from `getGalleryAlbums()`.
+- **Latest photos** — each tile has a heart; saved ids persist via
+  `useFavorites()` (`gc_favorites`) and are shared app-wide.
+- Sections reveal on scroll instead of all animating at load.
 
-1. **RLS is actually enabled.** In the Supabase dashboard →
-   Authentication → Policies, confirm every table listed in
-   `02_policies.sql` shows RLS **on**. `alter table ... enable row level
-   security` only takes effect once, at the time you ran the script — if
-   a table was recreated afterward, re-run that section.
-2. **Villager can't read donations/expenses.** Sign in as a plain
-   `villager`-role account (or use an incognito window with no session)
-   and try `supabase.from('donations').select('*')` in the browser
-   console — it must return an empty array or a permissions error, never
-   rows.
-3. **Only admins can promote roles.** As a `committee` account, confirm
-   `/admin/settings` doesn't show the Users & Roles section, and that a
-   direct `profiles` update to change someone's role is rejected by RLS
-   (`profiles: admin manages all` policy).
-4. **Storage bucket policy matches intent.** `gallery` is public-read by
-   design (festival photos are meant to be seen by everyone) but
-   committee/admin-only to upload and admin-only to delete — try
-   uploading as a signed-out session and confirm it's rejected.
-5. **`.env` is never committed.** Confirmed via `.gitignore` (`*.local`
-   and the standard Vite ignores) — double check `.env` itself isn't
-   already tracked if this repo existed before the ignore rule was added.
+## Notes
 
-### Navigation checklist
+- No new i18n keys are needed — the new strings are held bilingually
+  inside each new component, so `en.js` / `te.js` stay untouched.
+- `getGalleryAlbums()` is called with no year on Home and wrapped in a
+  `.catch(() => [])`; if your signature requires a year, pass
+  `festival.year` there.
+- `donationGoal` is optional. Add it to the festival row (or
+  `donation_goal`) to control the progress target explicitly.
 
-- Every admin sub-page (`ManageAnnouncements`, `ManageEvents`, …) uses
-  `showBack` on its header and returns to the Content hub, not the
-  Dashboard, matching how the person got there.
-- Deep-linking straight to `/#/admin/content/donations` while signed out
-  redirects to `/#/admin/login` and returns to the donations page after a
-  successful sign-in (`ProtectedRoute` passes `location.state.from`).
-- The public bottom nav and the admin bottom nav never appear at the same
-  time — `Root` in `App.jsx` switches the whole shell based on whether
-  the path starts with `/admin`, so there's no risk of overlapping nav
-  bars during a route transition.
+## Still to come
 
-### Production build
+Laddu, Lottery, Admin Dashboard and Login. `upgrade.css` already carries
+the classes those screens will use.
 
-```bash
-npm install
-npm run build      # outputs to dist/
-npm run preview    # sanity-check the production build locally
-```
+---
 
-`npm run build` must complete with no errors before deploying — this is
-checked after every phase, and Phase 4 keeps it clean (`✓ built in ~1.2s`
-as of this phase, ~278 KB main bundle + on-demand admin chunks, all
-gzipped under 100 KB).
+# Stage 2 — added on top of Stage 1
 
-### Deploying to Vercel
+Same drop-in rule: nothing in your folder is touched until you copy
+these over. Requires Stage 1's `upgrade.css` import already in place.
 
-1. Push this repo to GitHub.
-2. In Vercel: **New Project → Import** the repo. Framework preset
-   "Vite" is auto-detected; build command `npm run build`, output
-   directory `dist` (Vercel fills these in automatically).
-3. Add the two environment variables from `.env.example` under
-   **Settings → Environment Variables**:
-   - `VITE_SUPABASE_URL`
-   - `VITE_SUPABASE_ANON_KEY`
-4. Deploy. No `vercel.json` or rewrite rules are needed — the app uses
-   `HashRouter` (URLs like `/#/gallery`), so every route resolves to the
-   same static `index.html` without server-side routing configuration.
+| Copy this | To this path |
+|---|---|
+| `src/components/Reveal.jsx` | `project/src/components/Reveal.jsx` *(new)* |
+| `src/components/SavedPhotosSheet.jsx` | `project/src/components/SavedPhotosSheet.jsx` *(new)* |
+| `src/pages/Home.jsx` | `project/src/pages/Home.jsx` *(replaces — now imports shared Reveal)* |
+| `src/pages/Announcements.jsx` | `project/src/pages/Announcements.jsx` *(replaces)* |
+| `src/pages/Events.jsx` | `project/src/pages/Events.jsx` *(replaces)* |
+| `src/pages/Gallery.jsx` | `project/src/pages/Gallery.jsx` *(replaces)* |
+| `src/pages/Committee.jsx` | `project/src/pages/Committee.jsx` *(replaces)* |
+| `src/pages/Contacts.jsx` | `project/src/pages/Contacts.jsx` *(replaces)* |
+| `src/pages/More.jsx` | `project/src/pages/More.jsx` *(replaces)* |
 
-### Supabase production setup
+No new imports needed beyond Stage 1's `upgrade.css` line — every class
+these use (`reveal`, `search-scopes`/`scope-pill`, `fav-btn`/`photo-wrap`,
+`video-tile`, `live-dot`, `offline-strip`, `sheet`/`sheet-backdrop`) already
+shipped in Stage 1's `upgrade.css`.
 
-1. Create a fresh Supabase project for production (don't reuse a dev/test
-   project that has throwaway data).
-2. Run, in order, in the SQL editor: `supabase/01_schema.sql` →
-   `02_policies.sql` → `03_storage.sql`. Skip `04_seed.sql` in production
-   — it's sample data for local development only.
-3. Create your first festival year for real, either via SQL or once
-   you're signed in as an admin, via **Settings → New Festival Year** →
-   **Make Active**.
-4. Create the first admin account: Authentication → Users → Add user,
-   then in the table editor set that user's `profiles.role` to `admin`.
-   Every admin/committee account after that can be promoted from
-   **Settings → Users & Roles** instead of the table editor.
-5. Copy the project's URL and anon key (Project Settings → API) into
-   Vercel's environment variables (see above) and redeploy.
+## What changed
 
-### README / setup instructions
+**Reveal** — extracted the fade/rise-on-scroll wrapper Home used into its
+own component so every page shares it instead of re-declaring it.
 
-This file *is* the setup instructions — Phase 1 through Phase 4 sections
-above cover, in order: running locally on sample data, connecting a real
-Supabase project, using the admin area, and deploying to production. No
-separate setup doc was created, per the brief's instruction not to
-over-engineer the project.
+**Announcements** — filter pills (All / Important) when there's at least
+one important post; cards stagger in on scroll.
 
-## Phase 4 addendum — installability
+**Events** — Upcoming / Past / All filter pills (Upcoming is the default
+view); a live pulsing "Today" chip on same-day events, a leaf chip for
+"Tomorrow" / "in Nd" on the rest.
 
-Added after the initial Phase 4 pass: a `manifest.webmanifest` plus
-generated `icon-180.png` / `icon-192.png` / `icon-512.png` (derived from
-`favicon.svg`), linked from `index.html`. This is what lets a villager
-tap "Add to Home Screen" in their mobile browser and get a real app
-icon and splash instead of a browser tab — closing out the "App icon"
-requirement from the brief's UI section. No other behavior changes.
+**Gallery** — album view photos now carry a heart to save/unsave (shared
+with Home's favorites store); any photo whose row has `type: 'video'` or
+a `videoUrl` renders as a video tile with a play badge and duration
+instead of a plain image — no code change needed elsewhere, it reads
+whatever's already in the photo row.
 
-## Laptop / desktop view
+**Committee** — a quick filter-by-name/position search appears once
+there are more than 6 members; grid tiles stagger in.
 
-The app is mobile-first, but from 900px viewport width up it reflows
-into a real laptop layout — no separate desktop build, same code:
+**Contacts** — same quick filter (name / role / phone) once there are
+more than 6 contacts; rows stagger in.
 
-- The bottom tab bar becomes a sticky left sidebar.
-- The single mobile column widens into a proper content area
-  (max 1180px, centered) with a soft background behind the card so a
-  laptop window doesn't look like a phone floating on blank white.
-- Committee, prize, and gallery grids pick up extra columns
-  automatically as the window gets wider.
-- This applies to both the public site and the admin area — same
-  `.app-shell` / `.bottom-nav` markup drives both.
+**More** — a new **Saved Photos** entry (with a count badge) opens a
+sheet aggregating every hearted photo across every album/year
+(`SavedPhotosSheet.jsx`) with the same lightbox as everywhere else. An
+offline strip appears at the top of the page when the device has no
+connection. No route changes — the sheet opens from local state, so
+`App.jsx` doesn't need touching.
 
-Resize the browser window (or open dev tools' responsive mode) past
-900px to see it switch — nothing to configure.
+## Still to come
 
-## Notes on the offline rules
+Laddu, Lottery, Admin Dashboard, Login.
 
-Per the brief, the Lottery and Laddu Velam are conducted entirely offline —
-this app never builds ticket purchase, bidding, or payment flows for them.
-Donation and expense data is private by design and lives behind Supabase
-RLS (Phase 3), with only an admin-approved total (e.g. "Total Festival
-Donations: ₹8,50,000") ever shown to villagers, as reflected on the Home
-page.
+---
 
-## Phase 5 — Bilingual content (EN ↔ TE)
+# Stage 3 — Laddu, Lottery, Admin, Login
 
-Two separate layers of localization, both already wired in:
+Requires Stage 1's `upgrade.css` import already in place.
 
-**Static UI text** (nav labels, buttons, empty states, etc.) uses the
-existing `src/i18n/` system — `en.js` / `te.js` dictionaries plus
-`LanguageContext`, which persists the chosen language to `localStorage`
-(`gc_lang`) and applies it app-wide via `useLanguage()`.
+| Copy this | To this path |
+|---|---|
+| `src/hooks/useCountUp.js` | `project/src/hooks/useCountUp.js` *(new)* |
+| `src/pages/Laddu.jsx` | `project/src/pages/Laddu.jsx` *(replaces)* |
+| `src/pages/Lottery.jsx` | `project/src/pages/Lottery.jsx` *(replaces)* |
+| `src/pages/admin/AdminDashboard.jsx` | `project/src/pages/admin/AdminDashboard.jsx` *(replaces)* |
+| `src/components/admin/AdminLayout.jsx` | `project/src/components/admin/AdminLayout.jsx` *(replaces)* |
+| `src/pages/admin/Login.jsx` | `project/src/pages/admin/Login.jsx` *(replaces)* |
 
-**Admin-entered content** (festival name/village, announcements, events,
-committee positions, contacts, laddu/lottery details, gallery album
-names) now uses a single-input workflow instead of separate
-English/Telugu fields:
+No routing, auth, or Supabase logic changed anywhere in this stage —
+only presentation.
 
-- `src/lib/language.js` — `detectLanguage(text)` detects Telugu vs.
-  English by Unicode script, instantly, with no API call.
-- `src/components/admin/BilingualField.jsx` — a drop-in single `<input>`
-  that detects the script as the admin types and stores it in the
-  correct `{field}_en` / `{field}_te` / `{field}_source_lang` columns,
-  leaving the other language blank.
-- `src/services/translate.js` — `translateText()` calls MyMemory's free
-  translation API (no key required) with an 8s timeout, in-flight
-  request de-duplication, and a shared cache table
-  (`translation_cache`, see `supabase/06_i18n.sql`) so the same sentence
-  is never translated twice.
-- `src/services/localize.js` — `resolveBilingual()` fills in whichever
-  side is blank (cached translation → live translation → original text
-  as a last-resort fallback; it never returns blank/undefined). This is
-  wired into `src/services/api.js` for every public-facing read.
+## What changed
 
-`supabase/06_i18n.sql` is additive only — it doesn't touch or drop any
-existing column, so already-populated bilingual rows keep working
-exactly as before; only new/edited content goes through the
-detect-and-translate path. Run it after `05_gallery_update.sql`.
+**Laddu** — a settled/pending status chip on the feature card, a
+"Share on WhatsApp" button that sends the current laddu's price/winner
+details, reveal-in on scroll. Still fully read-only — no bidding UI was
+added, per the brief.
 
-**Applied so far:** Settings (festival name/village), Announcements,
-Events, Committee, Contacts, Gallery albums, Laddu Velam, Lottery
-(draw location + prize names). Donations/Expenses were left as-is —
-they're private admin-only financial records, not public bilingual
-content.
+**Lottery** — same share button for the draw, first prize gets a
+marigold glow and a "1st Prize" ribbon, winners list uses a trophy badge
+instead of an empty photo tile, everything reveals in on scroll.
 
-**Extending the pattern to a new field:** add a nullable
-`{field}_source_lang` column (see `06_i18n.sql` for the pattern), swap
-the admin form's two `Field`/`Input` pairs for one
-`<BilingualField label="..." baseName="..." form={form} setForm={setForm} />`,
-and wrap the read in `src/services/api.js` with
-`await bilingual(row.x_en, row.x_te, row.x_source_lang)`.
+**Admin Dashboard** — the three money stats (donations, expenses,
+balance) and the three count stats (donors, events, announcements) count
+up on load instead of appearing static; Quick Actions moved from a
+horizontal scroll strip to the same 4-column `quick-grid` tile the public
+Home page uses, so admin and villager views share one visual language.
 
+**AdminLayout** — its bottom nav now uses the same frosted `nav-v2`
+treatment as the public app's `BottomNav` (Stage 1) — same classes, so no
+new CSS is needed. Routes, the pending-invites dot, and sign-out are all
+unchanged.
+
+**Login** — the shield emblem blooms in on load (same easing as the
+splash screen), and the password field gets a show/hide toggle. Sign-in
+logic, role select, and error handling are untouched.
+
+## That's every screen
+
+All twelve screens from the original scope are now covered across the
+three stages. Nothing in your project folder was modified — every file
+above is a straight drop-in replacement (or new file) at the path shown.
+
+---
+
+# Stage 4 — Committee/Admin side, premium pass
+
+This stage upgrades the whole `/admin` area — dashboard, content
+management, money, gallery, settings, login/join. Requires Stage 1's
+`upgrade.css` already in place.
+
+## One more import line
+
+Already done for you — included in the `main.jsx` above.
+
+## Files in this stage
+
+| Copy this | To this path |
+|---|---|
+| `src/styles/admin-premium.css` | `project/src/styles/admin-premium.css` *(new)* |
+| `src/components/admin/AdminLayout.jsx` | `project/src/components/admin/AdminLayout.jsx` *(replaces — adds the `admin-shell` class)* |
+| `src/components/admin/FormField.jsx` | `project/src/components/admin/FormField.jsx` *(replaces — adds a themed focus ring to every input/select/textarea)* |
+| `src/pages/admin/Join.jsx` | `project/src/pages/admin/Join.jsx` *(replaces)* |
+| `src/pages/admin/ContentHub.jsx` | `project/src/pages/admin/ContentHub.jsx` *(replaces)* |
+| `src/pages/admin/MoneyHub.jsx` | `project/src/pages/admin/MoneyHub.jsx` *(replaces)* |
+| `src/pages/admin/MoneyDashboard.jsx` | `project/src/pages/admin/MoneyDashboard.jsx` *(replaces)* |
+| `src/pages/admin/ManageDonations.jsx` | `project/src/pages/admin/ManageDonations.jsx` *(replaces)* |
+| `src/pages/admin/ManageExpenses.jsx` | `project/src/pages/admin/ManageExpenses.jsx` *(replaces)* |
+
+`AdminDashboard.jsx` and `Login.jsx` were already upgraded in Stage 3 —
+no changes needed here.
+
+## What changed
+
+**Everywhere at once, for free** — because `admin-premium.css` targets
+the shared `.card`, `.icon-badge`, `.btn-primary`, `.chip`, `.empty-state`
+and `.photo-dropzone` classes every admin screen already uses, *every*
+admin page gets deeper card elevation, gradient icon tiles, a richer
+primary-button gradient, tracked/uppercase status chips, a frosted modal
+backdrop, and a nicer drag-and-drop zone — including screens this stage
+didn't touch directly: Announcements, Events, Committee, Contacts, Laddu,
+Lottery, Gallery, Settings, Pending Sends, Deleted Donations. Every form
+field across all of those (via the shared `FormField.jsx`) also picks up
+a themed focus ring instead of the browser default.
+
+**AdminLayout** — root now carries `admin-shell`, the class the whole
+premium layer keys off; routes and nav are unchanged from Stage 3.
+
+**Join** — same emblem-bloom entrance as Login (Stage 3); signup logic
+untouched.
+
+**Content hub / Money hub** — the flat link lists became icon tile grids
+(`quick-grid`), matching the villager Home's quick-access pattern instead
+of looking like a plain settings menu.
+
+**Money Dashboard** — the day/year totals count up on load; the
+source/volunteer breakdown bars use a smoother gradient track; the day
+picker is now sticky while scrolling the day's donation list.
+
+**Manage Donations / Manage Expenses** — the headline totals count up;
+list rows stagger in on scroll. All the safety-net logic (draft
+recovery, offline handling, idempotent saves, search) is byte-for-byte
+identical — only presentation changed.
+
+## Still untouched by design
+
+Settings, ManageAnnouncements, ManageEvents, ManageCommittee,
+ManageContacts, ManageLaddu, ManageLottery, ManageGallery,
+ManageDeletedDonations, PendingSends — their business logic is
+unchanged and none of their files need copying; they inherit the
+premium look purely from `admin-premium.css` + `FormField.jsx`. Say the
+word if you'd like any of these individually restructured further (e.g.
+count-up stats on Settings, or a nicer multi-step feel on Lottery's
+draw/prizes/winners flow).
+
+---
+
+# Stage 5 — New features (weather, maps, live stream, panchang, RSVP,
+# voice search, admin charts)
+
+Every API used here is **free, no signup, no key** — nothing to pay for,
+nothing to configure before it works:
+
+- **Weather** — [Open-Meteo](https://open-meteo.com) forecast + geocoding.
+- **Maps** — a plain OpenStreetMap embed (`openstreetmap.org/export/embed.html`)
+  plus a Google Maps *directions* deep link (`google.com/maps/dir/?...`) —
+  both are public URLs, not billed APIs.
+- **Live video** — a standard YouTube `<iframe>` embed of a video ID the
+  committee supplies.
+- **Panchang** — the lunar tithi is computed in plain JS (no API); sunrise/
+  sunset comes from [sunrise-sunset.org](https://sunrise-sunset.org), also
+  free/keyless.
+- **Voice search** — the browser's built-in Web Speech API. No network
+  call, no key; silently hides the mic button on browsers that don't
+  support it (older desktop Safari/Firefox).
+
+All of it degrades gracefully: if a village name can't be geocoded, or a
+festival has no live-video ID set, that widget simply doesn't render —
+nothing breaks, nothing shows an error for a "nice to have."
+
+## New files
+
+| Copy this | To this path |
+|---|---|
+| `src/services/weather.js` | `project/src/services/weather.js` *(new)* |
+| `src/lib/panchang.js` | `project/src/lib/panchang.js` *(new)* |
+| `src/services/rsvp.js` | `project/src/services/rsvp.js` *(new)* |
+| `src/components/WeatherWidget.jsx` | `project/src/components/WeatherWidget.jsx` *(new)* |
+| `src/components/PanchangWidget.jsx` | `project/src/components/PanchangWidget.jsx` *(new)* |
+| `src/components/VenueMap.jsx` | `project/src/components/VenueMap.jsx` *(new)* |
+| `src/components/LiveStream.jsx` | `project/src/components/LiveStream.jsx` *(new)* |
+| `src/components/admin/MiniBarChart.jsx` | `project/src/components/admin/MiniBarChart.jsx` *(new)* |
+| `src/pages/Rsvp.jsx` | `project/src/pages/Rsvp.jsx` *(new)* |
+| `src/pages/admin/ManageRsvp.jsx` | `project/src/pages/admin/ManageRsvp.jsx` *(new)* |
+| `supabase/13_rsvp.sql` | `project/supabase/13_rsvp.sql` *(new — run it in the Supabase SQL editor after `12_push_notifications.sql`)* |
+
+## Files replaced again in this stage
+
+| Copy this | To this path |
+|---|---|
+| `src/components/SearchSheet.jsx` | *(replaces — adds the voice-search mic)* |
+| `src/pages/Home.jsx` | *(replaces — adds weather, panchang, venue map, live stream, RSVP tile)* |
+| `src/pages/admin/MoneyDashboard.jsx` | *(replaces — adds the 7-day trend chart)* |
+| `src/pages/admin/ContentHub.jsx` | *(replaces — adds the RSVPs tile)* |
+| `src/styles/upgrade.css` | *(replaces — adds the styles for all of the above)* |
+
+## No manual routes needed
+
+Already wired into the `App.jsx` above: `/rsvp` (public) and
+`/admin/content/rsvps` (committee/admin).
+
+## What changed on Home
+
+Three new sections, each optional and self-hiding:
+
+- **Weather** — a horizontal strip covering the festival's dated range
+  (or the next few days if it hasn't been dated yet), geocoded from the
+  festival's village name.
+- **Panchang** — today's tithi (lunar day) plus sunrise/sunset and an
+  approximate Abhijit Muhurta window, clearly labeled as reference-only.
+- **Venue map** — an embedded OpenStreetMap preview with a "Get
+  Directions" button. Uses `festival.venueAddress` if you add that
+  column, otherwise falls back to `"<village> temple"`.
+- **Live Now** — only appears if `festival.liveVideoId` is set (add that
+  column, or set it directly in the table editor for now — same pattern
+  the README already uses for `public_donation_total`).
+- **RSVP** joined the quick-access grid, linking to the new `/rsvp` page.
+
+## RSVP
+
+A public headcount page: name, optional phone, a guest-count stepper,
+and a live running total of everyone who's RSVP'd — reads/writes
+through `services/rsvp.js`, which follows the same "Supabase if
+configured, else localStorage" fallback every other service in this app
+uses, so it works immediately on sample data. `ManageRsvp.jsx` (linked
+from the new Content Hub tile) lists everyone and lets committee/admin
+remove an entry.
+
+## Admin: 7-day donation trend
+
+`MoneyDashboard` gained a small hand-drawn bar chart (no chart library —
+just SVG, `MiniBarChart.jsx`) showing the last 7 days of collections
+above the existing day-picker, so a trend is visible at a glance instead
+of only one day at a time.
+
+## Voice search
+
+The header search sheet's mic button uses the browser's own speech
+recognition — tap it, speak in English or Telugu (it follows whichever
+language the app is currently in), and the transcript fills the search
+box. No audio ever leaves the device through anything this app added;
+whatever privacy policy the browser's built-in recognizer has is the
+only one in play.
+
+---
+
+# Stage 6 — Live session card (links out to YouTube Live)
+
+`LiveStream.jsx` is a rich, tappable card on the villager Home page —
+not an embed. It shows a "LIVE" pulsing badge over the broadcast's own
+YouTube thumbnail and title (fetched free, no key, via YouTube's public
+oEmbed endpoint), and tapping it opens the actual YouTube Live page.
+Broadcasting itself happens the normal way, from the YouTube app or
+Studio — this card is just the best possible doorway to it.
+
+## New / replaced files
+
+| Copy this | To this path |
+|---|---|
+| `src/services/livestream.js` | `project/src/services/livestream.js` *(new — same file as before, unchanged)* |
+| `src/components/admin/LiveStreamControl.jsx` | `project/src/components/admin/LiveStreamControl.jsx` *(replaces — now takes a YouTube link instead of a Daily room URL)* |
+| `supabase/14_live_stream.sql` | `project/supabase/14_live_stream.sql` *(new — additive, run after `13_rsvp.sql`, if you haven't already)* |
+| `src/components/LiveStream.jsx` | *(replaces — the new live-session card)* |
+| `src/pages/Home.jsx` | *(replaces — passes the saved link through to the card)* |
+| `src/pages/admin/AdminDashboard.jsx` | *(replaces — adds the Live Session control card)* |
+| `src/styles/upgrade.css` | *(replaces — adds the `.live-session-*` card styles)* |
+
+## Using it
+
+On festival day: start your YouTube Live broadcast as usual (phone app
+or Studio), copy its watch link, paste it into **Admin → Dashboard →
+Live Session**, and tap **Go Live** — the card appears on the villager
+Home page immediately, thumbnail and title pulled from YouTube. Tapping
+the card opens YouTube Live itself, so playback, chat, likes — all of
+it — is the real YouTube experience. **End Stream** hides the card once
+you're done; nothing on YouTube's side is affected either way.
+
+*(Superseded by Stage 7 below — kept here for history.)*
+
+---
+
+# Stage 7 — Real in-app live stream, fully free (replaces Stage 6's YouTube card)
+
+This is your own live broadcast, playing inside the app on a `<video>`
+element you own — not a link out, not an iframe to another site.
+Powered by [LiveKit Cloud](https://livekit.io)'s free tier: no credit
+card, doesn't expire, no server for you to run. (The honest tradeoff:
+LiveKit's free tier caps monthly streaming minutes — plenty for a
+festival's live hours; if you ever need guaranteed unlimited capacity,
+the same code points at a self-hosted LiveKit server later with just a
+URL change.)
+
+## One-time setup (free, ~5 minutes)
+
+1. Create a free account at [cloud.livekit.io](https://cloud.livekit.io)
+   and a project. Copy its **WebSocket URL** (`wss://your-project.livekit.cloud`)
+   and, from Settings → Keys, an **API Key** and **API Secret**.
+2. Install the one new dependency this needs:
+   ```
+   npm install livekit-client
+   ```
+3. Deploy the token-minting function (keeps your API Secret server-side,
+   never in the browser) — needs the [Supabase CLI](https://supabase.com/docs/guides/cli):
+   ```
+   supabase functions deploy livekit-token
+   supabase secrets set LIVEKIT_API_KEY=your_key LIVEKIT_API_SECRET=your_secret
+   ```
+4. Run `supabase/15_livekit.sql` in the Supabase SQL editor (after `14_live_stream.sql`).
+5. In **Admin → Dashboard → Live Stream**, paste the WSS URL from step 1
+   and a room name (anything, e.g. `festival-live`), then tap **Go Live**
+   — your device's camera/mic turns on and every villager on Home sees
+   you immediately, live, inside the app.
+
+## New / replaced files
+
+| Copy this | To this path |
+|---|---|
+| `src/services/livekit.js` | `project/src/services/livekit.js` *(new)* |
+| `supabase/functions/livekit-token/index.ts` | `project/supabase/functions/livekit-token/index.ts` *(new)* |
+| `supabase/15_livekit.sql` | `project/supabase/15_livekit.sql` *(new — additive, run after `14_live_stream.sql`)* |
+| `src/services/livestream.js` | *(replaces — now stores `roomName`/`wsUrl` instead of a YouTube link)* |
+| `src/components/LiveStream.jsx` | *(replaces — real in-app video + text chat)* |
+| `src/components/admin/LiveStreamControl.jsx` | *(replaces — broadcasts this device's camera/mic)* |
+| `src/pages/Home.jsx` | *(replaces — passes `roomName`/`wsUrl` through)* |
+| `src/styles/upgrade.css` | *(replaces — video/chat styles; the old YouTube card CSS is now dead and hidden)* |
+
+## What villagers see
+
+A live card on Home with the broadcaster's camera, a live viewer count,
+and a small text chat underneath — everyone watching can type and see
+each other's messages in real time, no page leaves the app.
+
+## Honest limits
+
+- LiveKit's free tier has a monthly streaming-minutes cap — ample for
+  festival days, worth checking your dashboard if you stream very
+  often.
+- The chat is live-only (LiveKit's data channel) — messages aren't
+  saved anywhere, so nothing shows up for someone who joins late.
+- Only one broadcaster per room in this version — everyone else
+  connects as a viewer.

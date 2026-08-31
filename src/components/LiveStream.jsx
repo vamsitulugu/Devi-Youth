@@ -1,64 +1,100 @@
-import { useEffect, useState } from 'react';
-import { Play, Video } from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
+import { Room, RoomEvent, Track } from 'livekit-client';
+import { Users, Send } from 'lucide-react';
+import { fetchLiveKitToken, randomIdentity } from '../services/livekit';
 
 const COPY = {
-  en: { live: 'Live Now', tap: 'Tap to watch on YouTube', fallback: 'Watch the live broadcast' },
-  te: { live: 'ప్రత్యక్ష ప్రసారం', tap: 'యూట్యూబ్‌లో చూడటానికి నొక్కండి', fallback: 'ప్రత్యక్ష ప్రసారం చూడండి' },
+  en: { live: 'Live Now', connecting: 'Connecting…', chatPlaceholder: 'Say something…', send: 'Send' },
+  te: { live: 'ప్రత్యక్ష ప్రసారం', connecting: 'కనెక్ట్ అవుతోంది…', chatPlaceholder: 'ఏదైనా చెప్పండి…', send: 'పంపండి' },
 };
 
-const CACHE_MS = 10 * 60 * 1000;
-
 /**
- * The "best live session card" — a rich, tappable card that opens the
- * festival's YouTube Live broadcast in YouTube itself. The thumbnail and
- * title come from YouTube's public oEmbed endpoint (free, no key) so the
- * card looks alive even before anyone's clicked it; if that lookup fails
- * the card still works, just with a plain gradient instead of a photo.
+ * Real in-app live video — this is your own broadcast, not a link to
+ * another site. Connects to your LiveKit room as a view-only
+ * subscriber and renders the broadcaster's camera into a plain
+ * <video> element this component owns, plus a lightweight text chat
+ * over LiveKit's data channel (no extra backend for chat).
  */
-export default function LiveStream({ url, active, lang = 'en' }) {
+export default function LiveStream({ active, roomName, wsUrl, lang = 'en' }) {
   const c = COPY[lang] || COPY.en;
-  const [meta, setMeta] = useState(null);
+  const videoRef = useRef(null);
+  const roomRef = useRef(null);
+  const [connected, setConnected] = useState(false);
+  const [count, setCount] = useState(0);
+  const [messages, setMessages] = useState([]);
+  const [chatInput, setChatInput] = useState('');
 
   useEffect(() => {
-    if (!active || !url) return;
-    const cacheKey = `gc_yt_oembed:${url}`;
-    let alive = true;
-    try {
-      const cached = JSON.parse(localStorage.getItem(cacheKey) || 'null');
-      if (cached && Date.now() - cached.at < CACHE_MS) { setMeta(cached.data); return; }
-    } catch { /* ignore */ }
-    fetch(`https://www.youtube.com/oembed?url=${encodeURIComponent(url)}&format=json`)
-      .then((r) => (r.ok ? r.json() : null))
-      .then((data) => {
-        if (!alive || !data) return;
-        setMeta(data);
-        try { localStorage.setItem(cacheKey, JSON.stringify({ at: Date.now(), data })); } catch { /* ignore */ }
-      })
-      .catch(() => {});
-    return () => { alive = false; };
-  }, [url, active]);
+    if (!active || !roomName || !wsUrl) return;
+    let cancelled = false;
+    const room = new Room();
+    roomRef.current = room;
 
-  if (!active || !url) return null;
+    room.on(RoomEvent.TrackSubscribed, (track) => {
+      if (track.kind === Track.Kind.Video && videoRef.current) track.attach(videoRef.current);
+    });
+    room.on(RoomEvent.ParticipantConnected, () => setCount(room.numParticipants));
+    room.on(RoomEvent.ParticipantDisconnected, () => setCount(room.numParticipants));
+    room.on(RoomEvent.DataReceived, (payload) => {
+      try {
+        const msg = JSON.parse(new TextDecoder().decode(payload));
+        setMessages((m) => [...m.slice(-49), msg]);
+      } catch { /* ignore malformed payloads */ }
+    });
+
+    (async () => {
+      try {
+        const identity = randomIdentity('viewer');
+        const token = await fetchLiveKitToken({ room: roomName, identity, name: 'Viewer', canPublish: false });
+        if (cancelled) return;
+        await room.connect(wsUrl, token);
+        if (cancelled) { room.disconnect(); return; }
+        setConnected(true);
+        setCount(room.numParticipants);
+      } catch (err) {
+        console.warn('Live stream connect failed:', err.message);
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+      room.disconnect();
+      roomRef.current = null;
+    };
+  }, [active, roomName, wsUrl]);
+
+  function sendMessage(e) {
+    e.preventDefault();
+    if (!chatInput.trim() || !roomRef.current) return;
+    const msg = { text: chatInput.trim(), from: 'Viewer', at: Date.now() };
+    roomRef.current.localParticipant.publishData(new TextEncoder().encode(JSON.stringify(msg)), { reliable: true });
+    setMessages((m) => [...m.slice(-49), msg]);
+    setChatInput('');
+  }
+
+  if (!active || !roomName || !wsUrl) return null;
 
   return (
-    <a href={url} target="_blank" rel="noopener noreferrer" className="live-session-card">
-      <div
-        className="live-session-bg"
-        style={meta?.thumbnail_url ? { backgroundImage: `url(${meta.thumbnail_url})` } : undefined}
-      />
-      <div className="live-session-overlay" />
-      <div className="live-session-badge">
+    <div className="card livestream-card">
+      <div className="livestream-badge">
         <span className="live-dot" style={{ width: 8, height: 8, borderRadius: '50%' }} />
-        {c.live}
+        {c.live}{count > 0 && <><Users size={12} style={{ marginLeft: 4 }} /> {count}</>}
       </div>
-      <div className="live-session-play">
-        <span className="live-session-play-ring" />
-        <Play size={22} fill="#fff" color="#fff" />
+      <div className="livestream-frame livestream-frame-tall">
+        <video ref={videoRef} autoPlay playsInline />
+        {!connected && <div className="livestream-connecting">{c.connecting}</div>}
       </div>
-      <div className="live-session-info">
-        <div className="live-session-title">{meta?.title || c.fallback}</div>
-        <div className="live-session-sub"><Video size={14} /> {c.tap}</div>
+      <div className="livestream-chat">
+        <div className="livestream-chat-log">
+          {messages.map((m, i) => (
+            <div key={i} className="livestream-chat-msg"><b>{m.from}:</b> {m.text}</div>
+          ))}
+        </div>
+        <form onSubmit={sendMessage} className="livestream-chat-form">
+          <input value={chatInput} onChange={(e) => setChatInput(e.target.value)} placeholder={c.chatPlaceholder} />
+          <button type="submit" aria-label={c.send}><Send size={15} /></button>
+        </form>
       </div>
-    </a>
+    </div>
   );
 }
