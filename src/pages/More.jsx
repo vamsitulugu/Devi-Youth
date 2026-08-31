@@ -1,7 +1,10 @@
 import { Link } from 'react-router-dom';
-import { Gift, Ticket, Users, Clock3, Phone, ChevronRight, LogIn, HeartHandshake } from 'lucide-react';
+import { Gift, Ticket, Users, Clock3, Phone, ChevronRight, LogIn, HeartHandshake, Download, Smartphone } from 'lucide-react';
+import { Capacitor } from '@capacitor/core';
 import { useLanguage } from '../i18n/LanguageContext';
+import { useAppMeta } from '../hooks/useAppMeta';
 import Header from '../components/Header';
+import AppQrCode from '../components/AppQrCode';
 
 const links = [
   { to: '/donations', icon: HeartHandshake, key: 'donations_title' },
@@ -21,10 +24,31 @@ const COMMITTEE_LOGIN_PATH = '/admin/login';
 
 export default function More() {
   const { t } = useLanguage();
+  const meta = useAppMeta();
+  const downloadEligible = !Capacitor.isNativePlatform() && Boolean(meta?.downloadUrl);
+
   return (
     <>
       <Header title={t('nav_more')} />
       <div className="page">
+        {downloadEligible && (
+          <div className="card" style={{ overflow: 'hidden' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '14px 16px' }}>
+              <div className="icon-badge"><Smartphone size={18} /></div>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontWeight: 600 }}>{t('app_download_ad_title')}</div>
+                <div style={{ fontSize: 'var(--fs-xs)', color: 'var(--color-ink-soft)', marginTop: 1 }}>
+                  {t('app_download_ad_body')}
+                </div>
+              </div>
+              <a href={meta.downloadUrl} download="devi-youth.apk" className="btn btn-primary btn-sm" style={{ flexShrink: 0 }}>
+                <Download size={14} /> {t('app_download_button')}
+              </a>
+              <AppQrCode variant="icon" />
+            </div>
+          </div>
+        )}
+
         <div className="card" style={{ overflow: 'hidden' }}>
           {links.map(({ to, icon: Icon, key }, i) => (
             <Link
