@@ -76,21 +76,13 @@
 }
 
 /* ============================================================
-   2. BOTTOM NAV — frosted, animated indicator, elevated centre tab
+   2. BOTTOM NAV — solid, never see-through while scrolling
    ============================================================ */
 .bottom-nav.nav-v2 {
   background: var(--color-surface);
   border-top: 1px solid var(--color-border);
   box-shadow: 0 -8px 26px -14px rgba(56, 34, 15, 0.35);
   align-items: stretch;
-}
-@supports ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
-  .bottom-nav.nav-v2 {
-    background: var(--glass);
-    backdrop-filter: saturate(1.6) blur(16px);
-    -webkit-backdrop-filter: saturate(1.6) blur(16px);
-    border-top: 1px solid var(--glass-border);
-  }
 }
 
 .nav-v2 .nav-item {
@@ -1112,24 +1104,28 @@
   background: radial-gradient(circle at 85% 30%, rgba(240, 148, 15, 0.35), transparent 60%);
   pointer-events: none;
 }
-.live-teaser-orb {
+.live-teaser-orb,
+.live-teaser-thumb {
   position: relative;
-  width: 50px;
-  height: 50px;
-  border-radius: 50%;
+  width: 58px;
+  height: 33px;
+  border-radius: var(--radius-sm);
   flex-shrink: 0;
   display: grid;
   place-items: center;
   background: rgba(255, 255, 255, 0.12);
   border: 1.5px solid rgba(255, 255, 255, 0.35);
+  color: #fff;
 }
-.live-teaser-orb::before {
-  content: "";
+.live-teaser-thumb-dot {
   position: absolute;
-  inset: -8px;
+  top: 4px;
+  right: 4px;
+  width: 6px;
+  height: 6px;
   border-radius: 50%;
-  border: 1.5px solid rgba(255, 255, 255, 0.35);
-  animation: splashRing 2.2s var(--ease-out) infinite;
+  background: var(--color-vermillion);
+  animation: livePulse2 1.4s ease-in-out infinite;
 }
 .live-teaser-body { flex: 1; min-width: 0; position: relative; }
 .live-teaser-title { font-weight: 800; font-size: var(--fs-md); display: flex; align-items: center; gap: 6px; }
@@ -1183,7 +1179,16 @@
   background: #000;
   flex: 0 0 auto;
   aspect-ratio: 16 / 9;
-  max-height: 46vh;
+  max-height: 42vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.live-modal-video-wrap.portrait {
+  aspect-ratio: 9 / 16;
+  max-height: 62vh;
+  max-width: min(100%, 62vh * 9 / 16);
+  margin: 0 auto;
 }
 .live-modal-video-wrap video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; background: #000; }
 .live-modal-connecting {
@@ -1216,19 +1221,21 @@
   gap: 8px;
   padding: var(--space-2) var(--space-4);
   flex-shrink: 0;
+  background: rgba(255, 255, 255, 0.04);
 }
 .live-modal-reaction-btn {
-  width: 38px;
-  height: 38px;
+  width: 40px;
+  height: 40px;
   border-radius: 50%;
   background: rgba(255, 255, 255, 0.1);
-  font-size: 18px;
+  font-size: 19px;
   display: flex;
   align-items: center;
   justify-content: center;
   transition: transform 0.15s var(--ease-spring);
 }
 .live-modal-reaction-btn:active { transform: scale(1.3); }
+.live-modal-lower { display: flex; flex-direction: column; flex: 1; min-height: 0; }
 .live-modal-chat {
   flex: 1;
   min-height: 0;
@@ -1242,10 +1249,60 @@
   padding: var(--space-2) var(--space-4);
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 8px;
 }
-.live-modal-chat-msg { font-size: 13px; color: rgba(255, 255, 255, 0.9); }
-.live-modal-chat-msg b { color: var(--color-turmeric); }
+.live-modal-chat-msg { display: flex; align-items: flex-start; gap: 8px; font-size: 13px; color: rgba(255, 255, 255, 0.92); line-height: 1.4; }
+.live-modal-chat-avatar {
+  flex-shrink: 0;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  color: #fff;
+  font-size: 11px;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 1px;
+}
+.live-modal-emoji-toggle {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.1);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.live-modal-name-form {
+  display: flex;
+  gap: 8px;
+  padding: var(--space-3) var(--space-4);
+  padding-bottom: calc(var(--space-3) + env(safe-area-inset-bottom, 0px));
+  flex-shrink: 0;
+}
+.live-modal-name-form input {
+  flex: 1;
+  min-height: 40px;
+  padding: 8px 14px;
+  border-radius: var(--radius-pill);
+  border: none;
+  background: rgba(255, 255, 255, 0.1);
+  color: #fff;
+  font-size: 14px;
+}
+.live-modal-name-form input::placeholder { color: rgba(255, 255, 255, 0.4); }
+.live-modal-name-form button {
+  padding: 0 16px;
+  border-radius: var(--radius-pill);
+  background: var(--color-vermillion);
+  color: #fff;
+  font-weight: 700;
+  font-size: 13px;
+  flex-shrink: 0;
+}
 .live-modal-chat-form {
   display: flex;
   gap: 8px;
@@ -1281,3 +1338,136 @@
    ============================================================ */
 .admin-live-chevron { transition: transform 0.2s ease; flex-shrink: 0; }
 .admin-live-chevron.open { transform: rotate(180deg); }
+
+/* ============================================================
+   26. PULL-TO-REFRESH + PAGE TRANSITION
+   ============================================================ */
+.ptr-indicator {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  transition: opacity 120ms linear;
+}
+.ptr-spin { animation: ptrSpin 0.8s linear infinite; }
+@keyframes ptrSpin { to { transform: rotate(360deg); } }
+.page-fade { animation: pageFadeIn 260ms var(--ease-out) both; }
+@keyframes pageFadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* ============================================================
+   27. SWIPE ROW (admin list actions)
+   ============================================================ */
+.swipe-row {
+  position: relative;
+  overflow: hidden;
+  border-radius: var(--radius-lg);
+  margin-bottom: var(--space-3);
+}
+.swipe-row-actions {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+}
+.swipe-action-btn {
+  width: 56px;
+  height: 100%;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.swipe-row-inner {
+  position: relative;
+  z-index: 1;
+  transition: transform 220ms var(--ease-out);
+  touch-action: pan-y;
+}
+.swipe-row-inner > .card { margin-bottom: 0; }
+
+/* ============================================================
+   28. EMPTY STATE — icon ring
+   ============================================================ */
+.empty-state-icon-ring {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  margin: 0 auto var(--space-3);
+  background: radial-gradient(circle, var(--color-surface-alt) 0%, transparent 75%);
+  border: 1.5px dashed var(--color-border);
+  color: var(--color-marigold-text);
+}
+
+/* ============================================================
+   29. STICKY SECTION HEADERS (event month groups, etc.)
+   ============================================================ */
+.sticky-section-header {
+  position: sticky;
+  top: 56px;
+  z-index: 4;
+  background: var(--color-bg);
+  padding: var(--space-2) 0;
+  margin: 0 calc(var(--space-4) * -1);
+  padding-left: var(--space-4);
+  padding-right: var(--space-4);
+  font-weight: 800;
+  font-size: var(--fs-sm);
+  color: var(--color-vermillion-dark);
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  border-bottom: 1px solid var(--color-border);
+}
+
+/* ============================================================
+   30. EDITORIAL HERO — bigger imagery treatment
+   ============================================================ */
+.editorial-hero {
+  position: relative;
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  min-height: 220px;
+  display: flex;
+  align-items: flex-end;
+  box-shadow: var(--shadow-lift);
+}
+.editorial-hero img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.editorial-hero::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(20, 10, 5, 0) 40%, rgba(20, 10, 5, 0.82) 100%);
+}
+.editorial-hero-copy {
+  position: relative;
+  z-index: 1;
+  padding: var(--space-4);
+  color: #fff;
+  width: 100%;
+}
+.editorial-hero-copy .title { font-size: var(--fs-lg); font-weight: 800; }
+.editorial-hero-copy .meta { color: rgba(255, 255, 255, 0.8); }
+
+/* Feature card (Laddu/Lottery) — taller hero image */
+.feature-card .feature-img { min-height: 200px; }
+
+/* Gallery year headers stick while scrolling a long timeline */
+.timeline-year {
+  position: sticky;
+  top: 56px;
+  z-index: 4;
+  background: var(--color-bg);
+  padding: var(--space-1) 0;
+}

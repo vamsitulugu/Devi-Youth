@@ -1,25 +1,39 @@
 import { useEffect, useRef, useState } from 'react';
 import { Room, RoomEvent, Track } from 'livekit-client';
-import { Users, Send, X, Maximize, Minimize, Radio, ChevronRight } from 'lucide-react';
+import { Users, Send, X, Maximize, Minimize, Radio, ChevronRight, Smile } from 'lucide-react';
 import { fetchLiveKitToken, randomIdentity } from '../services/livekit';
 
-const REACTIONS = ['❤️', '🙏', '🎉', '👏', '😍'];
+const REACTIONS = ['❤️', '🙏', '🎉', '👏', '😍', '🔥'];
+const NAME_KEY = 'gc_viewer_chat_name';
 
 const COPY = {
-  en: { live: 'Live Now', tap: 'Tap to watch', connecting: 'Connecting…', chatPlaceholder: 'Say something…' },
-  te: { live: 'ప్రత్యక్ష ప్రసారం', tap: 'చూడటానికి నొక్కండి', connecting: 'కనెక్ట్ అవుతోంది…', chatPlaceholder: 'ఏదైనా చెప్పండి…' },
+  en: {
+    live: 'Live Now', tap: 'Tap to watch', connecting: 'Connecting…', chatPlaceholder: 'Say something…',
+    nameTitle: 'Join the chat', namePlaceholder: 'Your name', nameCta: 'Continue',
+  },
+  te: {
+    live: 'ప్రత్యక్ష ప్రసారం', tap: 'చూడటానికి నొక్కండి', connecting: 'కనెక్ట్ అవుతోంది…', chatPlaceholder: 'ఏదైనా చెప్పండి…',
+    nameTitle: 'చాట్‌లో చేరండి', namePlaceholder: 'మీ పేరు', nameCta: 'కొనసాగించండి',
+  },
 };
 
 let emojiSeq = 0;
+const AVATAR_COLORS = ['#C22B1F', '#C77A00', '#2F6B3E', '#1E6FA6', '#7A4FB5'];
+function colorFor(name) {
+  let h = 0;
+  for (let i = 0; i < name.length; i++) h = (h * 31 + name.charCodeAt(i)) % AVATAR_COLORS.length;
+  return AVATAR_COLORS[h];
+}
 
 /**
  * Villager-facing live stream. A small horizontal teaser card sits on
- * Home (cheap — it never opens a video connection by itself); tapping
- * it opens the real thing full-screen: your broadcast, a live viewer
- * count, a fullscreen toggle, emoji reactions, and text chat — all over
- * one LiveKit connection, closed the moment the modal closes.
+ * Home (cheap — a static 16:9 preview, never opens a video connection
+ * by itself); tapping it opens the real thing full-screen: your
+ * broadcast video correctly framed to the orientation the broadcaster
+ * chose, a live viewer count, a fullscreen toggle, emoji reactions that
+ * float over the video, and real text chat with named/colored senders.
  */
-export default function LiveStream({ active, roomName, wsUrl, lang = 'en' }) {
+export default function LiveStream({ active, roomName, wsUrl, orientation = 'landscape', lang = 'en' }) {
   const c = COPY[lang] || COPY.en;
   const [open, setOpen] = useState(false);
 
@@ -28,7 +42,10 @@ export default function LiveStream({ active, roomName, wsUrl, lang = 'en' }) {
   return (
     <>
       <div className="live-teaser" onClick={() => setOpen(true)} role="button" tabIndex={0}>
-        <div className="live-teaser-orb"><Radio size={20} /></div>
+        <div className="live-teaser-thumb">
+          <Radio size={22} />
+          <span className="live-teaser-thumb-dot" />
+        </div>
         <div className="live-teaser-body">
           <div className="live-teaser-title">
             <span className="live-dot" style={{ width: 7, height: 7, borderRadius: '50%' }} /> {c.live}
@@ -37,12 +54,12 @@ export default function LiveStream({ active, roomName, wsUrl, lang = 'en' }) {
         </div>
         <ChevronRight size={20} className="live-teaser-chevron" />
       </div>
-      {open && <LiveModal roomName={roomName} wsUrl={wsUrl} lang={lang} onClose={() => setOpen(false)} />}
+      {open && <LiveModal roomName={roomName} wsUrl={wsUrl} orientation={orientation} lang={lang} onClose={() => setOpen(false)} />}
     </>
   );
 }
 
-function LiveModal({ roomName, wsUrl, lang, onClose }) {
+function LiveModal({ roomName, wsUrl, orientation, lang, onClose }) {
   const c = COPY[lang] || COPY.en;
   const videoRef = useRef(null);
   const wrapRef = useRef(null);
@@ -54,6 +71,11 @@ function LiveModal({ roomName, wsUrl, lang, onClose }) {
   const [chatInput, setChatInput] = useState('');
   const [floaters, setFloaters] = useState([]);
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [showReactions, setShowReactions] = useState(false);
+  const [viewerName, setViewerName] = useState(() => {
+    try { return localStorage.getItem(NAME_KEY) || ''; } catch { return ''; }
+  });
+  const [nameInput, setNameInput] = useState('');
 
   useEffect(() => {
     const prev = document.body.style.overflow;
@@ -113,23 +135,32 @@ function LiveModal({ roomName, wsUrl, lang, onClose }) {
 
   function spawnFloater(emoji) {
     const id = ++emojiSeq;
-    const left = 10 + Math.random() * 70;
+    const left = 8 + Math.random() * 74;
     setFloaters((f) => [...f.slice(-15), { id, emoji, left }]);
     setTimeout(() => setFloaters((f) => f.filter((x) => x.id !== id)), 2700);
   }
 
   function sendReaction(emoji) {
     spawnFloater(emoji);
+    setShowReactions(false);
     roomRef.current?.localParticipant.publishData(
       new TextEncoder().encode(JSON.stringify({ type: 'reaction', emoji })),
       { reliable: true }
     );
   }
 
+  function confirmName(e) {
+    e.preventDefault();
+    const name = nameInput.trim();
+    if (!name) return;
+    try { localStorage.setItem(NAME_KEY, name); } catch { /* private mode */ }
+    setViewerName(name);
+  }
+
   function sendMessage(e) {
     e.preventDefault();
-    if (!chatInput.trim() || !roomRef.current) return;
-    const msg = { type: 'chat', text: chatInput.trim(), from: 'Viewer', at: Date.now() };
+    if (!chatInput.trim() || !roomRef.current || !viewerName) return;
+    const msg = { type: 'chat', text: chatInput.trim(), from: viewerName, at: Date.now() };
     roomRef.current.localParticipant.publishData(new TextEncoder().encode(JSON.stringify(msg)), { reliable: true });
     setMessages((m) => [...m.slice(-49), msg]);
     setChatInput('');
@@ -140,6 +171,8 @@ function LiveModal({ roomName, wsUrl, lang, onClose }) {
     if (document.fullscreenElement) document.exitFullscreen();
     else wrapRef.current.requestFullscreen?.();
   }
+
+  const isPortrait = orientation === 'portrait';
 
   return (
     <div className="live-modal-backdrop">
@@ -156,7 +189,7 @@ function LiveModal({ roomName, wsUrl, lang, onClose }) {
         </div>
       </div>
 
-      <div className="live-modal-video-wrap" ref={wrapRef}>
+      <div className={`live-modal-video-wrap${isPortrait ? ' portrait' : ''}`} ref={wrapRef}>
         <video ref={videoRef} autoPlay playsInline />
         {!connected && <div className="live-modal-connecting">{c.connecting}</div>}
         <div className="live-modal-reactions-float">
@@ -166,22 +199,40 @@ function LiveModal({ roomName, wsUrl, lang, onClose }) {
         </div>
       </div>
 
-      <div className="live-modal-reactions-bar">
-        {REACTIONS.map((e) => (
-          <button key={e} type="button" className="live-modal-reaction-btn" onClick={() => sendReaction(e)}>{e}</button>
-        ))}
-      </div>
+      <div className="live-modal-lower">
+        <div className="live-modal-chat">
+          <div className="live-modal-chat-log" ref={chatLogRef}>
+            {messages.map((m, i) => (
+              <div key={i} className="live-modal-chat-msg">
+                <span className="live-modal-chat-avatar" style={{ background: colorFor(m.from) }}>{m.from[0]?.toUpperCase()}</span>
+                <span><b style={{ color: colorFor(m.from) }}>{m.from}</b> {m.text}</span>
+              </div>
+            ))}
+          </div>
 
-      <div className="live-modal-chat">
-        <div className="live-modal-chat-log" ref={chatLogRef}>
-          {messages.map((m, i) => (
-            <div key={i} className="live-modal-chat-msg"><b>{m.from}:</b> {m.text}</div>
-          ))}
+          {viewerName ? (
+            <form onSubmit={sendMessage} className="live-modal-chat-form">
+              <button type="button" className="live-modal-emoji-toggle" onClick={() => setShowReactions((s) => !s)} aria-label="Reactions">
+                <Smile size={18} />
+              </button>
+              <input value={chatInput} onChange={(e) => setChatInput(e.target.value)} placeholder={c.chatPlaceholder} />
+              <button type="submit" aria-label="Send"><Send size={16} /></button>
+            </form>
+          ) : (
+            <form onSubmit={confirmName} className="live-modal-name-form">
+              <input value={nameInput} onChange={(e) => setNameInput(e.target.value)} placeholder={c.namePlaceholder} autoFocus />
+              <button type="submit">{c.nameCta}</button>
+            </form>
+          )}
+
+          {showReactions && (
+            <div className="live-modal-reactions-bar">
+              {REACTIONS.map((e) => (
+                <button key={e} type="button" className="live-modal-reaction-btn" onClick={() => sendReaction(e)}>{e}</button>
+              ))}
+            </div>
+          )}
         </div>
-        <form onSubmit={sendMessage} className="live-modal-chat-form">
-          <input value={chatInput} onChange={(e) => setChatInput(e.target.value)} placeholder={c.chatPlaceholder} />
-          <button type="submit" aria-label="Send"><Send size={16} /></button>
-        </form>
       </div>
     </div>
   );

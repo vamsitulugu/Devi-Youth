@@ -1,5 +1,5 @@
-import { useEffect, useState } from 'react';
-import { Plus, Pencil, Trash2, X } from 'lucide-react';
+import { useEffect, useMemo, useState } from 'react';
+import { Plus, X, Search } from 'lucide-react';
 import { AdminHeader } from '../../components/admin/AdminLayout';
 import FestivalBanner from '../../components/admin/FestivalBanner';
 import ConfirmDialog from '../../components/admin/ConfirmDialog';
@@ -10,6 +10,8 @@ import { useActiveFestival } from '../../hooks/useActiveFestival';
 import { useCloseOnBack } from '../../hooks/useCloseOnBack';
 import { announcementsApi, uploadImage, publicUrl } from '../../services/adminApi';
 import { PageSkeleton, PageError } from '../../components/LoadingStates';
+import SwipeRow from '../../components/SwipeRow';
+import Reveal from '../../components/Reveal';
 
 const blank = {
   title_en: '', title_te: '', title_source_lang: null,
@@ -29,6 +31,7 @@ export default function ManageAnnouncements() {
   const [saving, setSaving] = useState(false);
   const [file, setFile] = useState(null);
   const [toDelete, setToDelete] = useState(null);
+  const [q, setQ] = useState('');
 
   async function reload() {
     if (festivalLoading) return;
@@ -48,6 +51,12 @@ export default function ManageAnnouncements() {
     reload();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [festivalId, festivalLoading]);
+
+  const filtered = useMemo(() => {
+    const needle = q.trim().toLowerCase();
+    if (!needle) return items;
+    return items.filter((a) => (a.title_en || a.title_te || '').toLowerCase().includes(needle));
+  }, [items, q]);
 
   function openNew() {
     setForm(blank);
@@ -140,26 +149,33 @@ export default function ManageAnnouncements() {
           </form>
         )}
 
+        {!editing && items.length > 5 && (
+          <div className="search-bar" style={{ margin: 0 }}>
+            <Search size={16} strokeWidth={2.4} />
+            <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search announcements…" />
+          </div>
+        )}
+
         {loading && <PageSkeleton />}
         {!loading && error && <PageError onRetry={reload} />}
         {!loading && !error && items.length === 0 && (
           <div className="card empty-state">No announcements yet.</div>
         )}
-        {!loading && !error && items.map((a) => (
-          <div key={a.id} className="card card-pad" style={{ display: 'flex', gap: 12 }}>
-            {a.image_url && (
-              <img src={publicUrl(a.image_url)} alt="" className="thumb" loading="lazy" decoding="async" style={{ width: 56, height: 56 }} />
-            )}
-            <div style={{ flex: 1, minWidth: 0 }}>
-              {a.important && <span className="chip chip-danger" style={{ marginBottom: 4 }}>Important</span>}
-              <div className="title">{a.title_en || a.title_te}</div>
-              <div className="desc" style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{a.body_en || a.body_te}</div>
-            </div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-              <button className="icon-btn" onClick={() => openEdit(a)} aria-label="Edit"><Pencil size={16} /></button>
-              <button className="icon-btn" onClick={() => setToDelete(a)} aria-label="Delete"><Trash2 size={16} color="var(--color-danger)" /></button>
-            </div>
-          </div>
+        {!loading && !error && filtered.map((a, i) => (
+          <Reveal key={a.id} delay={Math.min(i, 8) * 30} as="div">
+            <SwipeRow onEdit={() => openEdit(a)} onDelete={() => setToDelete(a)}>
+              <div className="card card-pad" style={{ display: 'flex', gap: 12 }}>
+                {a.image_url && (
+                  <img src={publicUrl(a.image_url)} alt="" className="thumb" loading="lazy" decoding="async" style={{ width: 56, height: 56 }} />
+                )}
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  {a.important && <span className="chip chip-danger" style={{ marginBottom: 4 }}>Important</span>}
+                  <div className="title">{a.title_en || a.title_te}</div>
+                  <div className="desc" style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{a.body_en || a.body_te}</div>
+                </div>
+              </div>
+            </SwipeRow>
+          </Reveal>
         ))}
       </div>
       <ConfirmDialog

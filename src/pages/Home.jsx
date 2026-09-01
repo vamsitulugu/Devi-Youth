@@ -299,7 +299,7 @@ function HomeContent({ data, t, lang }) {
 
       {/* ---------- LIVE STREAM (only if the committee started one) ---------- */}
       {live?.active && live?.roomName && live?.wsUrl && (
-        <Reveal><LiveStream active={live.active} roomName={live.roomName} wsUrl={live.wsUrl} lang={lang} /></Reveal>
+        <Reveal><LiveStream active={live.active} roomName={live.roomName} wsUrl={live.wsUrl} orientation={live.orientation} lang={lang} /></Reveal>
       )}
 
       {/* ---------- QUICK ACCESS ---------- */}

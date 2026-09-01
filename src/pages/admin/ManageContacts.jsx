@@ -1,5 +1,5 @@
-import { useEffect, useState } from 'react';
-import { Plus, Pencil, Trash2, X } from 'lucide-react';
+import { useEffect, useMemo, useState } from 'react';
+import { Plus, X, Search } from 'lucide-react';
 import { AdminHeader } from '../../components/admin/AdminLayout';
 import ConfirmDialog from '../../components/admin/ConfirmDialog';
 import { Field, Input, FormGrid } from '../../components/admin/FormField';
@@ -8,6 +8,8 @@ import { useToast } from '../../components/admin/Toast';
 import { contactsApi } from '../../services/adminApi';
 import { useCloseOnBack } from '../../hooks/useCloseOnBack';
 import { PageSkeleton, PageError } from '../../components/LoadingStates';
+import SwipeRow from '../../components/SwipeRow';
+import Reveal from '../../components/Reveal';
 
 const blank = { name: '', role_en: '', role_te: '', role_source_lang: null, phone: '', sort_order: 0 };
 
@@ -21,6 +23,7 @@ export default function ManageContacts() {
   const [form, setForm] = useState(blank);
   const [saving, setSaving] = useState(false);
   const [toDelete, setToDelete] = useState(null);
+  const [q, setQ] = useState('');
 
   async function reload() {
     setLoading(true);
@@ -35,6 +38,12 @@ export default function ManageContacts() {
   }
 
   useEffect(() => { reload(); }, []);
+
+  const filtered = useMemo(() => {
+    const needle = q.trim().toLowerCase();
+    if (!needle) return items;
+    return items.filter((c) => (c.name || '').toLowerCase().includes(needle) || (c.phone || '').includes(needle));
+  }, [items, q]);
 
   function openNew() {
     setForm(blank);
@@ -111,20 +120,27 @@ export default function ManageContacts() {
           </form>
         )}
 
+        {!editing && items.length > 6 && (
+          <div className="search-bar" style={{ margin: 0 }}>
+            <Search size={16} strokeWidth={2.4} />
+            <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search contacts…" />
+          </div>
+        )}
+
         {loading && <PageSkeleton />}
         {!loading && error && <PageError onRetry={reload} />}
         {!loading && !error && items.length === 0 && <div className="card empty-state">No contacts yet.</div>}
-        {!loading && !error && items.map((c) => (
-          <div key={c.id} className="card card-pad" style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-            <div style={{ flex: 1, minWidth: 0 }}>
-              <div className="title">{c.name}</div>
-              <div className="meta">{c.role_en || c.role_te} · {c.phone}</div>
-            </div>
-            <div style={{ display: 'flex', gap: 8 }}>
-              <button className="icon-btn" onClick={() => openEdit(c)} aria-label="Edit"><Pencil size={16} /></button>
-              <button className="icon-btn" onClick={() => setToDelete(c)} aria-label="Delete"><Trash2 size={16} color="var(--color-danger)" /></button>
-            </div>
-          </div>
+        {!loading && !error && filtered.map((c, i) => (
+          <Reveal key={c.id} delay={Math.min(i, 8) * 30} as="div">
+            <SwipeRow onEdit={() => openEdit(c)} onDelete={() => setToDelete(c)}>
+              <div className="card card-pad" style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div className="title">{c.name}</div>
+                  <div className="meta">{c.role_en || c.role_te} · {c.phone}</div>
+                </div>
+              </div>
+            </SwipeRow>
+          </Reveal>
         ))}
       </div>
       <ConfirmDialog

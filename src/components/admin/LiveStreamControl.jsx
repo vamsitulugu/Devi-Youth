@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { Room, Track, createLocalTracks } from 'livekit-client';
-import { Radio, Video, Square, ChevronDown } from 'lucide-react';
+import { Radio, Video, Square, ChevronDown, RectangleHorizontal, RectangleVertical } from 'lucide-react';
 import { getLiveStatus, setLiveStatus } from '../../services/livestream';
 import { fetchLiveKitToken, randomIdentity } from '../../services/livekit';
 import { useToast } from './Toast';
@@ -8,11 +8,11 @@ import Reveal from '../Reveal';
 
 /**
  * Broadcaster control. Collapsed by default (just "Live Stream — set up
- * / broadcasting now"); tap to expand the config form or the on-air
- * preview. Enter your LiveKit WSS URL + a room name once, then "Go
- * Live" turns this device's camera/mic on and publishes into that room
- * — every villager on Home sees it via LiveStream.jsx. "End Stream"
- * stops publishing and flips the flag villagers watch off.
+ * / broadcasting now"); tap to expand. Pick an orientation, enter the
+ * LiveKit WSS URL + a room name once, then "Go Live" turns this
+ * device's camera/mic on with that orientation's aspect ratio and
+ * publishes into the room — every villager on Home sees it via
+ * LiveStream.jsx, framed the same way. "End Stream" stops publishing.
  *
  * The preview <video> is always mounted (just hidden via CSS while not
  * live) so its ref exists before goLive() attaches a track to it —
@@ -26,6 +26,7 @@ export default function LiveStreamControl({ festivalId }) {
   const [status, setStatus] = useState(null);
   const [wsUrl, setWsUrl] = useState('');
   const [roomName, setRoomName] = useState('');
+  const [orientation, setOrientation] = useState('landscape');
   const [live, setLive] = useState(false);
   const [busy, setBusy] = useState(false);
   const [expanded, setExpanded] = useState(false);
@@ -35,6 +36,7 @@ export default function LiveStreamControl({ festivalId }) {
       setStatus(s);
       setWsUrl(s.wsUrl || '');
       setRoomName(s.roomName || 'festival-live');
+      setOrientation(s.orientation || 'landscape');
       setLive(Boolean(s.active));
       setExpanded(Boolean(s.active));
     });
@@ -48,7 +50,7 @@ export default function LiveStreamControl({ festivalId }) {
   async function saveConfig() {
     setBusy(true);
     try {
-      const saved = await setLiveStatus(festivalId, { active: live, wsUrl: wsUrl.trim(), roomName: roomName.trim() });
+      const saved = await setLiveStatus(festivalId, { active: live, wsUrl: wsUrl.trim(), roomName: roomName.trim(), orientation });
       setStatus(saved);
       toast('Live stream settings saved');
     } catch (err) {
@@ -70,13 +72,16 @@ export default function LiveStreamControl({ festivalId }) {
       const room = new Room();
       roomRef.current = room;
       await room.connect(wsUrl.trim(), token);
-      const tracks = await createLocalTracks({ audio: true, video: true });
+      const videoConstraint = orientation === 'portrait'
+        ? { aspectRatio: 9 / 16, width: { ideal: 720 }, height: { ideal: 1280 } }
+        : { aspectRatio: 16 / 9, width: { ideal: 1280 }, height: { ideal: 720 } };
+      const tracks = await createLocalTracks({ audio: true, video: videoConstraint });
       tracksRef.current = tracks;
       for (const track of tracks) {
         await room.localParticipant.publishTrack(track);
         if (track.kind === Track.Kind.Video && videoRef.current) track.attach(videoRef.current);
       }
-      const saved = await setLiveStatus(festivalId, { active: true, wsUrl: wsUrl.trim(), roomName: roomName.trim() });
+      const saved = await setLiveStatus(festivalId, { active: true, wsUrl: wsUrl.trim(), roomName: roomName.trim(), orientation });
       setStatus(saved);
       setLive(true);
       toast("You're live!");
@@ -94,7 +99,7 @@ export default function LiveStreamControl({ festivalId }) {
       tracksRef.current = [];
       roomRef.current?.disconnect();
       roomRef.current = null;
-      const saved = await setLiveStatus(festivalId, { active: false, wsUrl: wsUrl.trim(), roomName: roomName.trim() });
+      const saved = await setLiveStatus(festivalId, { active: false, wsUrl: wsUrl.trim(), roomName: roomName.trim(), orientation });
       setStatus(saved);
       setLive(false);
       toast('Stream ended');
@@ -133,6 +138,27 @@ export default function LiveStreamControl({ festivalId }) {
         <div style={{ padding: '0 var(--space-4) var(--space-4)', display: 'flex', flexDirection: 'column', gap: 10 }}>
           {!live && (
             <>
+              <div>
+                <span style={{ fontSize: 'var(--fs-xs)', fontWeight: 700, color: 'var(--color-ink-soft)' }}>Orientation</span>
+                <div style={{ display: 'flex', gap: 8, marginTop: 6 }}>
+                  <button
+                    type="button"
+                    className={`btn btn-sm ${orientation === 'landscape' ? 'btn-primary' : 'btn-outline'}`}
+                    style={{ flex: 1 }}
+                    onClick={() => setOrientation('landscape')}
+                  >
+                    <RectangleHorizontal size={15} /> Landscape (16:9)
+                  </button>
+                  <button
+                    type="button"
+                    className={`btn btn-sm ${orientation === 'portrait' ? 'btn-primary' : 'btn-outline'}`}
+                    style={{ flex: 1 }}
+                    onClick={() => setOrientation('portrait')}
+                  >
+                    <RectangleVertical size={15} /> Portrait (9:16)
+                  </button>
+                </div>
+              </div>
               <input
                 value={wsUrl}
                 onChange={(e) => setWsUrl(e.target.value)}
@@ -163,10 +189,11 @@ export default function LiveStreamControl({ festivalId }) {
             muted
             style={{
               display: live ? 'block' : 'none',
-              width: '100%',
+              width: orientation === 'portrait' ? '55%' : '100%',
+              margin: orientation === 'portrait' ? '0 auto' : 0,
               borderRadius: 'var(--radius-md)',
               background: '#000',
-              aspectRatio: '4/3',
+              aspectRatio: orientation === 'portrait' ? '9/16' : '16/9',
               objectFit: 'cover',
             }}
           />

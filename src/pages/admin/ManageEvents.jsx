@@ -1,5 +1,5 @@
-import { useEffect, useState } from 'react';
-import { Plus, Pencil, Trash2, X, MapPin, Clock } from 'lucide-react';
+import { useEffect, useMemo, useState } from 'react';
+import { Plus, X, MapPin, Clock, Search } from 'lucide-react';
 import { AdminHeader } from '../../components/admin/AdminLayout';
 import FestivalBanner from '../../components/admin/FestivalBanner';
 import ConfirmDialog from '../../components/admin/ConfirmDialog';
@@ -8,14 +8,16 @@ import BilingualField from '../../components/admin/BilingualField';
 import { useToast } from '../../components/admin/Toast';
 import { useActiveFestival } from '../../hooks/useActiveFestival';
 import { useCloseOnBack } from '../../hooks/useCloseOnBack';
-import { eventsApi } from '../../services/adminApi';
+import { eventsApi, uploadImage, publicUrl } from '../../services/adminApi';
 import { PageSkeleton, PageError } from '../../components/LoadingStates';
+import SwipeRow from '../../components/SwipeRow';
+import Reveal from '../../components/Reveal';
 
 const blank = {
   title_en: '', title_te: '', title_source_lang: null,
   description_en: '', description_te: '', description_source_lang: null,
   location_en: '', location_te: '', location_source_lang: null,
-  event_date: '', event_time: '', sort_order: 0,
+  event_date: '', event_time: '', sort_order: 0, image_url: '',
 };
 
 export default function ManageEvents() {
@@ -27,8 +29,10 @@ export default function ManageEvents() {
   const [editing, setEditing] = useState(null);
   useCloseOnBack(!!editing, () => setEditing(null));
   const [form, setForm] = useState(blank);
+  const [file, setFile] = useState(null);
   const [saving, setSaving] = useState(false);
   const [toDelete, setToDelete] = useState(null);
+  const [q, setQ] = useState('');
 
   async function reload() {
     if (festivalLoading) return;
@@ -49,8 +53,15 @@ export default function ManageEvents() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [festivalId, festivalLoading]);
 
+  const filtered = useMemo(() => {
+    const needle = q.trim().toLowerCase();
+    if (!needle) return items;
+    return items.filter((ev) => (ev.title_en || ev.title_te || '').toLowerCase().includes(needle));
+  }, [items, q]);
+
   function openNew() {
     setForm(blank);
+    setFile(null);
     setEditing({});
   }
   function openEdit(item) {
@@ -59,8 +70,9 @@ export default function ManageEvents() {
       description_en: item.description_en || '', description_te: item.description_te || '', description_source_lang: item.description_source_lang,
       location_en: item.location_en || '', location_te: item.location_te || '', location_source_lang: item.location_source_lang,
       event_date: item.event_date || '', event_time: item.event_time || '',
-      sort_order: item.sort_order || 0,
+      sort_order: item.sort_order || 0, image_url: item.image_url || '',
     });
+    setFile(null);
     setEditing(item);
   }
 
@@ -68,7 +80,12 @@ export default function ManageEvents() {
     e.preventDefault();
     setSaving(true);
     try {
-      const payload = { ...form, festival_id: festivalId, sort_order: Number(form.sort_order) || 0 };
+      let image_url = form.image_url;
+      if (file) {
+        const path = `${festival.year}/events/${Date.now()}-${file.name}`;
+        image_url = await uploadImage(file, path);
+      }
+      const payload = { ...form, image_url, festival_id: festivalId, sort_order: Number(form.sort_order) || 0 };
       if (editing?.id) {
         await eventsApi.update(editing.id, payload);
         toast('Event updated');
@@ -126,6 +143,9 @@ export default function ManageEvents() {
               </div>
               <BilingualField label="Location" baseName="location" form={form} setForm={setForm} />
               <BilingualField label="Description" baseName="description" form={form} setForm={setForm} multiline />
+              <Field label="Photo (optional)">
+                <Input type="file" accept="image/*" onChange={(e) => setFile(e.target.files?.[0] || null)} />
+              </Field>
               <Field label="Sort order" hint="Lower numbers appear first on the same date">
                 <Input type="number" value={form.sort_order} onChange={(e) => setForm({ ...form, sort_order: e.target.value })} />
               </Field>
@@ -136,27 +156,37 @@ export default function ManageEvents() {
           </form>
         )}
 
+        {!editing && items.length > 5 && (
+          <div className="search-bar" style={{ margin: 0 }}>
+            <Search size={16} strokeWidth={2.4} />
+            <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search events…" />
+          </div>
+        )}
+
         {loading && <PageSkeleton />}
         {!loading && error && <PageError onRetry={reload} />}
         {!loading && !error && items.length === 0 && <div className="card empty-state">No events yet.</div>}
-        {!loading && !error && items.map((ev) => (
-          <div key={ev.id} className="card card-pad" style={{ display: 'flex', gap: 12 }}>
-            <div style={{ flex: 1, minWidth: 0 }}>
-              <div className="title">{ev.title_en || ev.title_te}</div>
-              <div className="meta" style={{ display: 'flex', gap: 10, marginTop: 4 }}>
-                <span><Clock size={12} style={{ verticalAlign: -2 }} /> {ev.event_date} {ev.event_time}</span>
-              </div>
-              {(ev.location_en || ev.location_te) && (
-                <div className="meta" style={{ marginTop: 2 }}>
-                  <MapPin size={12} style={{ verticalAlign: -2 }} /> {ev.location_en || ev.location_te}
+        {!loading && !error && filtered.map((ev, i) => (
+          <Reveal key={ev.id} delay={Math.min(i, 8) * 30} as="div">
+            <SwipeRow onEdit={() => openEdit(ev)} onDelete={() => setToDelete(ev)}>
+              <div className="card card-pad" style={{ display: 'flex', gap: 12 }}>
+                {ev.image_url && (
+                  <img src={publicUrl(ev.image_url)} alt="" className="thumb" loading="lazy" decoding="async" style={{ width: 56, height: 56 }} />
+                )}
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div className="title">{ev.title_en || ev.title_te}</div>
+                  <div className="meta" style={{ display: 'flex', gap: 10, marginTop: 4 }}>
+                    <span><Clock size={12} style={{ verticalAlign: -2 }} /> {ev.event_date} {ev.event_time}</span>
+                  </div>
+                  {(ev.location_en || ev.location_te) && (
+                    <div className="meta" style={{ marginTop: 2 }}>
+                      <MapPin size={12} style={{ verticalAlign: -2 }} /> {ev.location_en || ev.location_te}
+                    </div>
+                  )}
                 </div>
-              )}
-            </div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-              <button className="icon-btn" onClick={() => openEdit(ev)} aria-label="Edit"><Pencil size={16} /></button>
-              <button className="icon-btn" onClick={() => setToDelete(ev)} aria-label="Delete"><Trash2 size={16} color="var(--color-danger)" /></button>
-            </div>
-          </div>
+              </div>
+            </SwipeRow>
+          </Reveal>
         ))}
       </div>
       <ConfirmDialog

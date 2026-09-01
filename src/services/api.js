@@ -153,6 +153,7 @@ export async function getEvents() {
     id: e.id,
     date: e.event_date,
     time: e.event_time,
+    image: publicImageUrl(e.image_url),
     title: await bilingual(e.title_en, e.title_te, e.title_source_lang),
     location: await bilingual(e.location_en, e.location_te, e.location_source_lang),
     description: await bilingual(e.description_en, e.description_te, e.description_source_lang),

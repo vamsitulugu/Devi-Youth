@@ -1,5 +1,5 @@
-import { useEffect, useState } from 'react';
-import { Plus, Pencil, Trash2, X } from 'lucide-react';
+import { useEffect, useMemo, useState } from 'react';
+import { Plus, X, Search } from 'lucide-react';
 import { AdminHeader } from '../../components/admin/AdminLayout';
 import FestivalBanner from '../../components/admin/FestivalBanner';
 import ConfirmDialog from '../../components/admin/ConfirmDialog';
@@ -11,6 +11,8 @@ import { useCloseOnBack } from '../../hooks/useCloseOnBack';
 import { committeeApi, uploadImage, publicUrl } from '../../services/adminApi';
 import { PageSkeleton, PageError } from '../../components/LoadingStates';
 import PhotoViewer from '../../components/PhotoViewer';
+import SwipeRow from '../../components/SwipeRow';
+import Reveal from '../../components/Reveal';
 
 const blank = { name: '', position_en: 'Committee Member', position_te: '', position_source_lang: 'en', phone: '', sort_order: 0, photo_url: '', qr_url: '' };
 
@@ -27,6 +29,7 @@ export default function ManageCommittee() {
   const [saving, setSaving] = useState(false);
   const [toDelete, setToDelete] = useState(null);
   const [viewing, setViewing] = useState(null);
+  const [q, setQ] = useState('');
   useCloseOnBack(!!editing, () => setEditing(null));
   useCloseOnBack(!!viewing, () => setViewing(null));
 
@@ -48,6 +51,12 @@ export default function ManageCommittee() {
     reload();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [festivalId, festivalLoading]);
+
+  const filtered = useMemo(() => {
+    const needle = q.trim().toLowerCase();
+    if (!needle) return items;
+    return items.filter((m) => (m.name || '').toLowerCase().includes(needle));
+  }, [items, q]);
 
   function openNew() {
     setForm(blank);
@@ -157,39 +166,46 @@ export default function ManageCommittee() {
           </form>
         )}
 
+        {!editing && items.length > 6 && (
+          <div className="search-bar" style={{ margin: 0 }}>
+            <Search size={16} strokeWidth={2.4} />
+            <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search members…" />
+          </div>
+        )}
+
         {loading && <PageSkeleton />}
         {!loading && error && <PageError onRetry={reload} />}
         {!loading && !error && items.length === 0 && <div className="card empty-state">No committee members yet.</div>}
-        {!loading && !error && items.map((m) => (
-          <div key={m.id} className="card card-pad" style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-            <img
-              src={publicUrl(m.photo_url) || undefined}
-              alt=""
-              className="thumb"
-              loading="lazy"
-              decoding="async"
-              onClick={m.photo_url ? () => setViewing(m) : undefined}
-              style={{
-                width: 48,
-                height: 48,
-                borderRadius: '50%',
-                objectFit: 'cover',
-                border: '2px solid var(--color-vermillion)',
-                cursor: m.photo_url ? 'zoom-in' : undefined,
-              }}
-            />
-            <div style={{ flex: 1, minWidth: 0 }}>
-              <div className="title">{m.name}</div>
-              <div className="meta">{m.position_en || m.position_te}{m.phone ? ` · ${m.phone}` : ''}</div>
-              <div className="meta" style={{ color: m.qr_url ? 'var(--color-success, green)' : 'var(--color-border)' }}>
-                {m.qr_url ? '✓ Donation QR set' : 'No donation QR yet'}
+        {!loading && !error && filtered.map((m, i) => (
+          <Reveal key={m.id} delay={Math.min(i, 8) * 30} as="div">
+            <SwipeRow onEdit={() => openEdit(m)} onDelete={() => setToDelete(m)}>
+              <div className="card card-pad" style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                <img
+                  src={publicUrl(m.photo_url) || undefined}
+                  alt=""
+                  className="thumb"
+                  loading="lazy"
+                  decoding="async"
+                  onClick={m.photo_url ? () => setViewing(m) : undefined}
+                  style={{
+                    width: 48,
+                    height: 48,
+                    borderRadius: '50%',
+                    objectFit: 'cover',
+                    border: '2px solid var(--color-vermillion)',
+                    cursor: m.photo_url ? 'zoom-in' : undefined,
+                  }}
+                />
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div className="title">{m.name}</div>
+                  <div className="meta">{m.position_en || m.position_te}{m.phone ? ` · ${m.phone}` : ''}</div>
+                  <div className="meta" style={{ color: m.qr_url ? 'var(--color-success, green)' : 'var(--color-border)' }}>
+                    {m.qr_url ? '✓ Donation QR set' : 'No donation QR yet'}
+                  </div>
+                </div>
               </div>
-            </div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-              <button className="icon-btn" onClick={() => openEdit(m)} aria-label="Edit"><Pencil size={16} /></button>
-              <button className="icon-btn" onClick={() => setToDelete(m)} aria-label="Delete"><Trash2 size={16} color="var(--color-danger)" /></button>
-            </div>
-          </div>
+            </SwipeRow>
+          </Reveal>
         ))}
       </div>
       <ConfirmDialog

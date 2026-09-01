@@ -7,8 +7,8 @@
 const LOCAL_KEY = 'gc_live_status_v2';
 
 function loadLocal() {
-  try { return JSON.parse(localStorage.getItem(LOCAL_KEY) || 'null') || { active: false, roomName: '', wsUrl: '' }; }
-  catch { return { active: false, roomName: '', wsUrl: '' }; }
+  try { return JSON.parse(localStorage.getItem(LOCAL_KEY) || 'null') || { active: false, roomName: '', wsUrl: '', orientation: 'landscape' }; }
+  catch { return { active: false, roomName: '', wsUrl: '', orientation: 'landscape' }; }
 }
 function saveLocal(status) {
   try { localStorage.setItem(LOCAL_KEY, JSON.stringify(status)); } catch { /* private mode */ }
@@ -28,22 +28,27 @@ export async function getLiveStatus(festivalId) {
   if (isSupabaseConfigured && festivalId) {
     const { data, error } = await supabase
       .from('festivals')
-      .select('live_active, live_room_name, live_ws_url')
+      .select('live_active, live_room_name, live_ws_url, live_orientation')
       .eq('id', festivalId)
       .maybeSingle();
     if (error) throw error;
-    return { active: Boolean(data?.live_active), roomName: data?.live_room_name || '', wsUrl: data?.live_ws_url || '' };
+    return {
+      active: Boolean(data?.live_active),
+      roomName: data?.live_room_name || '',
+      wsUrl: data?.live_ws_url || '',
+      orientation: data?.live_orientation || 'landscape',
+    };
   }
   return loadLocal();
 }
 
-export async function setLiveStatus(festivalId, { active, roomName, wsUrl }) {
+export async function setLiveStatus(festivalId, { active, roomName, wsUrl, orientation }) {
   const { supabase, isSupabaseConfigured } = await backend();
-  const status = { active: Boolean(active), roomName: roomName || '', wsUrl: wsUrl || '' };
+  const status = { active: Boolean(active), roomName: roomName || '', wsUrl: wsUrl || '', orientation: orientation || 'landscape' };
   if (isSupabaseConfigured && festivalId) {
     const { error } = await supabase
       .from('festivals')
-      .update({ live_active: status.active, live_room_name: status.roomName, live_ws_url: status.wsUrl })
+      .update({ live_active: status.active, live_room_name: status.roomName, live_ws_url: status.wsUrl, live_orientation: status.orientation })
       .eq('id', festivalId);
     if (error) throw error;
     return status;

@@ -22,22 +22,30 @@ function cacheSet(key, data) {
   try { localStorage.setItem(key, JSON.stringify({ at: Date.now(), data })); } catch { /* private mode */ }
 }
 
-/** Resolve a free-text place name to lat/lon. Returns null if not found. */
+/** Resolve a free-text place name to lat/lon. Returns null if not found.
+ * Tries the name as given first, then with ", India" appended — most
+ * village/town names alone are ambiguous or too small for the geocoder,
+ * but resolve reliably once the country is specified. */
 export async function geocodePlace(query) {
   const key = `gc_geocode:${query}`;
   const cached = cacheGet(key);
   if (cached) return cached;
-  try {
-    const res = await fetch(`${GEOCODE_URL}?name=${encodeURIComponent(query)}&count=1&language=en&format=json`);
-    const data = await res.json();
-    const hit = data?.results?.[0];
-    if (!hit) return null;
-    const result = { lat: hit.latitude, lon: hit.longitude, label: hit.name, country: hit.country };
-    cacheSet(key, result);
-    return result;
-  } catch {
-    return null;
+  const attempts = [query, `${query}, India`];
+  for (const attempt of attempts) {
+    try {
+      const res = await fetch(`${GEOCODE_URL}?name=${encodeURIComponent(attempt)}&count=1&language=en&format=json`);
+      const data = await res.json();
+      const hit = data?.results?.[0];
+      if (hit) {
+        const result = { lat: hit.latitude, lon: hit.longitude, label: hit.name, country: hit.country };
+        cacheSet(key, result);
+        return result;
+      }
+    } catch {
+      // try the next attempt
+    }
   }
+  return null;
 }
 
 /** Daily forecast (max/min temp, weather code, rain chance) starting today. */
